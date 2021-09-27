@@ -9,22 +9,33 @@ import collections
 
 ids = ["1000022", "1000023", "1000025", "1000035", "1000037"]
 ids = [int(id) for id in ids]
-
-
 blocks = ["MASS", "NMIX", "VMIX", "UMIX"]
 
-def get_features(data, blocks, ids):
+def get_features(data, blocks, ids = None):
     features = {}
     for block in blocks:
         if block == "MASS":
             mass = {}
-            for id in ids:
-                mass[id] = data.blocks[block][id]
-            features[block] = mass
+            if ids == None:
+                for id in data.blocks[block].keys():
+                    mass[id] = data.blocks[block][id]
+                features[block] = mass
+            else:
+                for id in ids:
+                    mass[id] = data.blocks[block][id]
+                features[block] = mass
         else:
             features[block] = []
             for key in data.blocks[block].keys():
                 features[block].append(data.blocks[block][key])
+    return features
+
+def get_features2(data, blocks, ids):
+    features = {}
+    for block in blocks:
+        features[block] = []
+        for key in data.blocks[block].keys():
+            features[block].append(data.blocks[block][key])
     return features
 
 def get_targets(data, col_idx = 8, block = "PROSPINO_OUTPUT", excl_id = 0, with_keys = True):
@@ -50,22 +61,26 @@ def get_targets(data, col_idx = 8, block = "PROSPINO_OUTPUT", excl_id = 0, with_
         return targets
 
 
-def sort_targets(targets):
-    keys = targets[0].keys()
-    sorted_targets = {key : [] for key in keys}
-    for d in targets:
+def sort_list_of_dicts(dicts):
+    keys = dicts[0].keys()
+    sorted_dict = {key : [] for key in keys}
+    for d in dicts:
         for key in keys:
-            sorted_targets[key].append(d.get(key))
-    sorted_targets = {str(key) : np.asarray(sorted_targets[key]) for key in sorted_targets.keys()}
-    return sorted_targets
+            sorted_dict[key].append(d.get(key))
+    sorted_dict = {str(key) : np.asarray(sorted_dict.get(key)) for key in sorted_dict.keys()}
+    return sorted_dict
+
+
+
+def sort_targets(targets):
+    return sort_list_of_dicts(targets)
 
 
 
 def get_data(root_dir, blocks, ids, col_idxs = [8, 9]):
 
     # Extract number of files in the root ri
-    if not os.path.exists(".num_files.txt"):
-        os.system(f"ls {root_dir}/*.slha | wc -l >> num_files.txt")
+    os.system(f"ls {root_dir}/*.slha | wc -l > num_files.txt")
     with open("num_files.txt", "r") as infile:
         lines = infile.readlines()
         num_files = int(lines[0].split()[0])
@@ -84,6 +99,7 @@ def get_data(root_dir, blocks, ids, col_idxs = [8, 9]):
         features = {key : np.asarray(features[key]) for key in features.keys()}
         for col_idx in targets.keys():
             targets[col_idx] = sort_targets(targets[col_idx])
+        features = sort_features(features, blocks)
     return features, targets
 
 def load_targets(col_idxs):
@@ -94,35 +110,6 @@ def load_targets(col_idxs):
         targets[col_idx] = np.load(f"targets_col_{col_idx}.npz")
     return targets
 
-blocks = ["MASS", "NMIX", "VMIX", "UMIX"]
-ids = [1000022, 1000024, 1000023, 1000025, 1000035, 1000037] #particle ids
-path = "./EWonly"
-filename = "./EWonly/1_3_1.slha"
-data = pyslha.read(filename)
-# # print(data.blocks["PROSPINO_OUTPUT"].keys())
-# targets1 = get_targets(data)
-# filename2 = "./EWonly/1_4_1.slha"
-# targets2 = get_targets(data)
-# targets = [targets1, targets2]
-#
-# # print(targets)
-# targets = sort_targets(targets)
-# print(targets)
-# df_targets = pd.DataFrame(targets)
-# print(df_targets)
-
-# print(data.blocks["PROSPINO_OUTPUT"])
-# print(targets)
-# print(targets)
-# features = get_features(data, blocks, ids)
-# print(features["MASS"])
-# print("*"*20)
-# print(features["NMIX"])
-# print("*"*20)
-# print(features["UMIX"])
-# print("*"*20)
-# print(features["VMIX"])
-
 
 
 ##########################################################################
@@ -130,23 +117,55 @@ data = pyslha.read(filename)
 ##########################################################################
 
 
-features, targets = get_data(path, blocks, ids)
-#Sort mass dictionary.
-print(features["MASS"])
-for i in range(len(features["MASS"])):
-    features["MASS"][i] = {key : [features["MASS"][i][key]] for key in features["MASS"][i].keys()}
-features["MASS"] = [pd.DataFrame(features["MASS"][i]) for i in range(len(features["MASS"]))]
-features["MASS"] = pd.concat(features["MASS"], ignore_index = True)
-print("--"*30)
-print(features["MASS"])
+def sort_features(features, blocks):
+    for block in blocks:
+        if block == "MASS":
+            features[block] = sort_list_of_dicts(features[block])
+        else:
+            shape = features[block].shape
+            features[block] = features[block].reshape(shape[0], int(np.sqrt(shape[1])), int(np.sqrt(shape[1])))
+    return features
 
-# targets = {}
-# for col_idx in targets.keys():
-#     targets[col_idx] = pd.DataFrame(targets[col_idx])
-#     cols = targets[col_idx].columns
-#     arrs = {col : targets[col_idx][col] for col in cols}
-#     np.savez_compressed(f"targets_col_{col_idx}.npz", **arrs)
 
+def save_targets(targets):
+    #targets = {}
+    for col_idx in targets.keys():
+        targets[col_idx] = pd.DataFrame(targets[col_idx])
+        cols = targets[col_idx].columns
+        arrs = {col : targets[col_idx][col] for col in cols}
+        np.savez_compressed(f"targets_col_{col_idx}.npz", **arrs)
+    del targets
+
+def save_features(features):
+    np.savez_compressed("mass.npz", **features["MASS"])
+    del features["MASS"]
+    np.savez_compressed("feat_no_mass.npz", **features)
+    del features
+
+
+def load_features():
+    mass = np.load("mass.npz")
+    feat_no_mass = np.load("feat_no_mass.npz")
+
+    features = {}
+    features["MASS"] = { key : mass[key] for key in mass.files}
+    for key in feat_no_mass.files:
+        features[key] = feat_no_mass[key]
+    return features
+
+
+
+blocks = ["MASS", "NMIX", "VMIX", "UMIX", "MINPAR"]
+ids = [1000022, 1000024, 1000023, 1000025, 1000035, 1000037] #particle ids
+path = "./EWonly"
+# path = "./dummy_data"
+
+
+
+
+# features, targets = get_data(path, blocks, ids = None)
+# save_targets(targets)
+# save_features(features)
 
 
 
@@ -155,5 +174,9 @@ print(features["MASS"])
 ##########################################################################
 
 
-# targets = load_targets(8)
-# print(targets[8])
+features = load_features()
+targets = load_targets(8)
+# print(targets[8].files)
+# print(targets[8].get("(1000022, 1000022)"))
+
+print(features)
