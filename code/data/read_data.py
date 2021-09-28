@@ -102,16 +102,6 @@ def get_data(root_dir, blocks, ids, col_idxs = [8, 9]):
         features = sort_features(features, blocks)
     return features, targets
 
-def load_targets(col_idxs):
-    col_idxs = [8, 9]
-    targets = {}
-    processes = {}
-    for col_idx in col_idxs:
-        targets[col_idx] = np.load(f"targets_col_{col_idx}.npz")
-    return targets
-
-
-
 ##########################################################################
 # Reads data from file and writes it to numpy compressed zip file.
 ##########################################################################
@@ -143,16 +133,6 @@ def save_features(features):
     del features
 
 
-def load_features():
-    mass = np.load("mass.npz")
-    feat_no_mass = np.load("feat_no_mass.npz")
-
-    features = {}
-    features["MASS"] = { key : mass[key] for key in mass.files}
-    for key in feat_no_mass.files:
-        features[key] = feat_no_mass[key]
-    return features
-
 
 
 blocks = ["MASS", "NMIX", "VMIX", "UMIX", "MINPAR"]
@@ -174,9 +154,9 @@ path = "./EWonly"
 ##########################################################################
 
 
-features = load_features()
-targets = load_targets(8)
+# features = load_features()
+# targets = load_targets(8)
 # print(targets[8].files)
 # print(targets[8].get("(1000022, 1000022)"))
-
-print(features)
+#
+# print(features)
