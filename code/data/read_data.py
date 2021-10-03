@@ -12,6 +12,17 @@ ids = [int(id) for id in ids]
 blocks = ["MASS", "NMIX", "VMIX", "UMIX"]
 
 def get_features(data, blocks, ids = None):
+    """Extracts features from a pyslha data object.
+
+        Args:
+            data                    : pyslha data object
+            blocks (list)           : which blocks to extract.
+            ids (list, optional)    : particle ids to extract.
+
+        Returns:
+            features (dict) :   dictionary containing the extracted features.
+                                using blocks as its keys.
+    """
     features = {}
     for block in blocks:
         if block == "MASS":
@@ -38,46 +49,64 @@ def get_features2(data, blocks, ids):
             features[block].append(data.blocks[block][key])
     return features
 
-def get_targets(data, col_idx = 8, block = "PROSPINO_OUTPUT", excl_id = 0, with_keys = True):
+def get_targets(data, col_idx = 8, block = "PROSPINO_OUTPUT"):
+    """Extracts targets from a pyslha object.
+
+        Args:
+            data                :   pyslha data object
+            col_idx (int)       :   which column in the slha file to extract.
+            block (str)         :   defaults to PROSPINO_OUTPUT. Not subject to change.
+    """
+
     targets = {}
-    if with_keys == False:
-        targets = []
-        for key in data.blocks[block].keys():
-            if not excl_id in key and not -excl_id in key:
-                if len(key) == 3:
-                    targets.append(data.blocks[block][key][col_idx])
-                else:
-                    targets.append(-1)
-        return targets
-
-    else:
-        targets = {}
-        for key in data.blocks[block].keys():
-            if not excl_id in key and not -excl_id in key:
-                if len(key) == 3:
-                    targets[key[:2]] = data.blocks[block][key][col_idx]
-                else:
-                    targets[key[:2]] = -1
-        return targets
+    for key in data.blocks[block].keys():
+        if len(key) == 3:
+            targets[key[:2]] = data.blocks[block][key][col_idx]
+        else:
+            targets[key[:2]] = -1
+    return targets
 
 
-def sort_list_of_dicts(dicts):
+def merge_list_of_dicts(dicts):
+    """ Merges a list of dictionaries to a single dictionary.
+
+        Args:
+            dicts (list)    :   list of dictionaries to merge.
+
+        Returns:
+            merged_dict (dict)  :   Merged dictionary.
+
+    """
     keys = dicts[0].keys()
-    sorted_dict = {key : [] for key in keys}
+    merged_dict = {key : [] for key in keys}
     for d in dicts:
         for key in keys:
-            sorted_dict[key].append(d.get(key))
-    sorted_dict = {str(key) : np.asarray(sorted_dict.get(key)) for key in sorted_dict.keys()}
-    return sorted_dict
+            merged_dict[key].append(d.get(key))
+    merged_dict = {str(key) : np.asarray(merged_dict.get(key)) for key in merged_dict.keys()}
+    return merged_dict
 
 
 
 def sort_targets(targets):
-    return sort_list_of_dicts(targets)
+    return merge_list_of_dicts(targets)
 
 
 
-def get_data(root_dir, blocks, ids, col_idxs = [8, 9]):
+def get_data(root_dir, blocks, ids, col_idxs = [8, 7]):
+    """ Extracts data from a set of .slha files.
+
+        Args:
+            root_dir (str)      :   root directory of .slha files.
+            blocks (list)       :   blocks in .slha files to extract
+            ids (list)          :   particle ids to extract data for
+            col_idx (list)      :   column index of targets to extract
+                                    in PROSPINO_OUTPUT block.
+
+        Returns:
+            features (dict)     :   dictionary with extracted features
+            targets (dict)      :   dictionary with extracted targets
+
+    """
 
     # Extract number of files in the root ri
     os.system(f"ls {root_dir}/*.slha | wc -l > num_files.txt")
@@ -99,7 +128,7 @@ def get_data(root_dir, blocks, ids, col_idxs = [8, 9]):
         features = {key : np.asarray(features[key]) for key in features.keys()}
         for col_idx in targets.keys():
             targets[col_idx] = sort_targets(targets[col_idx])
-        features = sort_features(features, blocks)
+        features = merge_features(features, blocks)
     return features, targets
 
 ##########################################################################
@@ -107,10 +136,20 @@ def get_data(root_dir, blocks, ids, col_idxs = [8, 9]):
 ##########################################################################
 
 
-def sort_features(features, blocks):
+def merge_features(features, blocks):
+    """ Merge features with respect to the blocks in the .slha files.
+
+        Args:
+            features (dict)     :   dictionary containing features to merge.
+            blocks (list)       :   List of blocks to merge.
+
+        Returns:
+            Merged dictionary
+    """
+
     for block in blocks:
         if block == "MASS":
-            features[block] = sort_list_of_dicts(features[block])
+            features[block] = merge_list_of_dicts(features[block])
         else:
             shape = features[block].shape
             features[block] = features[block].reshape(shape[0], int(np.sqrt(shape[1])), int(np.sqrt(shape[1])))
@@ -118,7 +157,13 @@ def sort_features(features, blocks):
 
 
 def save_targets(targets):
-    #targets = {}
+    """ Saves targets to a set of .npz file using the keys as filenames.
+
+        Args:
+            targets (dict)  :   Dictionary of targets
+
+    """
+
     for col_idx in targets.keys():
         targets[col_idx] = pd.DataFrame(targets[col_idx])
         cols = targets[col_idx].columns
@@ -127,6 +172,12 @@ def save_targets(targets):
     del targets
 
 def save_features(features):
+    """ Saves features to .npz files.
+
+        Args:
+            features (dict) :   dictionary of features
+
+    """
     np.savez_compressed("mass.npz", **features["MASS"])
     del features["MASS"]
     np.savez_compressed("feat_no_mass.npz", **features)
@@ -143,9 +194,9 @@ path = "./EWonly"
 
 
 
-# features, targets = get_data(path, blocks, ids = None)
-# save_targets(targets)
-# save_features(features)
+features, targets = get_data(path, blocks, ids = None)
+save_targets(targets)
+save_features(features)
 
 
 
