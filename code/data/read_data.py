@@ -56,6 +56,9 @@ def get_targets(data, col_idx = 8, block = "PROSPINO_OUTPUT"):
             data                :   pyslha data object
             col_idx (int)       :   which column in the slha file to extract.
             block (str)         :   defaults to PROSPINO_OUTPUT. Not subject to change.
+
+        Returns:
+            targets (dict)  : Dictionary of targets.
     """
 
     targets = {}
@@ -131,10 +134,6 @@ def get_data(root_dir, blocks, ids, col_idxs = [8, 7]):
         features = merge_features(features, blocks)
     return features, targets
 
-##########################################################################
-# Reads data from file and writes it to numpy compressed zip file.
-##########################################################################
-
 
 def merge_features(features, blocks):
     """ Merge features with respect to the blocks in the .slha files.
@@ -152,7 +151,10 @@ def merge_features(features, blocks):
             features[block] = merge_list_of_dicts(features[block])
         else:
             shape = features[block].shape
-            features[block] = features[block].reshape(shape[0], int(np.sqrt(shape[1])), int(np.sqrt(shape[1])))
+            if int(shape[1]) != 1:
+                features[block] = features[block].reshape(shape[0], int(np.sqrt(shape[1])), int(np.sqrt(shape[1])))
+            else:
+                features[block] = features[block].reshape(shape[0], 1)
     return features
 
 
@@ -183,6 +185,26 @@ def save_features(features):
     np.savez_compressed("feat_no_mass.npz", **features)
     del features
 
+def sort_nmix(features):
+    """ Sort NMIX matrix according to particle ids.
+
+    """
+    neutralinos = ["1000022", "1000023", "1000025", "1000035"] #neutralinos[i] = neutralino i.
+    nmix_matrices = features["NMIX"]
+    # print(nmix_matrices.shape)
+    nmix_dict = {}
+    for i, id in enumerate(neutralinos):
+        nmix_dict[id] = features["NMIX"][:, i, :]
+    features["NMIX"] = nmix_dict
+    # print(features)
+    return features
+
+def sort_vmix_umix(features):
+    """ Sort VMIX and UMIX according to particle ids
+
+    """
+    return NotImplemented
+
 
 
 
@@ -190,13 +212,29 @@ blocks = ["MASS", "NMIX", "VMIX", "UMIX", "MINPAR"]
 ids = [1000022, 1000024, 1000023, 1000025, 1000035, 1000037] #particle ids
 path = "./EWonly"
 # path = "./dummy_data"
+# path = "./dummy_data/1_317_1.slha"
+# data = pyslha.read(path)
+# print(data.blocks["PROSPINO_OUTPUT"])
 
-
-
+##########################################################################
+# Parse data and write it to file
+##########################################################################
 
 features, targets = get_data(path, blocks, ids = None)
-save_targets(targets)
-save_features(features)
+features = sort_nmix(features)
+
+
+del features["VMIX"]
+del features["UMIX"]
+
+features["MASS"] = pd.DataFrame(features["MASS"])
+for key in features["NMIX"].keys():
+    features["NMIX"][key] = pd.DataFrame(features["NMIX"][key], columns = [f"{key},N1", f"{key},N2", f"{key},N3", f"{key},N4"])
+
+features["MASS"].to_pickle("./features/mass.pkl")
+for key in features["NMIX"].keys():
+    path = f"./features/nmix_{key}.pkl"
+    features["NMIX"][key].to_pickle(path)
 
 
 
@@ -211,3 +249,25 @@ save_features(features)
 # print(targets[8].get("(1000022, 1000022)"))
 #
 # print(features)
+
+
+##########################################################################
+# Loads data from pickle
+##########################################################################
+
+df_nmix = pd.read_pickle("./features/nmix_1000022.pkl")
+print(type(df_nmix))
+df_mass = pd.read_pickle("./features/mass.pkl")
+df_mass1 = pd.DataFrame(df_mass["1000022"])
+print(pd.concat([df_mass1, df_nmix], axis=1))
+
+
+df_nmix1 = pd.read_pickle("./features/nmix_1000022.pkl")
+df_nmix2 = pd.read_pickle("./features/nmix_1000025.pkl")
+df_mass1 = pd.DataFrame(df_mass["1000022"])
+df_mass2 = pd.DataFrame(df_mass["1000025"])
+
+df = pd.concat([df_mass1, df_mass2, df_nmix1, df_nmix2], axis=1)
+print(df)
+print(df.to_numpy())
+print(df.to_numpy().shape)
