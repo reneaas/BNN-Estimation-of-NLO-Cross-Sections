@@ -186,24 +186,46 @@ def save_features(features):
     del features
 
 def sort_nmix(features):
-    """ Sort NMIX matrix according to particle ids.
+    """ Sort NMIX according to particle ids
 
+        Args:
+            features (dict) :   dictionary of features
+
+        Returns:
+            features (dict) :   dictionary of features
+                                with NMIX sorted.
     """
     neutralinos = ["1000022", "1000023", "1000025", "1000035"] #neutralinos[i] = neutralino i.
-    nmix_matrices = features["NMIX"]
-    # print(nmix_matrices.shape)
     nmix_dict = {}
     for i, id in enumerate(neutralinos):
         nmix_dict[id] = features["NMIX"][:, i, :]
     features["NMIX"] = nmix_dict
-    # print(features)
     return features
 
 def sort_vmix_umix(features):
     """ Sort VMIX and UMIX according to particle ids
 
+        Args:
+            features (dict) :   dictionary of features
+
+        Returns:
+            features (dict) :   dictionary of features
+                                with UMIX and VMIX sorted.
     """
-    return NotImplemented
+
+    charginos = ["1000024", "1000037"]
+
+    vmix_dict = {}
+    umix_dict = {}
+    for i, id in enumerate(charginos):
+        vmix_dict[id] = features["VMIX"][:, i, :]
+        umix_dict[id] = features["UMIX"][:, i, :]
+    features["VMIX"] = vmix_dict
+    features["UMIX"] = umix_dict
+    print(features["VMIX"])
+    print("----"*20)
+    print(features["UMIX"])
+    return features
 
 
 
@@ -222,20 +244,42 @@ path = "./EWonly"
 
 features, targets = get_data(path, blocks, ids = None)
 features = sort_nmix(features)
+features = sort_vmix_umix(features)
 
+# del features["VMIX"]
+# del features["UMIX"]
 
-del features["VMIX"]
-del features["UMIX"]
-
+#Store masses
 features["MASS"] = pd.DataFrame(features["MASS"])
-for key in features["NMIX"].keys():
-    features["NMIX"][key] = pd.DataFrame(features["NMIX"][key], columns = [f"{key},N1", f"{key},N2", f"{key},N3", f"{key},N4"])
-
 features["MASS"].to_pickle("./features/mass.pkl")
+
+#Store NMIX matrices
+for key in features["NMIX"].keys():
+    features["NMIX"][key] = pd.DataFrame(features["NMIX"][key], columns = [f"{key},N{i}" for i in range(1,5)])
 for key in features["NMIX"].keys():
     path = f"./features/nmix_{key}.pkl"
     features["NMIX"][key].to_pickle(path)
 
+#Store UMIX matrices
+for key in features["UMIX"].keys():
+    features["UMIX"][key] = pd.DataFrame(features["UMIX"][key], columns = [f"{key},U{i}" for i in range(1, 3)])
+    features["VMIX"][key] = pd.DataFrame(features["VMIX"][key], columns = [f"{key},V{i}" for i in range(1, 3)])
+
+print(features["UMIX"])
+
+for key in features["UMIX"].keys():
+    path = f"./features/umix_{key}.pkl"
+    features["UMIX"][key].to_pickle(path)
+
+    path = f"./features/vmix_{key}.pkl"
+    features["VMIX"][key].to_pickle(path)
+
+
+
+print(features["MASS"])
+print(features["NMIX"])
+print(features["UMIX"])
+print(features["VMIX"])
 
 
 ##########################################################################
@@ -255,19 +299,19 @@ for key in features["NMIX"].keys():
 # Loads data from pickle
 ##########################################################################
 
-df_nmix = pd.read_pickle("./features/nmix_1000022.pkl")
-print(type(df_nmix))
-df_mass = pd.read_pickle("./features/mass.pkl")
-df_mass1 = pd.DataFrame(df_mass["1000022"])
-print(pd.concat([df_mass1, df_nmix], axis=1))
-
-
-df_nmix1 = pd.read_pickle("./features/nmix_1000022.pkl")
-df_nmix2 = pd.read_pickle("./features/nmix_1000025.pkl")
-df_mass1 = pd.DataFrame(df_mass["1000022"])
-df_mass2 = pd.DataFrame(df_mass["1000025"])
-
-df = pd.concat([df_mass1, df_mass2, df_nmix1, df_nmix2], axis=1)
-print(df)
-print(df.to_numpy())
-print(df.to_numpy().shape)
+# df_nmix = pd.read_pickle("./features/nmix_1000022.pkl")
+# print(type(df_nmix))
+# df_mass = pd.read_pickle("./features/mass.pkl")
+# df_mass1 = pd.DataFrame(df_mass["1000022"])
+# print(pd.concat([df_mass1, df_nmix], axis=1))
+#
+#
+# df_nmix1 = pd.read_pickle("./features/nmix_1000022.pkl")
+# df_nmix2 = pd.read_pickle("./features/nmix_1000025.pkl")
+# df_mass1 = pd.DataFrame(df_mass["1000022"])
+# df_mass2 = pd.DataFrame(df_mass["1000025"])
+#
+# df = pd.concat([df_mass1, df_mass2, df_nmix1, df_nmix2], axis=1)
+# print(df)
+# print(df.to_numpy())
+# print(df.to_numpy().shape)
