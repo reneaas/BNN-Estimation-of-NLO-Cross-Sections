@@ -173,17 +173,6 @@ def save_targets(targets):
         np.savez_compressed(f"targets_col_{col_idx}.npz", **arrs)
     del targets
 
-def save_features(features):
-    """ Saves features to .npz files.
-
-        Args:
-            features (dict) :   dictionary of features
-
-    """
-    np.savez_compressed("mass.npz", **features["MASS"])
-    del features["MASS"]
-    np.savez_compressed("feat_no_mass.npz", **features)
-    del features
 
 def sort_nmix(features):
     """ Sort NMIX according to particle ids
@@ -222,10 +211,33 @@ def sort_vmix_umix(features):
         umix_dict[id] = features["UMIX"][:, i, :]
     features["VMIX"] = vmix_dict
     features["UMIX"] = umix_dict
-    print(features["VMIX"])
-    print("----"*20)
-    print(features["UMIX"])
     return features
+
+
+def save_features(features):
+    #Store masses
+    features["MASS"] = pd.DataFrame(features["MASS"])
+    features["MASS"].to_pickle("./features/mass.pkl")
+
+    #Store NMIX matrices
+    for key in features["NMIX"].keys():
+        features["NMIX"][key] = pd.DataFrame(features["NMIX"][key], columns = [f"{key},N{i}" for i in range(1,5)])
+    for key in features["NMIX"].keys():
+        path = f"./features/nmix_{key}.pkl"
+        features["NMIX"][key].to_pickle(path)
+
+    #Store UMIX matrices
+    for key in features["UMIX"].keys():
+        features["UMIX"][key] = pd.DataFrame(features["UMIX"][key], columns = [f"{key},U{i}" for i in range(1, 3)])
+        features["VMIX"][key] = pd.DataFrame(features["VMIX"][key], columns = [f"{key},V{i}" for i in range(1, 3)])
+
+
+    for key in features["UMIX"].keys():
+        path = f"./features/umix_{key}.pkl"
+        features["UMIX"][key].to_pickle(path)
+
+        path = f"./features/vmix_{key}.pkl"
+        features["VMIX"][key].to_pickle(path)
 
 
 
@@ -246,40 +258,24 @@ features, targets = get_data(path, blocks, ids = None)
 features = sort_nmix(features)
 features = sort_vmix_umix(features)
 
+print(targets)
+for key in targets.keys():
+    targets[key] = pd.DataFrame(targets[key])
+print("---"*20)
+print("----"*20)
+print(targets)
+
+targets[7].to_pickle("targets/nlo.pkl")
+targets[8].to_pickle("targets/nlo_rel_err.pkl")
+
+
+
 # del features["VMIX"]
 # del features["UMIX"]
 
-#Store masses
-features["MASS"] = pd.DataFrame(features["MASS"])
-features["MASS"].to_pickle("./features/mass.pkl")
 
-#Store NMIX matrices
-for key in features["NMIX"].keys():
-    features["NMIX"][key] = pd.DataFrame(features["NMIX"][key], columns = [f"{key},N{i}" for i in range(1,5)])
-for key in features["NMIX"].keys():
-    path = f"./features/nmix_{key}.pkl"
-    features["NMIX"][key].to_pickle(path)
+#Store targets
 
-#Store UMIX matrices
-for key in features["UMIX"].keys():
-    features["UMIX"][key] = pd.DataFrame(features["UMIX"][key], columns = [f"{key},U{i}" for i in range(1, 3)])
-    features["VMIX"][key] = pd.DataFrame(features["VMIX"][key], columns = [f"{key},V{i}" for i in range(1, 3)])
-
-print(features["UMIX"])
-
-for key in features["UMIX"].keys():
-    path = f"./features/umix_{key}.pkl"
-    features["UMIX"][key].to_pickle(path)
-
-    path = f"./features/vmix_{key}.pkl"
-    features["VMIX"][key].to_pickle(path)
-
-
-
-print(features["MASS"])
-print(features["NMIX"])
-print(features["UMIX"])
-print(features["VMIX"])
 
 
 ##########################################################################

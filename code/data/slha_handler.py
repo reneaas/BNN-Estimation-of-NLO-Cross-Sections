@@ -1,5 +1,6 @@
 import numpy as np
 import os
+import pandas as pd
 
 
 class SLHAloader(object):
@@ -7,15 +8,70 @@ class SLHAloader(object):
         for data from slha files.
 
         Args:
-            mass_fname          : .npz file contaning masses
-            feat_exc_mass_fname : .npz filename contaning the remaining features
-            target_fnames       : .npz filenames containing the targets
+            particle_ids (list)  :      List of particle ids for a process
+                                        (particle pair)
     """
 
-    def __init__(self, mass_fname, feat_exc_mass_fname, target_fnames):
+    def __init__(self, particle_ids, feat_dir, target_dir):
 
-        self.features = self.load_features(mass_fname, feat_exc_mass_fname)
-        self.targets = self.load_targets(target_fnames)
+        possible_ids = ["1000022", "1000023", "1000025", "1000035",
+                        "1000024", "1000037"
+        ]
+
+
+        #Raise ValueError if a particle id is not a valid id.
+        for id in particle_ids:
+            if id not in possible_ids:
+                raise ValueError(f"{id} is not a supported particle id. Supported particle ids: \n" + ", ".join(possible_ids))
+
+        features = {"MASS" : {}, "NMIX" : {}, "VMIX" : {}, "UMIX" : {}}
+
+        #Extract mass of particle_ids.
+        df_mass = pd.read_pickle(feat_dir + "/" + "mass.pkl")
+        dfs = []
+
+        #Extract rest of features
+        for id in particle_ids:
+            features["MASS"][id] = df_mass[id]
+            fname = feat_dir + "/nmix_"  + id + ".pkl"
+            if os.path.isfile(fname):
+                features["NMIX"][id] = pd.read_pickle(fname)
+
+            fname = feat_dir + "/vmix_" + id + ".pkl"
+            if os.path.isfile(fname):
+                features["VMIX"][id] = pd.read_pickle(fname)
+
+            fname = feat_dir + "/umix_" + id + ".pkl"
+            if os.path.isfile(fname):
+                features["UMIX"][id] = pd.read_pickle(fname)
+
+        #Extract features and delete temporary dict
+        self.features = {}
+        for key in features.keys():
+            if len(features[key]) != 0:
+                self.features[key] = features.get(key)
+        del features  #Clear memory.
+
+        # Merge dataframes
+        dfs = []
+        for block in self.features.keys():
+            for id in particle_ids:
+                dfs.append(self.features[block][id])
+        self.features = pd.concat(dfs, axis=1)
+
+        #Extract targets
+        target_keys = ["nlo", "nlo_rel_err"]
+        targets = {}
+        for key in target_keys:
+            fname = target_dir  + f"/{key}.pkl"
+            targets[key] = pd.read_pickle(fname)
+
+        #Extract process
+        self.targets = {}
+        process = str(tuple( [int(i) for i in particle_ids] ))
+        for key in targets.keys():
+            self.targets[key] = targets[key][process]
+
 
 
 
@@ -116,21 +172,28 @@ class SLHAloader(object):
 
 if __name__ == "__main__":
 
-    mass_fname = "mass.npz"
-    feat_exc_mass_fname = "feat_no_mass.npz"
-    target_fnames = ["targets_col_8.npz", "targets_col_9.npz"]
-    dl = SLHAloader(mass_fname, feat_exc_mass_fname, target_fnames)
-    # print(dl.features["NMIX"])
-    print("--"*20)
-    # print(dl.features["NMIX"])
-    # print(dl.targets["targets_col_8"].files)
-    process = (10000_22, 10000_22)
-    targets = dl.extract_targets(process)
-    print(dl.features["MASS"])
-    print("--"*20)
-    print(dl.features["NMIX"])
-    # print(type(dl.features["NMIX"]["1000022"]))
+    ids = ["1000022", "1000023"]
+    target_dir = "./targets"
+    feat_dir = "./features"
+    dl = SLHAloader(ids, feat_dir, target_dir)
     print(dl.features)
+    print(dl.targets)
+
+    # mass_fname = "mass.npz"
+    # feat_exc_mass_fname = "feat_no_mass.npz"
+    # target_fnames = ["targets_col_8.npz", "targets_col_9.npz"]
+    # dl = SLHAloader(mass_fname, feat_exc_mass_fname, target_fnames)
+    # # print(dl.features["NMIX"])
+    # print("--"*20)
+    # # print(dl.features["NMIX"])
+    # # print(dl.targets["targets_col_8"].files)
+    # process = (10000_22, 10000_22)
+    # targets = dl.extract_targets(process)
+    # print(dl.features["MASS"])
+    # print("--"*20)
+    # print(dl.features["NMIX"])
+    # # print(type(dl.features["NMIX"]["1000022"]))
+    # print(dl.features)
     # features = dl.extract_features(process)
     # print(features)
     # print(targets)
