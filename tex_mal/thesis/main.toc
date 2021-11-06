@@ -1,0 +1,9 @@
+\babel@toc {UKenglish}{}
+\contentsline {chapter}{Introduction}{1}{chapter*.4}%
+\contentsline {chapter}{\numberline {1}Machine Learning: Preliminaries}{3}{chapter.1}%
+\contentsline {section}{\numberline {1.1}Basic concepts in regression}{3}{section.1.1}%
+\contentsline {subsection}{\numberline {1.1.1}Bias-variance trade-off}{3}{subsection.1.1.1}%
+\contentsline {chapter}{Conclusion}{6}{chapter*.6}%
+\contentsline {chapter}{Appendices}{7}{section*.7}%
+\contentsline {chapter}{Appendix A}{9}{appendix*.8}%
+\contentsline {section}{\numberline {A.1}Appendix 1 title }{9}{section.Alph0.1}%

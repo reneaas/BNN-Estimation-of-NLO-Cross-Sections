@@ -14,15 +14,18 @@ class SLHAloader(object):
 
     def __init__(self, particle_ids, feat_dir, target_dir, target_keys = ["nlo"]):
 
-        possible_ids = ["1000022", "1000023", "1000025", "1000035",
-                        "1000024", "1000037"
+        possible_ids = ["1000022", "1000023", "1000025",
+                        "1000035", "1000024", "1000037"
         ]
 
 
         #Raise ValueError if a particle id is not a valid id.
         for id in particle_ids:
             if id not in possible_ids:
-                raise ValueError(f"{id} is not a supported particle id. Supported particle ids: \n" + ", ".join(possible_ids))
+                err_message = f"particle id = {id} is not a supported particle id. \n"
+                err_message += "Supported particle ids: \n"
+                err_message += "\n".join(possible_ids)
+                raise ValueError(err_message)
 
         features = {"MASS" : {}, "NMIX" : {}, "VMIX" : {}, "UMIX" : {}}
 
@@ -90,22 +93,14 @@ class SLHAloader(object):
         return None
 
 
-
-
-
-
-
-
-
-
-
 if __name__ == "__main__":
 
-    ids = ["1000022", "1000023"]
-    target_dir = "./targets"
-    feat_dir = "./features"
+    #ids = ["1000022", "1000023"]
+    ids = ["2", "4"]
+    target_dir = "../targets"
+    feat_dir = "../features"
     dl = SLHAloader(ids, feat_dir, target_dir)
-    dl.to_numpy()
+    #dl.to_numpy()
     print(dl.features)
     print(dl.targets)
     # print(targets)

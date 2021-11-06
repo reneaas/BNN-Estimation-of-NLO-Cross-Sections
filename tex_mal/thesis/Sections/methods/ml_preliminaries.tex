@@ -1,0 +1,15 @@
+
+Machine learning is a field of study concerned with learning from known observations and of unseen ones. In this thesis, we'll focus on \textit{supervised} machine learning, which is a subfield of machine learning that fits models on data points $x$ with definite targets $y$. We'll confine ourselves even further and only study \textit{regression} problems, which is a class of problems where the function we're trying to learn produces a continuous output, i.e a function $f : \mathbb{R}^p \to \mathbb{R}$.
+
+\section{Basic concepts in regression}\label{sec:basic_concepts}
+
+The basic conceptual framework of a supervised machine learning problem is as follows. Assume a dataset $\mathcal{D}$ built up of $n$ datapoints $(\vb*{x}_i, y_i)$, where $\vb*{x}_i \in \mathbb{R}^p$ is the set of \textit{features} and $y_i \in \mathbb{R}$ is the \textit{target}. I'll introduce a shorthand notation to represent the dataset as $\mathcal{D} = (X, \vb*{y})$ where $X$ is the set of features and $\vb*{y}$ is the set of targets. The next ingredient is to assume the targets are of the form 
+\begin{equation}\label{eq:model_assumption}
+	y_i = f(\vb{x}_i) + \epsilon_i,
+\end{equation}
+for some true function $f(\vb*{x}_i)$ (also known as the ground truth), where $\epsilon_i$ is introduced to account for random noise. To approximate the outputs $y_i$, the standard approach is to choose a model class $\hat{f}(\vb*{x}; \vb*{\theta})$ combined with a procedure to choose parameters $\vb*{\theta}$ such that the model is as close to $f(\vb*{x}_i)$ as possible. This typically involves choosing a \textit{metric} $\mathcal{C}$ to quantify the error, usually called a \textit{cost}-function or a \textit{loss}-function, and minimize it with respect to the parameters of the model.
+
+
+\subsection{Bias-variance trade-off}\label{sec:bias_var}
+From eq.~\eqref{eq:model_assumption}, we can deduce a general feature of machine learning problems that proves challenging. We cannot directly probe the true function $f(\vb{x}_i)$, because only $y_i$ is observed. Because of this, choosing a model class is a delicate process. If the model class is too simple (i.e few parameters $\vb*{\theta}$), it is likely to capture very general features of the ground truth whilst more nuances properties are missed entirely. Then we say that the model has a high bias and a low variance. Increasing the model complexity (i.e increasing number of parameters) allows the model to reproduce a growing number of nook-and-crannies of the data. A model that is too complex is said to have a low bias and a high variance.
+

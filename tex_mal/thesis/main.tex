@@ -1,0 +1,112 @@
+\documentclass[UKenglish]{book}
+\newcommand\hmmax{0}
+\newcommand\bmmax{0}
+
+\counterwithout{footnote}{chapter}
+\usepackage{Setup/style}
+\DeclareMathAlphabet{\mathcal}{OMS}{cmsy}{m}{n}
+\raggedbottom %%reduces the gaps between the paragraphs
+\usepackage{jheppub}
+
+\title{Bayesian neural network estimation of next-to-leading-order cross sections}
+%\subtitle{My subtitle}
+\subsubtitle{by}
+\author{René Alexander Ask}
+\thesistext{THESIS}
+\thesistextt{for the degree of}
+\thesistexttt{MASTER OF SCIENCE}
+
+
+\bibliographystyle{JHEP}
+%\addbibresource{bibliography.bib}
+%\DeclareUnicodeCharacter{2212}{-}
+%\DeclareUnicodeCharacter{03B1}{-}
+
+\begin{document}
+\duoforside[dept={Department of Physics},
+  program={Master's Program Name},
+  long]
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\frontmatter{}
+\input{Sections/Abstract/Abstract}
+\input{Sections/Acknow}
+\tableofcontents{}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\mainmatter{}
+\input{Sections/Introduction/Introduction}
+
+
+%%%%%%%%%%%% QFT %%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%% Neural networks %%%%%%%%%%%%%%
+%\chapter{Methods}\label{chap:methods}
+\chapter{Machine Learning: Preliminaries}\label{chap:ml_preliminaries}
+\input{Sections/methods/ml_preliminaries}
+%\input{Sections/methods/neural_networks}
+
+
+%\input{Sections/QFT/Axiomatic}
+%\input{Sections/QFT/Pertubationtheory}
+%\input{Sections/QFT/StandardModel}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%\input{Sections/QFT/MathematicalFormulationGaugeTheories}
+%\input{Sections/QFT/WilsonGeometry}
+
+%%%%%%%%%%%%% Wilson Line Properties %%%%%%%%%%%%%%%%%%%%%%%%
+%\chapter{Wilson Line Properties}
+%\input{Sections/WilsonLineProperties/CuspAnomalous}
+
+%\chapter{Supersymmetry}
+%\input{Sections/SUSY/Supersymmetry}
+
+%%%%%%%%%%%%% QCD %%%%%%%%%%%%%%%%%%%%%%%%
+% \chapter{Perturbative Quantum Chromodynamics}\label{Chap:pQCD}
+% \input{Sections/QCD/LagrangianQCD}
+% \input{Sections/QCD/DIS}
+% \input{Sections/QCD/DrellYan}
+
+
+
+%%%%%%%%%%%%% Conclusion %%%%%%%%%%%%%%%%%%%%%%%%%%
+\chapter*{Conclusion}\label{chap:conclusion}
+\input{Sections/Conclusion/Conclusion}
+\backmatter{}
+%%%%%%%%%%%%% Appendix %%%%%%%%%%%%%%%%%%%%%%%%
+
+\begin{appendices}
+\numberwithin{equation}{section}
+
+\appendix
+\chapter{Appendix A}
+\renewcommand{\thechapter}{A}
+\renewcommand{\theequation}{\thechapter.\arabic{equation}}
+\input{Sections/Appendix/Appendix1}
+
+
+% \appendix
+% \renewcommand{\thechapter}{B}
+% \chapter{Appendix B}
+% \input{Sections/Appendix/Appendix2}
+%
+% \appendix
+% \renewcommand{\thechapter}{C}
+% \chapter{Appendix C}
+% \renewcommand{\theequation}{\thechapter.\arabic{equation}}
+% \input{Sections/Appendix/Appendix3}
+%
+% \appendix
+% \renewcommand{\thechapter}{D}
+% \chapter{Appendix D}
+% \renewcommand{\theequation}{\thechapter.\arabic{equation}}
+% \input{Sections/Appendix/Appendix4}
+
+
+\end{appendices}
+
+
+
+
+\bibliography{bibliography.bib}
+
+\end{document}
