@@ -58,10 +58,10 @@ def scale_data(x, y):
 def get_model(optimizer, loss_fn, metrics):
     model = keras.Sequential(
         [
-            layers.Dense(50, activation="relu", input_shape=(10,)),
-            layers.Dense(50, activation="relu"),
+            layers.Dense(1000, activation="relu", input_shape=(10,)),
+            layers.Dense(1000, activation="relu"),
             # layers.Dropout(rate=0.2),
-            layers.Dense(50, activation="relu"),
+            layers.Dense(1000, activation="relu"),
             layers.Dense(1, activation="linear"),
         ]
     )
@@ -71,7 +71,7 @@ def get_model(optimizer, loss_fn, metrics):
 
 def fit(model, x_train, y_train, x_val, y_val):
     history = model.fit(
-            x_train, y_train, batch_size=64, epochs=100, validation_data=(x_val, y_val)
+            x_train, y_train, batch_size=512, epochs=100, validation_data=(x_val, y_val)
     )
     return model, history
 
