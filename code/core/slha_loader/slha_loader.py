@@ -8,8 +8,14 @@ class SLHAloader(object):
         for data from slha files.
 
         Args:
-            particle_ids (list)  :      List of particle ids for a process
-                                        (particle pair)
+            particle_ids (list)     :       List of particle ids for a process
+                                            (particle pair)
+            
+            feat_dir (str)          :       root directory with features
+
+            target_dir (str)        :       root directory with targets
+
+
     """
 
     def __init__(self, particle_ids, feat_dir, target_dir, target_keys = ["nlo"]):

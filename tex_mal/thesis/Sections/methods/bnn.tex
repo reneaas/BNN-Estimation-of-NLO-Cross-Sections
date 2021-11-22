@@ -1,0 +1,43 @@
+\section{Interpretations of probability}
+
+
+\section{Bayesian inference}
+Given a series of observations $D = \{ x^{(1)}, ... , x^{(n)} \}$, one defines a probabilistic model $P(x^{(i)}, \theta)$ for a set of parameters $\theta$.  The foundation for Bayesian inference is Bayes' theorem, which can be formulated as
+\begin{equation}
+	P(\theta | D) = \frac{P(D|\theta)P(\theta)}{P(D)}
+\end{equation}
+Some useful terminology is in order. $P(\theta)$ is called the \textit{prior} distribution and embodies our prior knowledge of the distribution of $\theta$ before any new observations are considered. $P(D|\theta)$ is called the \textit{likelihood} function and provides information about $\theta$ learned from observing the data $D$. The likelihood function is often written
+\begin{equation}
+  L(\theta) \equiv L(\theta|D) = P(D|\theta).
+\end{equation}
+One should remember that this is specific to the data $D$, even though it's sometimes written as $L(\theta)$. The \textit{posterior} distribution $P(\theta|D)$ models our belief about the distribution of $\theta$ after observer $D$. More succinctly, we can write Bayes' theorem as
+\begin{equation}
+  P(\theta|D) \propto L(\theta|D)P(\theta),
+\end{equation}
+because its rarely of interest, or tractable, to compute $P(D)$, known as the \textit{evidence}.
+
+The objective of Bayesian inference is to compute the \textit{predictive} distribution, which can be expressed as
+the integral over all parameters of the posterior distribution weighted by the likelihood. Mathematically,
+\begin{equation}
+  P(x^{(n+1)}|D) = \int L(\theta|x^{(n+1)})P(\theta|D)\dd \theta.
+\end{equation}
+
+
+\section{Bayesian framework for neural networks}
+
+We can specialize the equations used in Bayesian inference for neural networks in the context of regression.
+The predictive distribution $P(y|x)$ seeks to model a function $f : \mathbb{R}^p \to \mathbb{R}$ that for a given $x$ produces an output $y$. In the infinite data limit, the distribution should be a Dirac Delta function. For finite datasets, however, we instead seek a distribution of outputs given the input features.
+
+Consider a set of observations $D = \{(x^{(1)}, y^{(1)}), ..., (x^{(n)}, y^{(n)})\}$, where $x^{(i)} \in \mathbb{R}^p$ are the input features and $y^{(i)} \in \mathbb{R}$ are the \textit{targets}. The equation for the predictive distribution changes to
+\begin{equation}
+  P(y^{(n+1)}|x^{(n+1)}, D) = \int L(\theta, y^{(n+1)}|x^{(n+1)})P(\theta|D)\dd \theta.
+\end{equation}
+Assuming that the the observations in $D$ are drawn independently, the likelihood function can be expressed as
+\begin{equation}
+  L(\theta|D) = \prod_{i=1}^n L(\theta, y^{(i)}|x^{(i)}) = \prod_{i=1}^n P(y^{(i)}|x^{(i)}, \theta).
+\end{equation}
+In the context of regression, the conditional distribution is chosen to be
+\begin{equation}
+  P(y|x, \theta) = \frac{1}{\sqrt{2\pi}\sigma}\exp\left(-\frac{(f(x) - y)^2}{2\sigma^2}\right),
+\end{equation}
+where $f(x)$, the neural network output, is the mean of $y$ and $\sigma$ is the noise of $y$.

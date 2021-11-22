@@ -1,3 +1,52 @@
-\providecommand{\href}[2]{#2}\begingroup\raggedright\begin{thebibliography}{}
+\providecommand{\href}[2]{#2}\begingroup\raggedright\begin{thebibliography}{1}
+
+\bibitem{backprop}
+D.~E. Rumelhart, G.~E. Hinton and R.~J. Williams, \emph{Learning
+  representations by back-propagating errors},
+  \href{http://dx.doi.org/10.1038/323533a0}{\emph{Nature} {\bf 323} (1986)
+  533--536}.
+
+\bibitem{ml_for_physicists}
+P.~Mehta, M.~Bukov, C.-H. Wang, A.~G. Day, C.~Richardson, C.~K. Fisher et~al.,
+  \emph{A high-bias, low-variance introduction to machine learning for
+  physicists},
+  \href{http://dx.doi.org/10.1016/j.physrep.2019.03.001}{\emph{Physics Reports}
+  {\bf 810} (May, 2019) }.
+
+\bibitem{markov_chains}
+M.~E.~J. Newman and G.~T. Barkema, \emph{Monte Carlo Methods in Statistical
+  Physics}.
+\newblock Oxford University Press, 1991.
+
+\bibitem{gibbs}
+S.~Geman and D.~Geman, \emph{{S}tochastic relaxation, {G}ibbs {D}istributions,
+  and the {B}ayesian {R}estoration of {I}mages},
+  \href{http://dx.doi.org/10.1109/TPAMI.1984.4767596}{\emph{{I}{E}{E}{E}
+  {T}ransactions on {P}attern {A}nalysis and {M}achine {I}ntelligence} {\bf
+  PAMI-6} (1984) 721--741}.
+
+\bibitem{metropolis}
+N.~Metropolis, A.~W. Rosenbluth, M.~N. Rosenbluth, A.~H. Teller and E.~Teller,
+  \emph{{E}quation of {S}tate {C}alculations by {F}ast {C}omputing {M}achines},
+  \href{http://dx.doi.org/10.1063/1.1699114}{\emph{The Journal of Chemical
+  Physics} {\bf 21} (1953) 1087--1092},
+  [\href{http://arxiv.org/abs/https://doi.org/10.1063/1.1699114}{{\tt
+  https://doi.org/10.1063/1.1699114}}].
+
+\bibitem{classical_mechanics}
+J.~S. Helbert~Goldstein, Charles~Poole, \emph{Classical Mechanics, 3rd ed.},
+  ch.~2,8.
+\newblock Addison Wesley, 2000.
+
+\bibitem{leapfrog}
+C.~M. Bishop, \emph{Pattern Recognition and Machine Learning}, ch.~11, p.~551.
+\newblock Springer New York, 2006.
+
+\bibitem{hmc}
+R.~Neal, \emph{Handbook of Markov Chain Monte Carlo}, ch.~5.
+\newblock Chapman and Hall/CRC, May, 2011.
+\newblock \href{http://arxiv.org/abs/http://dx.doi.org/10.1201/b10905}{{\tt
+  http://dx.doi.org/10.1201/b10905}}.
+\newblock 10.1201/b10905.
 
 \end{thebibliography}\endgroup

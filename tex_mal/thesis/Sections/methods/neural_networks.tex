@@ -1,3 +1,89 @@
 \section{Neural Networks}\label{sec:neural_networks}
+In this chapter, I'll introduce the mathematical formalism underpinning
+neural networks.
+A neural network is most generally defined as a non-linear function $f : \mathbb{R}^p \to \mathbb{R}^d$. This non-linear function is built-up as follows:
+\begin{itemize}
+    \item An input layer where a real observable $x \in \mathbb{R}^p$ is fed.
+    \item A set of hidden layers.
+    \item An output layer which consists of the output of the function.
+\end{itemize}
 
+\subsection{Basic mathematical structure}
+Denote a layer of the network as $\ell$. Assume there are $L$ layers in total, such that $\ell \in \{1,2,...,L\}$. Denote the activation at layer $\ell$ as $a_j^\ell$ and its bias as $b_j^\ell$. Moreover, denote its logits as $z_j^\ell$. The following recursive equation defines the general structure of a neural network
+\begin{equation}
+    a_j^\ell = \sigma_\ell \left(\sum_k W_{jk}^\ell a_j^{\ell - 1} + b_j^\ell\right) \equiv \sigma_\ell(z_j^\ell), 
+\end{equation}
+where $\sigma_\ell$ denotes some possibly non-linear function associated with layer $\ell$, $W_{jk}^\ell$ denotes the weights connecting layer $\ell-1$ to layer $\ell$, and $b_j^\ell$ denotes the bias at layer $\ell$. Typically $\sigma_\ell$ is called an activation function. The weights and biases of the network serve as the adjustable or \textit{learnable} parameters of the model.
 
+\subsection{Backpropagation}
+The standard approach to train a neural network is minimization of some cost function by employing the \textit{backpropagation} algorithm\cite{backprop}. The algorithm boils down to four equations defining a recursive algorithm that approximates the gradient with respect to the parameters of the model.
+
+The first of the four equations quantifes the error, 
+\begin{equation}\label{eq:backprop1}
+    \Delta_j^L = \pdv{E}{z_j^L}.
+\end{equation}
+The second equation allows us to compute the error at layer $\ell$ given we know the error at layer $\ell+1$,
+\begin{equation}\label{eq:backprop2}
+    \Delta_j^\ell = \left(\sum_k \Delta_k^{\ell+1}W_{kj}^{\ell+1}\right)\sigma_\ell'(z_j^\ell).
+\end{equation}
+The final two equations relate these errors to the gradient of the cost function with respect to the model parameters. For the weights, we have
+\begin{equation}
+    \pdv{E}{W_{jk}^\ell} = \pdv{E}{z_j^\ell}\pdv{z_j^\ell}{W_{jk}^\ell} = \Delta_j^\ell a_k^{\ell-1}.
+\end{equation}
+For the biases, the gradients are
+\begin{equation}
+    \pdv{E}{b_j^\ell} = \pdv{E}{z_j^\ell}\pdv{z_j^\ell}{b_j^\ell} = \Delta_j^\ell.
+\end{equation}
+With these four equations, we can fit the neural network using simple minimization techniques such as stochastic gradient descent or more complex methods such as ADAM (pages 13-19 in \cite{ml_for_physicists}). 
+
+\subsection{Cost function for regression}
+In this thesis, we're concerned with regression tasks. The activation function of the final layer $\sigma_L$ is then just the identity function. The typical cost function chosen to solve regression tasks is the $L_2$-norm, which for a single output can be written as 
+\begin{equation}
+    E(y, \hat{y}) = \frac{1}{2}\norm{y-\hat{y}}_2^2,
+\end{equation}
+where $\hat{y}$ denotes the model output and $y$ the ground-truth. Now, the model output in  this case is $\hat{y}_j = a_j^L = z_j^L$. Therefore, 
+\begin{equation}
+    \Delta_j^L = \pdv{E}{z_j^L} = a_j^L - y_j.
+\end{equation} 
+
+The backpropagation algorithm for a single datapoint can be written summarized as
+
+\begin{figure}[H]
+    \begin{algorithm}[H]
+        \caption{Backpropagation: forward pass}\label{algo:backprop}
+        \begin{algorithmic}
+        \State $a_j^0 = x_j$ \qq{for} $j = 1,..., p$ \Comment{Initialize input} 
+        \State \textbf{Feed-forward}
+        \For {$l=1,2,.., L-1$}
+        \For{$j=1,2,.., n$}
+        \State $a_j^l \leftarrow \sigma\left(\sum_k W_{jk}^l a_k^{l-1} + b_j^l \right)$
+        \EndFor
+        \EndFor
+        \For{$j=1,2,.., m$} \Comment{$m$ outputs}
+        \State $a_j^L \leftarrow \sigma\left(\sum_k W_{jk}^L a_k^{L-1} + b_j^L \right)$
+        \EndFor
+        \end{algorithmic}
+    \end{algorithm}
+\end{figure}
+
+\begin{figure}[H]
+    \begin{algorithm}[H]
+        \caption{Backpropagation: backward pass}\label{algo:backprop}
+        \begin{algorithmic}
+        \State \textbf{Backward pass}
+        \For{$j=1,2,.., m$} \Comment{$m$ outputs}
+        \State $\Delta_j^L \leftarrow a_j^L - y_j$
+        \State $\pdv*{E}{b_j^L} \leftarrow \Delta_j^L$
+        \State $\pdv*{E}{W_{jk}^L} \leftarrow \Delta_j^L a_k^{L-1}$
+        \EndFor
+        \For{$l = L-1, ..., 1$}
+        \For{$j = 1, ..., n$}
+        \State $\Delta_j^l \leftarrow \left(\sum_k \Delta_k^{l+1}W_{kj}^{l+1}\right) \sigma'(z_j^l)$
+        \State $\pdv*{E}{b_j^l} \leftarrow \Delta_j^l$
+        \State $\pdv*{E}{W_{jk}^l} \leftarrow \Delta_j^l a_k^{l-1}$
+        \State update $b_j^l$ and $W_{jk}^l$.
+        \EndFor
+        \EndFor
+        \end{algorithmic}
+    \end{algorithm}
+\end{figure}
