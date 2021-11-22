@@ -46,14 +46,14 @@ where $\hat{y}$ denotes the model output and $y$ the ground-truth. Now, the mode
     \Delta_j^L = \pdv{E}{z_j^L} = a_j^L - y_j.
 \end{equation} 
 
-The backpropagation algorithm for a single datapoint can be written summarized as
+The backpropagation algorithm for a single datapoint can now be written down. The forward pass
+is found in algorithm \ref{algo:backprop_forward}. 
 
 \begin{figure}[H]
     \begin{algorithm}[H]
-        \caption{Backpropagation: forward pass}\label{algo:backprop}
+        \caption{Backpropagation: forward pass}\label{algo:backprop_forward}
         \begin{algorithmic}
         \State $a_j^0 = x_j$ \qq{for} $j = 1,..., p$ \Comment{Initialize input} 
-        \State \textbf{Feed-forward}
         \For {$l=1,2,.., L-1$}
         \For{$j=1,2,.., n$}
         \State $a_j^l \leftarrow \sigma\left(\sum_k W_{jk}^l a_k^{l-1} + b_j^l \right)$
@@ -65,12 +65,12 @@ The backpropagation algorithm for a single datapoint can be written summarized a
         \end{algorithmic}
     \end{algorithm}
 \end{figure}
+The backward pass of the algorithm is stated in algorithm \ref{algo:backprop_backward}.
 
 \begin{figure}[H]
     \begin{algorithm}[H]
-        \caption{Backpropagation: backward pass}\label{algo:backprop}
+        \caption{Backpropagation: backward pass}\label{algo:backprop_backward}
         \begin{algorithmic}
-        \State \textbf{Backward pass}
         \For{$j=1,2,.., m$} \Comment{$m$ outputs}
         \State $\Delta_j^L \leftarrow a_j^L - y_j$
         \State $\pdv*{E}{b_j^L} \leftarrow \Delta_j^L$
@@ -87,3 +87,4 @@ The backpropagation algorithm for a single datapoint can be written summarized a
         \end{algorithmic}
     \end{algorithm}
 \end{figure}
+
