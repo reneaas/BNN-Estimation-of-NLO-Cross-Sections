@@ -86,8 +86,6 @@ class BNNregression(object):
             self(x)
             self.backward(y)
             self.update_layers()
-    
-
 
 
 class DenseLayer(object):
@@ -147,7 +145,7 @@ class DenseLayer(object):
 
 if __name__ == "__main__":
     f = lambda x: np.sin(x)
-    layers = [1, 100, 1]
+    layers = [1, 20, 1]
     bnn = BNNregression(layers, lr=0.0001, activation="relu")
     n_train = 100
     x_train = np.random.normal(0, 2, size=(n_train, 1))
@@ -161,6 +159,6 @@ if __name__ == "__main__":
     y_hat = bnn(x_test)
     plt.scatter(x_test, y_hat, label="predictions")
     plt.scatter(x_test, y_test, label="ground truth")
-    plt.plot(x, f(x))
+    plt.plot(x, f(x), label="True function")
     plt.legend()
     plt.show()
