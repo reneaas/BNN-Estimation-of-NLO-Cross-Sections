@@ -51,7 +51,7 @@ class BNNregression(object):
                     self.layers[l + 1].err,
                     self.layers[l + 1].w,
                     optimize=True,
-                ) 
+                )
                 * self.layers[l].activation(self.layers[l].z)
             )
             self.layers[l].db = np.mean(self.layers[l].err, axis=0)
@@ -66,12 +66,9 @@ class BNNregression(object):
                 axis=0,
             )
 
-        self.layers[0].err = (
-            np.einsum(
-                "...k,kj->...j", self.layers[1].err, self.layers[1].w, optimize=True
-            )
-            * self.layers[0].activation_derivative(self.layers[0].z)
-        )
+        self.layers[0].err = np.einsum(
+            "...k,kj->...j", self.layers[1].err, self.layers[1].w, optimize=True
+        ) * self.layers[0].activation_derivative(self.layers[0].z)
         self.layers[0].db = np.mean(self.layers[0].err, axis=0)
 
         self.layers[0].dw = np.sum(
@@ -89,25 +86,22 @@ class BNNregression(object):
             self(x)
             self.backward(y)
             self.update_layers()
+    
+
 
 
 class DenseLayer(object):
-    """Implements a densely connected layer for a neural network."""
+    """Implements a densely connected layer for a neural network for regression tasks."""
 
     def __init__(self, n_cols, n_rows, activation):
         super(DenseLayer, self).__init__()
         self.n_cols = n_cols
         self.n_rows = n_rows
 
-        possible_activations = [
-            "sigmoid",
-            "relu",
-            None
-        ]
+        possible_activations = ["sigmoid", "relu", None]
         # Assign activation function
         if not activation in possible_activations:
             raise ValueError(f"{activation=} is not a supported activation function.")
-
 
         if activation == "sigmoid":
             self.activation = self.sigmoid
@@ -140,7 +134,7 @@ class DenseLayer(object):
 
     def sigmoid_derivative(self, x):
         y = self.sigmoid(x)
-        return y*(1-y)
+        return y * (1 - y)
 
     @staticmethod
     def relu(x):
