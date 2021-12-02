@@ -13,18 +13,6 @@ P.~Mehta, M.~Bukov, C.-H. Wang, A.~G. Day, C.~Richardson, C.~K. Fisher et~al.,
   \href{http://dx.doi.org/10.1016/j.physrep.2019.03.001}{\emph{Physics Reports}
   {\bf 810} (May, 2019) }.
 
-\bibitem{markov_chains}
-M.~E.~J. Newman and G.~T. Barkema, \emph{Monte Carlo Methods in Statistical
-  Physics}.
-\newblock Oxford University Press, 1991.
-
-\bibitem{gibbs}
-S.~Geman and D.~Geman, \emph{{S}tochastic relaxation, {G}ibbs {D}istributions,
-  and the {B}ayesian {R}estoration of {I}mages},
-  \href{http://dx.doi.org/10.1109/TPAMI.1984.4767596}{\emph{{I}{E}{E}{E}
-  {T}ransactions on {P}attern {A}nalysis and {M}achine {I}ntelligence} {\bf
-  PAMI-6} (1984) 721--741}.
-
 \bibitem{metropolis}
 N.~Metropolis, A.~W. Rosenbluth, M.~N. Rosenbluth, A.~H. Teller and E.~Teller,
   \emph{{E}quation of {S}tate {C}alculations by {F}ast {C}omputing {M}achines},
@@ -32,6 +20,13 @@ N.~Metropolis, A.~W. Rosenbluth, M.~N. Rosenbluth, A.~H. Teller and E.~Teller,
   Physics} {\bf 21} (1953) 1087--1092},
   [\href{http://arxiv.org/abs/https://doi.org/10.1063/1.1699114}{{\tt
   https://doi.org/10.1063/1.1699114}}].
+
+\bibitem{gibbs}
+S.~Geman and D.~Geman, \emph{{S}tochastic relaxation, {G}ibbs {D}istributions,
+  and the {B}ayesian {R}estoration of {I}mages},
+  \href{http://dx.doi.org/10.1109/TPAMI.1984.4767596}{\emph{{I}{E}{E}{E}
+  {T}ransactions on {P}attern {A}nalysis and {M}achine {I}ntelligence} {\bf
+  PAMI-6} (1984) 721--741}.
 
 \bibitem{classical_mechanics}
 J.~S. Helbert~Goldstein, Charles~Poole, \emph{Classical Mechanics, 3rd ed.},

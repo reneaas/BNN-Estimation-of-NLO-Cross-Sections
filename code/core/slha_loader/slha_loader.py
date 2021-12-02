@@ -4,45 +4,93 @@ import pandas as pd
 
 
 class SLHAloader(object):
-    """ SLHAloader provides a flexible and easy-to-use dataloader
-        for data from slha files.
+    """SLHAloader provides a flexible and easy-to-use dataloader
+    for data from slha files.
 
-        Args:
-            particle_ids (list)     :       List of particle ids for a process
-                                            (particle pair)
-            
-            feat_dir (str)          :       root directory with features
+    Args:
+        particle_ids (list)     :       List of particle ids for a process
+                                        (particle pair)
 
-            target_dir (str)        :       root directory with targets
+        feat_dir (str)          :       root directory with features
+
+        target_dir (str)        :       root directory with targets
 
 
     """
 
-    def __init__(self, particle_ids, feat_dir, target_dir, target_keys = ["nlo"]):
+    def __init__(self, particle_ids, feat_dir, target_dir, target_keys=["nlo"]):
 
-        possible_ids = ["1000022", "1000023", "1000025",
-                        "1000035", "1000024", "1000037"
+        self.supported_ids = [
+            "1000022",
+            "1000023",
+            "1000025",
+            "1000035",
+            "1000024",
+            "1000037",
         ]
 
+        self.supported_processes = [
+            str((1000022, 1000022)),
+            str((1000022, 1000023)),
+            str((1000022, 1000025)),
+            str((1000022, 1000035)),
+            str((1000022, 1000024)),
+            str((1000022, 1000037)),
+            str((1000022, -1000024)),
+            str((1000022, -1000037)),
+            str((1000023, 1000023)),
+            str((1000023, 1000025)),
+            str((1000023, 1000035)),
+            str((1000023, 1000024)),
+            str((1000023, 1000037)),
+            str((1000023, -1000024)),
+            str((1000023, -1000037)),
+            str((1000025, 1000025)),
+            str((1000025, 1000035)),
+            str((1000025, 1000024)),
+            str((1000025, 1000037)),
+            str((1000025, -1000024)),
+            str((1000025, -1000037)),
+            str((1000035, 1000035)),
+            str((1000035, 1000024)),
+            str((1000035, 1000037)),
+            str((1000035, -1000024)),
+            str((1000035, -1000037)),
+            str((1000024, -1000024)),
+            str((1000024, -1000037)),
+            str((1000037, -1000024)),
+            str((1000037, -1000037)),
+        ]
 
-        #Raise ValueError if a particle id is not a valid id.
-        for id in particle_ids:
-            if id not in possible_ids:
+        # particle_ids = sorted(particle_ids) #Sort in ascending order.
+        self.particle_ids = list(set(particle_ids))
+        # Raise ValueError if a particle id is invalid.
+        for id in self.particle_ids:
+            if str(abs(int(id))) not in self.supported_ids:
                 err_message = f"particle id = {id} is not a supported particle id. \n"
                 err_message += "Supported particle ids: \n"
-                err_message += "\n".join(possible_ids)
+                err_message += "\n".join(self.supported_ids)
                 raise ValueError(err_message)
 
-        features = {"MASS" : {}, "NMIX" : {}, "VMIX" : {}, "UMIX" : {}}
+        #Raise Valueerror if a particle process is invalid.
+        self.process = str(tuple([int(i) for i in particle_ids]))
+        if self.process not in self.supported_processes:
+            err_message = f"{self.process=} is not a valid process.\n"
+            err_message += "Supported processes:\n"
+            err_message += "\n".join(self.supported_processes)
+            raise ValueError(err_message)
 
-        #Extract mass of particle_ids.
-        df_mass = pd.read_pickle(feat_dir + "/" + "mass.pkl")
+
+        features = {"MASS": {}, "NMIX": {}, "VMIX": {}, "UMIX": {}}
+
+        # Extract mass of particle_ids.
+        df_mass = pd.read_pickle(feat_dir + "/" + "mass.pkl")[self.particle_ids]
+            
         dfs = []
-
-        #Extract rest of features
-        for id in particle_ids:
+        # Extract rest of features
+        for id in self.particle_ids:
             features["MASS"][id] = df_mass[id]
-            fname = feat_dir + "/nmix_"  + id + ".pkl"
+            fname = feat_dir + "/nmix_" + id + ".pkl"
             if os.path.isfile(fname):
                 features["NMIX"][id] = pd.read_pickle(fname)
 
@@ -54,59 +102,58 @@ class SLHAloader(object):
             if os.path.isfile(fname):
                 features["UMIX"][id] = pd.read_pickle(fname)
 
-        #Extract features and delete temporary dict
+        # Extract features and delete temporary dict
         self.features = {}
-        for key in features.keys():
+        for key in features:
             if len(features[key]) != 0:
                 self.features[key] = features.get(key)
-        del features  #Clear memory.
+        del features  # Clear memory.
+
 
         # Merge dataframes
         dfs = []
-        for block in self.features.keys():
-            for id in particle_ids:
-                dfs.append(self.features[block][id])
+        for block in self.features:
+            for id in self.particle_ids:
+                if self.features[block].get(id) is not None:
+                    dfs.append(self.features[block][id])
         self.features = pd.concat(dfs, axis=1)
 
-        #Extract targets
+        # Extract targets
         targets = {}
         for key in target_keys:
-            fname = target_dir  + f"/{key}.pkl"
+            fname = target_dir + f"/{key}.pkl"
             targets[key] = pd.read_pickle(fname)
 
-        #Extract process
+        # Extract process
         self.targets = {}
-        process = str(tuple( [int(i) for i in particle_ids] ))
         for key in targets.keys():
-            self.targets[key] = targets[key][process]
-            self.targets[key] = self.targets[key]
-
+            self.targets[key] = targets[key].get(self.process)
 
     def to_numpy(self):
         """Converts the data to numpy arrays."""
         self.features = self.features.to_numpy()
-        for key in self.targets.keys():
+        for key in self.targets:
             self.targets[key] = self.targets[key].to_numpy()
 
-
     def __getitem__(self, idx):
-        """ Returns a datapoint (feature, target)
+        """Returns a datapoint (feature, target)
 
-            Args:
-                idx (int)   :   index of datapoint
+        Args:
+            idx (int)   :   index of datapoint
         """
-
         return None
 
 
 if __name__ == "__main__":
 
-    #ids = ["1000022", "1000023"]
-    ids = ["2", "4"]
+    ids = ["1000025", "1000025"]
+    # ids = ["2", "4"]
     target_dir = "../targets"
     feat_dir = "../features"
     dl = SLHAloader(ids, feat_dir, target_dir)
-    #dl.to_numpy()
+    # dl.to_numpy()
     print(dl.features)
     print(dl.targets)
     # print(targets)
+
+

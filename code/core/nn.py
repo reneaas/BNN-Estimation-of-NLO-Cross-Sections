@@ -5,6 +5,7 @@ from tensorflow.keras import layers
 from math import isnan
 import numpy as np
 import matplotlib.pyplot as plt
+import tensorflow_probability as tfp
 
 
 def get_dataset(feat_dir, target_dir, ids):
@@ -75,26 +76,43 @@ def fit(model, x_train, y_train, x_val, y_val):
     )
     return model, history
 
+def get_bnn(optimizer, loss_fn):
+    model = tf.keras.Sequential([
+        tfp.layers.DenseFlipout(512, activation=tf.nn.relu, input_shape=(10,)),
+        tfp.layers.DenseFlipout(10),
+    ])
+    model.compile(optimizer=optimizer, loss=loss_fn)
+    return model
+
+
+
 
 if __name__ == "__main__":
     ids = ["1000022", "1000022"]
     target_dir = "./targets"
     feat_dir = "./features"
     features, targets = get_dataset(feat_dir, target_dir, ids)
-
-    # optimizer = keras.optimizers.RMSprop(learning_rate = 0.001),
-    # optimizer = keras.optimizers.SGD(learning_rate = 0.1)
+    ds = create_dataset(features, targets, batch_size=16)
     optimizer = keras.optimizers.Adam()
     loss = (keras.losses.MeanSquaredError(),)
-    metrics = [keras.metrics.MeanSquaredError()]
-    model = get_model(optimizer, loss, metrics)
-    model.summary()
-    x_train, y_train, x_val, y_val, x_test, y_test = split_data(features, targets)
-    model, history = fit(model, x_train, y_train, x_val, y_val)
+    bnn_model = get_bnn(optimizer, loss)
+    print(bnn_model.summary())
+    print(bnn_model(features[0]))
 
-    plt.plot(history.history["loss"], label = "training")
-    plt.plot(history.history["val_loss"], label = "validation")
-    plt.xlabel("epochs")
-    plt.ylabel("loss")
-    plt.legend()
-    plt.show()
+
+    # # optimizer = keras.optimizers.RMSprop(learning_rate = 0.001),
+    # # optimizer = keras.optimizers.SGD(learning_rate = 0.1)
+    # optimizer = keras.optimizers.Adam()
+    # loss = (keras.losses.MeanSquaredError(),)
+    # metrics = [keras.metrics.MeanSquaredError()]
+    # model = get_model(optimizer, loss, metrics)
+    # model.summary()
+    # x_train, y_train, x_val, y_val, x_test, y_test = split_data(features, targets)
+    # model, history = fit(bnn_model, x_train, y_train, x_val, y_val)
+
+    # plt.plot(history.history["loss"], label = "training")
+    # plt.plot(history.history["val_loss"], label = "validation")
+    # plt.xlabel("epochs")
+    # plt.ylabel("loss")
+    # plt.legend()
+    # plt.show()

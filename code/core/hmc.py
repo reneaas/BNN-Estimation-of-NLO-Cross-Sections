@@ -3,13 +3,15 @@ import matplotlib.pyplot as plt
 from tqdm import trange
 import seaborn as sns
 
-
 def prior(q: np.ndarray) -> float:
     return 0.5 * np.dot(q, q)
 
 
 def grad_prior(q: np.ndarray) -> np.ndarray:
     return np.array([1, *q])
+
+def sigmoid(x):
+    return 1./(1 + np.exp(-x))
 
 
 def model(x: np.ndarray, q: np.ndarray) -> float:
@@ -20,6 +22,8 @@ def model(x: np.ndarray, q: np.ndarray) -> float:
             x : input point
     """
     return np.dot(x, q)
+
+
 
 def likelihood(x: np.ndarray, q: np.ndarray, t: float, model: float) -> float:
     y = model(x, q)
@@ -93,10 +97,10 @@ if __name__ == "__main__":
     x_train[:, 0] = 1
     t = ground_truth(x_train)
     q = np.random.normal(0, 1, size=2)
-    num_samples = 100
+    num_samples = 1000
     params = []
     predictions = []
-    for k in range(num_samples):
+    for k in trange(num_samples):
         q = hmc(V=V, grad_V=grad_V, eps=0.01, L=40, x=x_train, t=t, current_q=q)
         params.append(np.copy(q))
     n_test = 1000

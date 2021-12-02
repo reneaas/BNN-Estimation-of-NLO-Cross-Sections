@@ -19,7 +19,7 @@ because its rarely of interest, or tractable, to compute $P(D)$, known as the \t
 The objective of Bayesian inference is to compute the \textit{predictive} distribution, which can be expressed as
 the integral over all parameters of the posterior distribution weighted by the likelihood. Mathematically,
 \begin{equation}
-  P(x^{(n+1)}|D) = \int L(\theta|x^{(n+1)})P(\theta|D)\dd \theta.
+  P(x^{(n+1)}|D) = \int P(x^{(n+1)}|\theta)P(\theta|D)\dd \theta = \int L(\theta|x^{(n+1)})P(\theta|D)\dd \theta.
 \end{equation}
 
 
