@@ -1,6 +1,8 @@
 import numpy as np
 from tqdm import trange
 import matplotlib.pyplot as plt
+import seaborn as sns
+np.random.seed(100)
 
 
 class BNNregression(object):
@@ -8,7 +10,7 @@ class BNNregression(object):
     using HMC for sampling the posterier
     """
 
-    def __init__(self, layers: list, lr: float, activation: str):
+    def __init__(self, layers: list, lr: float, lamb: float=1e-3, activation: str="sigmoid"):
         super(BNNregression, self).__init__()
         self.layers = [
             DenseLayer(n_rows=n, n_cols=m, activation=activation)
@@ -20,6 +22,7 @@ class BNNregression(object):
 
         self.n_layers = len(self.layers)
         self.lr = lr
+        self.lamb = lamb
 
     def __call__(self, x):
         self.x = x
@@ -77,15 +80,133 @@ class BNNregression(object):
         )
 
     def update_layers(self):
-        for layer in self.layers:
-            layer.w -= self.lr * layer.dw
-            layer.b -= self.lr * layer.db
+        if self.lamb:
+            for layer in self.layers:
+                layer.w -= self.lr * layer.dw + self.lamb * layer.w
+                layer.b -= self.lr * layer.db + self.lamb * layer.b
+        else:
+            for layer in self.layers:
+                layer.w -= self.lr * layer.dw
+                layer.b -= self.lr * layer.db
 
     def fit(self, x, y, epochs=10000):
         for i in trange(epochs):
             self(x)
             self.backward(y)
             self.update_layers()
+
+    # def potential_energy(self):
+    #     V = np.sum([np.einsum("ij,ij->", layer.w, layer.w) for layer in self.layers])
+    #     +np.sum([np.einsum("i,i->", layer.b, layer.b) for layer in self.layers])
+    #     return V
+
+    def potential_energy(self, x, y):
+        V = 0
+        if self.lamb:
+            for layer in self.layers:
+                V += np.einsum("ij,ij->", layer.w, layer.w)
+                V += np.einsum("i,i->", layer.b, layer.b)
+            V *= self.lamb
+        return 0.5 * np.sum((y - self(x)) ** 2, axis=0) + V
+
+    def kinetic_energy(self):
+        K = 0
+        for l in range(len(self.layers)):
+            K += 0.5 * np.einsum("ij,ij->", self.p_w[l], self.p_w[l])
+            K += 0.5 * np.einsum("i,i->", self.p_b[l], self.p_b[l])
+        return K
+
+    def bayesian_fit(self, x: np.ndarray, y: np.ndarray, num_samples: int, L: int, eps: float, num_burn_in: int=1000):
+        self.L = L
+        self.eps = eps
+        self.num_samples = num_samples
+
+        for i in trange(num_burn_in):
+            self.hmc_step(x, y, burn_in=True)
+
+        for i in trange(self.num_samples):
+            self.hmc_step(x, y, burn_in=False)
+
+    def bayesian_predict(self, x):
+        predictions = []
+        for i in range(self.num_samples):
+            for l, layer in enumerate(self.layers):
+                layer.w = layer.samples_w[i]
+                layer.b = layer.samples_b[i]
+            predictions.append(self(x))
+        return predictions
+            
+
+
+    def hmc_step(self, x: np.ndarray, y: np.ndarray, burn_in: bool):
+        # Generate momenta
+        self.p_w = [np.random.normal(size=layer.w.shape) for layer in self.layers]
+        self.p_b = [np.random.normal(size=layer.b.shape) for layer in self.layers]
+
+        # Copy initial weights and biases.
+        w_init = [np.copy(layer.w) for layer in self.layers]
+        b_init = [np.copy(layer.b) for layer in self.layers]
+
+        K_init = self.kinetic_energy()
+        V_init = self.potential_energy(x, y)
+
+        # perform first step of leapfrog.
+        for l, layer in enumerate(self.layers):
+            self.p_b[l] -= 0.5 * self.eps * layer.db
+            self.p_w[l] -= 0.5 * self.eps * layer.dw
+
+        # Do inner steps of leapfrog
+        for i in range(self.L - 1):
+            for l, layer in enumerate(self.layers):
+                # Update generalized coordinates (parameters of network)
+                layer.w += self.eps * self.p_w[l]
+                layer.b += self.eps * self.p_b[l]
+
+            # Compute new gradients
+            self.forward(x)
+            self.backward(y)
+
+            # Update momenta
+            for l, layer in enumerate(self.layers):
+                self.p_w[l] -= self.eps * layer.dw
+                self.p_b[l] -= self.eps * layer.db
+
+        # Perform Final step of leapfrog
+        for l, layer in enumerate(self.layers):
+            layer.w += self.eps * self.p_w[l]
+            layer.b += self.eps * self.p_b[l]
+
+        # Compute new gradients
+        self.forward(x)
+        self.backward(y)
+
+        # Update final momenta.
+        for l, layer in enumerate(self.layers):
+            self.p_w[l] -= 0.5 * self.eps * layer.dw
+            #self.p_w[l] = -self.p_w[l]  # Might remove
+
+            self.p_b[l] -= 0.5 * self.eps * layer.db
+            #self.p_b[l] = -self.p_b[l]  # Might remove
+
+        # Compute final energy and differences
+        K_final = self.kinetic_energy()
+        V_final = self.potential_energy(x, y)
+        dK = K_final - K_init
+        dV = V_final - V_init
+
+        # Metropolis Hastings part:
+        if not burn_in:
+            if np.random.uniform() <= min(1, np.exp(-dV) * np.exp(-dK)):
+                # Accept new weights
+                for l, layer in enumerate(self.layers):
+                    layer.samples_w.append(layer.w)
+                    layer.samples_b.append(layer.b)
+            else:
+                # Keep the old weights
+                for l, layer in enumerate(self.layers):
+                    layer.samples_w.append(w_init[l])
+                    layer.samples_b.append(b_init[l])
+
 
 
 class DenseLayer(object):
@@ -96,7 +217,10 @@ class DenseLayer(object):
         self.n_cols = n_cols
         self.n_rows = n_rows
 
-        possible_activations = ["sigmoid", "relu", None]
+        self.samples_w = []
+        self.samples_b = [] 
+
+        possible_activations = ["sigmoid", "relu", "tanh", None]
         # Assign activation function
         if not activation in possible_activations:
             raise ValueError(f"{activation=} is not a supported activation function.")
@@ -107,8 +231,12 @@ class DenseLayer(object):
         elif activation == "relu":
             self.activation = self.relu
             self.activation_derivative = self.relu_derivative
+        elif activation == "tanh":
+            self.activation = self.tanh
+            self.activation_derivative = self.tanh_derivative
         else:
             self.activation = lambda x: x  # identity function
+            self.activation_derivative = lambda x: 1
 
         # Initialize parameters of the layer
         self.w = np.random.normal(size=(n_rows, n_cols)) / np.sqrt(n_cols)
@@ -120,6 +248,11 @@ class DenseLayer(object):
         self.dw = np.zeros_like(self.w)
         self.db = np.zeros_like(self.b)
         self.err = np.zeros_like(self.a)
+
+
+        # Store first set of weights used for the BNN
+        self.samples_w.append(self.w)
+        self.samples_b.append(self.b)
 
     def __call__(self, x):
         self.z = np.einsum("ij,...j->...i", self.w, x, optimize=True) + self.b
@@ -142,23 +275,43 @@ class DenseLayer(object):
     def relu_derivative(x):
         return 1.0 * (x > 0)
 
+    @staticmethod
+    def tanh(x):
+        return np.tanh(x)
+
+    @staticmethod
+    def tanh_derivative(x):
+        y = np.tanh(x)
+        return 1 - y ** 2
+
 
 if __name__ == "__main__":
     f = lambda x: np.sin(x)
-    layers = [1, 20, 1]
-    bnn = BNNregression(layers, lr=0.0001, activation="relu")
-    n_train = 100
+    layers = [1, 50, 1]
+    bnn = BNNregression(layers, lr=0.0001, lamb=1e-5, activation="sigmoid")
+    n_train = 1000
     x_train = np.random.normal(0, 2, size=(n_train, 1))
     y_train = f(x_train)
-    bnn.fit(x_train, y_train, epochs=10000)
+    #bnn.fit(x_train, y_train, epochs=0)
+    bnn.bayesian_fit(x=x_train, y=y_train, num_samples=10000, L=60, eps=0.001)
 
-    n_test = 10000
-    x = np.linspace(-2 * np.pi, 2 * np.pi, 1001)
+    n_test = 1000
     x_test = np.random.normal(0, 2, size=(n_test, 1))
     y_test = f(x_test)
-    y_hat = bnn(x_test)
-    plt.scatter(x_test, y_hat, label="predictions")
-    plt.scatter(x_test, y_test, label="ground truth")
-    plt.plot(x, f(x), label="True function")
+
+    predictions = bnn.bayesian_predict(x_test)
+    for i in range(len(predictions)):
+        predictions[i] = predictions[i].squeeze(axis=-1)
+    
+    X = np.array(list(x_test)*bnn.num_samples).squeeze(-1)
+    predictions = np.array(predictions)
+    predictions = predictions.reshape(n_test*bnn.num_samples, 1).squeeze(axis=-1)
+    sns.lineplot(x=X, y=predictions, ci="sd")
+    #sns.scatterplot(X, predictions, label="predictions")
+
+    x = np.linspace(-2 * np.pi, 2 * np.pi, 1001)
+    plt.plot(x, f(x), label="True function", color="r")
     plt.legend()
+    plt.xlabel("x")
+    plt.ylabel("y")
     plt.show()
