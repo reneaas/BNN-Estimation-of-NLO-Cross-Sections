@@ -50,8 +50,8 @@ def run_hmc(
     current_state=None,
     resume=None,
     log_dir="logs/hmc/",
-    sampler="nuts",
-    step_size_adapter="dual_averaging",
+    sampler="hmc",
+    step_size_adapter="simple",
     **kwargs,
 ):
     """Use adaptive HMC to generate a Markov chain of length num_results.
@@ -69,31 +69,16 @@ def run_hmc(
     err = "Either current_state or resume is required when calling run_hmc"
     assert current_state is not None or resume is not None, err
     summary_writer = tf.summary.create_file_writer(log_dir)
-    step_size_adapter = {
-        "simple": tfp.mcmc.SimpleStepSizeAdaptation,
-        "dual_averaging": tfp.mcmc.DualAveragingStepSizeAdaptation,
-    }[step_size_adapter]
-
-    if sampler == "nuts":
-        kernel = tfp.mcmc.NoUTurnSampler(target_log_prob_fn, step_size=step_size)
-        adaptive_kernel = step_size_adapter(
-            kernel,
-            num_adaptation_steps=num_burnin_steps,
-            step_size_setter_fn=lambda pkr, new_step_size: pkr._replace(
-                step_size=new_step_size
-            ),
-            step_size_getter_fn=lambda pkr: pkr.step_size,
-            log_accept_prob_getter_fn=lambda pkr: pkr.log_accept_ratio,
-        )
-    elif sampler == "hmc":
-        kernel = tfp.mcmc.HamiltonianMonteCarlo(
-            target_log_prob_fn,
-            step_size=step_size,
-            num_leapfrog_steps=num_leapfrog_steps,
-        )
-        adaptive_kernel = step_size_adapter(
+    step_size_adapter = tfp.mcmc.SimpleStepSizeAdaptation
+    kernel = tfp.mcmc.HamiltonianMonteCarlo(
+        target_log_prob_fn=target_log_prob_fn,
+        step_size=step_size,
+        num_leapfrog_steps=num_leapfrog_steps
+    )
+    adaptive_kernel = step_size_adapter(
             kernel, num_adaptation_steps=num_burnin_steps
         )
+
     if resume:
         prev_chain, prev_trace, prev_kernel_results = resume
         step = len(prev_chain)
