@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 
 np.random.seed(100)
-
+import numba
 
 class BNNregression(object):
     """Implements a simple Bayesian neural network
@@ -157,10 +157,10 @@ class BNNregression(object):
         self.num_samples = num_samples
 
         for i in trange(num_burn_in):
-            self.hmc_step(x, y, burn_in=True)
+            self.hmc_step(self, x, y, burn_in=True)
 
         for i in trange(self.num_samples):
-            self.hmc_step(x, y, burn_in=False)
+            self.hmc_step(self, x, y, burn_in=False)
 
     def bayesian_predict(self, x):
         predictions = []
