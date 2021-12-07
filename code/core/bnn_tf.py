@@ -79,55 +79,6 @@ def bayesian_fit(model, x, y, L, eps, num_burnin_steps, num_samples):
 
     return model, samples
 
-def hmc_step(model, x, y, L, eps, current_state):
-
-    # Initialize momenta for the kernels and biases
-    momenta = [tf.random.normal(w.shape) for w in current_state]
-    K_init = get_kinetic_energy(momenta)
-
-    # Compute initial potential energy (loss) and gradient.
-    loss_init, grad = grad_loss(model, x, y)
-
-    # First step of leapfro
-    momenta = [p - 0.5 * eps * dp for p, dp in zip(momenta, grad)]
-
-    # Inner steps of leapfrog iterations
-    weights = [w for w in current_state]
-    for i in range(L - 1):
-        # Update network parameters
-        weights = [w + eps * p for w, p in zip(weights, momenta)]
-        model.set_weights(weights)
-
-        # Compute new gradients
-        loss, grad = grad_loss(model, x, y)
-
-        #Update momenta again
-        momenta = [p - eps * dp for p, dp in zip(momenta, grad)]
-
-    # Final step in leapfrog
-    weights = [w + eps * p for w, p in zip(weights, momenta)]
-    model.set_weights(weights)
-    #model.weights = weights
-    loss, grad = grad_loss(model, x, y)
-
-    #Final update of momenta 
-    momenta = [p - 0.5 * eps * dp for p, dp in zip(momenta, grad)]
-
-    # Get final energies and energy differences.
-    K_final = get_kinetic_energy(momenta)
-    dK = K_final - K_init
-    dV = loss - loss_init
-    dE = dK + dV
-
-    if np.random.uniform() <= min(1, np.exp(-dE.numpy())):
-        accepted = True
-    else:
-        model.set_weights(current_state)
-        accepted = False
-
-    return model, accepted
-
-
 def sample_chain(*args, **kwargs):
     return tfp.mcmc.sample_chain(*args, **kwargs)
 
@@ -138,6 +89,37 @@ def predict_from_chain(x_test, chain, model):
         model.set_weights(weights)
         predictions.append(model(x_test).numpy())
     return predictions
+
+def prior_log_prob_fn(params, lamb = 1):
+    log_prob = 0
+    for w in params:
+        log_prob -= tf.reduce_sum(w ** 2)
+    return lamb * log_prob
+
+def bnn_log_prob_fn(X, y, params, get_mean=False):
+    """Compute log likelihood of predicted labels y given features X and params.
+    Args:
+        X (np.array): 2d feature values.
+        y (np.array): 1d labels (ground truth).
+        params (list): [[w1, b1], ...] containing 2d/1d arrays for weights/biases.
+        get_mean (bool, optional): Whether to return the mean log
+            probability over all labels for diagnostics, e.g. to
+            compare train and test set performance.
+    Returns:
+        tf.tensor: Sum or mean of log probabilities of all labels.
+    """
+    #net = build_net(params)
+    model.set_weights(params)
+    yhat = model(X)
+
+    return -0.5 * tf.reduce_sum((y - yhat)**2)
+
+def target_log_prob_fn_factory(X_train, y_train):
+    # This signature is forced by TFP's HMC kernel which calls log_prob_fn(*chains).
+    def target_log_prob_fn(*params):
+        log_prob = prior_log_prob_fn(params) + bnn_log_prob_fn(X_train, y_train, params)
+        return log_prob
+    return target_log_prob_fn
 
 
 
@@ -158,89 +140,100 @@ if __name__ == "__main__":
         yhat = model(x_train)
 
 
-        num_results = 100
-        num_burnin_steps = 1000
 
 
-        loss, grad = grad_loss(model, x_train, y_train)
+        w_prior = tfp.distributions.Normal(loc=0., scale=0.01)
+        b_prior = tfp.distributions.Normal(loc=0., scale=0.01)
 
-        # w_prior = tfp.distributions.Normal(loc=0., scale=0.01)
-        # b_prior = tfp.distributions.Normal(loc=0., scale=0.01)
+        target_log_prob_fn = target_log_prob_fn_factory(x_train, y_train)
 
-        # target_log_prob_fn = target_log_prob_fn_factory(x_train, y_train)
+        kernel = tfp.mcmc.HamiltonianMonteCarlo(
+            target_log_prob_fn=target_log_prob_fn,
+            step_size=0.01,
+            num_leapfrog_steps=60,
+            #store_parameters_in_results=True
+        )
 
-        # kernel = tfp.mcmc.HamiltonianMonteCarlo(
-        #     target_log_prob_fn=target_log_prob_fn,
-        #     step_size=0.0001,
-        #     num_leapfrog_steps=40,
-        # )
         # adaptive_kernel = tfp.mcmc.SimpleStepSizeAdaptation(
         #     kernel, num_adaptation_steps=num_burnin_steps
         # )
 
-        # current_state = model.get_weights()
-        # current_state = [np.array(w) for w in current_state]
-        # current_state_shapes = [arr.shape for arr in current_state]
-        # print(f"{current_state=}\n")
-        # print(f"{current_state_shapes=}\n")
-        # chain = sample_chain(   
-        #     kernel=kernel,
-        #     current_state=current_state,
-        #     num_results=num_results,
-        #     trace_fn=None,
+        # kernel = tfp.mcmc.NoUTurnSampler(
+        #     target_log_prob_fn=target_log_prob_fn,
+        #     step_size=0.01
         # )
-        # #Sort chain according to complete networks.
-        # chain = [
-        #     [tensor[i] for tensor in chain] for i in range(len(chain[0]))
-        # ]
 
-        # n_test = 1000
-        # x_test = tf.random.normal(shape=(n_test,1), mean=0., stddev=3.)
-        # predictions = predict_from_chain(x_test, chain, model)
-
-        # x = np.array(list(x_test.numpy().squeeze(-1))*num_results)
-        # predictions = np.array(predictions)
-        # predictions = predictions.squeeze(-1).ravel()
-        # sns.lineplot(x, predictions, ci="sd")
-        
-        # x = np.linspace(-2 * np.pi, 2 * np.pi, 1001)
-        # plt.plot(x, f(x), label="True function", color="r")
-        # plt.legend()
-        # plt.xlabel("x")
-        # plt.ylabel("y")
-        # plt.show()
-
-
-    with tf.device("/CPU:0"):
-        model, samples = bayesian_fit(
-            model,
-            x_train,
-            y_train,
-            L=60,
-            eps=0.0001,
-            num_burnin_steps=num_burnin_steps,
-            num_samples=num_results,
+        adaptive_kernel = tfp.mcmc.DualAveragingStepSizeAdaptation(
+            inner_kernel=kernel,
+            num_adaptation_steps=1000,
         )
 
-        #print(f"{samples=}")
+        
+        num_results = 1000
+        num_burnin_steps = 500
+        current_state = model.get_weights()
+        current_state = [np.array(w) for w in current_state]
+        current_state_shapes = [arr.shape for arr in current_state]
+        chain = sample_chain(   
+            kernel=kernel,
+            current_state=current_state,
+            num_results=num_results,
+            num_burnin_steps=num_burnin_steps,
+            trace_fn=None,
+        )
+        #Sort chain according to complete networks.
+        chain = [
+            [tensor[i] for tensor in chain] for i in range(len(chain[0]))
+        ]
+
         n_test = 1000
-        x_test = tf.random.normal(shape=(n_test, dims), mean=0., stddev=2.)
-        y_test = f(x_test)
+        x_test = tf.random.normal(shape=(n_test,1), mean=0., stddev=3.)
+        predictions = predict_from_chain(x_test, chain, model)
 
-        predictions = []
-        for weights in samples:
-            model.set_weights(weights)
-            predictions.append(model(x_test).numpy().ravel())
-
+        x = np.array(list(x_test.numpy().squeeze(-1))*num_results)
         predictions = np.array(predictions)
-        predictions = predictions.ravel()
-
-        X = np.array(list(x_test) * num_results).squeeze(-1)
-        sns.lineplot(x=X, y=predictions, ci="sd")
-
+        predictions = predictions.squeeze(-1).ravel()
+        sns.lineplot(x, predictions, ci="sd")
+        
         x = np.linspace(-2 * np.pi, 2 * np.pi, 1001)
         plt.plot(x, f(x), label="True function", color="r")
+        plt.scatter(x_train, y_train, label="observed data")
         plt.legend()
         plt.xlabel("x")
         plt.ylabel("y")
         plt.show()
+
+
+    # with tf.device("/CPU:0"):
+    #     model, samples = bayesian_fit(
+    #         model,
+    #         x_train,
+    #         y_train,
+    #         L=60,
+    #         eps=0.0001,
+    #         num_burnin_steps=num_burnin_steps,
+    #         num_samples=num_results,
+    #     )
+
+    #     #print(f"{samples=}")
+    #     n_test = 1000
+    #     x_test = tf.random.normal(shape=(n_test, dims), mean=0., stddev=2.)
+    #     y_test = f(x_test)
+
+    #     predictions = []
+    #     for weights in samples:
+    #         model.set_weights(weights)
+    #         predictions.append(model(x_test).numpy().ravel())
+
+    #     predictions = np.array(predictions)
+    #     predictions = predictions.ravel()
+
+    #     X = np.array(list(x_test) * num_results).squeeze(-1)
+    #     sns.lineplot(x=X, y=predictions, ci="sd")
+
+    #     x = np.linspace(-2 * np.pi, 2 * np.pi, 1001)
+    #     plt.plot(x, f(x), label="True function", color="r")
+    #     plt.legend()
+    #     plt.xlabel("x")
+    #     plt.ylabel("y")
+    #     plt.show()

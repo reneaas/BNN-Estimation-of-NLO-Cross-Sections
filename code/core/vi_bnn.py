@@ -117,26 +117,21 @@ y_train = f(x_train)
 
 layers = [50, 1]
 model = get_model(layers, n_train, activation="relu")
-model(x_train)
 model.compile(
     optimizer="adam",
     loss="mse",
 )
-model(x_train)
 
 with tf.device("/CPU:0"):
-    model.fit(x=x_train, y=y_train, batch_size=10, epochs=5)
+    model.fit(x=x_train, y=y_train, batch_size=10, epochs=500)
+    num_results = 1000
+    n_test = 1000
+    x_test = tf.random.normal(shape=(n_test, 1), mean=0., stddev=2.)
 
-#model.fit(x=x_train, y=y_train, batch_size=100, epochs=100)
-
-num_results = 10
-n_test = 10
-x_test = tf.random.normal(shape=(n_test, 1), mean=0., stddev=2.)
-print(model.summary())
-y_test = model(x_test)
+    X, predictions = compute_predictions(model, x_test, num_results)
 
 
-sns.lineplot(X.ravel(), predictions.ravel())
+sns.lineplot(X.ravel(), predictions.ravel(), ci="sd")
 
 x = np.linspace(-2 * np.pi, 2 * np.pi, 1001)
 plt.plot(x, f(x), label="True function")
