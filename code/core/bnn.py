@@ -3,7 +3,7 @@ from tqdm import trange
 import matplotlib.pyplot as plt
 import seaborn as sns
 np.random.seed(100)
-
+import numba
 
 class BNNregression(object):
     """Implements a simple Bayesian neural network
@@ -122,10 +122,10 @@ class BNNregression(object):
         self.num_samples = num_samples
 
         for i in trange(num_burn_in):
-            self.hmc_step(x, y, burn_in=True)
+            self.hmc_step(self, x, y, burn_in=True)
 
         for i in trange(self.num_samples):
-            self.hmc_step(x, y, burn_in=False)
+            self.hmc_step(self, x, y, burn_in=False)
 
     def bayesian_predict(self, x):
         predictions = []
@@ -136,8 +136,8 @@ class BNNregression(object):
             predictions.append(self(x))
         return predictions
             
-
-
+    @staticmethod
+    @numba.njit
     def hmc_step(self, x: np.ndarray, y: np.ndarray, burn_in: bool):
         # Generate momenta
         self.p_w = [np.random.normal(size=layer.w.shape) for layer in self.layers]
