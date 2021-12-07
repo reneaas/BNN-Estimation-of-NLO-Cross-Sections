@@ -41,3 +41,16 @@ In the context of regression, the conditional distribution is chosen to be
   P(y|x, \theta) = \frac{1}{\sqrt{2\pi}\sigma}\exp\left(-\frac{(f(x) - y)^2}{2\sigma^2}\right),
 \end{equation}
 where $f(x)$, the neural network output, is the mean of $y$ and $\sigma$ is the noise of $y$.
+
+In practice, however, we instead sample a set of network paramters $\{\theta_1, ..., \theta_n\}$ from which can produce a set of predictions $\{\hat{y}_1,\ldots \hat{y}_n\}$ from the neural network model 
+\begin{equation}
+  \hat{y}_i = f(x, \theta_i).
+\end{equation}
+From there we can compute the sample mean
+\begin{equation}
+  \hat{y} = \frac{1}{n}\sum_i f(x, \theta_i),
+\end{equation}
+which is an approximation to the \textit{maximum likelihood estimate} (MLE). Furthermore, an estimate of the error is provided by the sample variance
+\begin{equation}
+  \text{Var} (y) = \frac{1}{n-1}\sum_i (\hat{y} - y_i)^2,
+\end{equation}

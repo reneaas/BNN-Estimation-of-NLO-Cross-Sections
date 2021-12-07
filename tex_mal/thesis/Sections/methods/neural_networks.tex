@@ -17,7 +17,7 @@ where $\sigma_\ell$ denotes some possibly non-linear function associated with la
 
 \subsection{Backpropagation}
 The standard approach to train a neural network is minimization of some cost function by employing the \textit{backpropagation} algorithm\cite{backprop}. The algorithm boils down to four equations defining a recursive algorithm that approximates the gradient with respect to the parameters of the model.
-
+Consider $E$ as the so-called \textit{loss} functions (which in the case of Bayesian neural network is the potential energy function $V(q)$).
 The first of the four equations quantifes the error, 
 \begin{equation}\label{eq:backprop1}
     \Delta_j^L = \pdv{E}{z_j^L}.
@@ -54,9 +54,9 @@ is found in algorithm \ref{algo:backprop_forward}.
         \caption{Backpropagation: forward pass}\label{algo:backprop_forward}
         \begin{algorithmic}
         \State $a_j^0 = x_j$ \qq{for} $j = 1,..., p$ \Comment{Initialize input} 
-        \For {$l=1,2,.., L-1$}
+        \For {$\ell=1,2,.., L-1$}
         \For{$j=1,2,.., n$}
-        \State $a_j^l \leftarrow \sigma\left(\sum_k W_{jk}^l a_k^{l-1} + b_j^l \right)$
+        \State $a_j^\ell \leftarrow \sigma\left(\sum_k W_{jk}^\ell a_k^{\ell-1} + b_j^\ell \right)$
         \EndFor
         \EndFor
         \For{$j=1,2,.., m$} \Comment{$m$ outputs}
@@ -76,12 +76,12 @@ The backward pass of the algorithm is stated in algorithm \ref{algo:backprop_bac
         \State $\pdv*{E}{b_j^L} \leftarrow \Delta_j^L$
         \State $\pdv*{E}{W_{jk}^L} \leftarrow \Delta_j^L a_k^{L-1}$
         \EndFor
-        \For{$l = L-1, ..., 1$}
+        \For{$\ell = L-1, ..., 1$}
         \For{$j = 1, ..., n$}
-        \State $\Delta_j^l \leftarrow \left(\sum_k \Delta_k^{l+1}W_{kj}^{l+1}\right) \sigma'(z_j^l)$
-        \State $\pdv*{E}{b_j^l} \leftarrow \Delta_j^l$
-        \State $\pdv*{E}{W_{jk}^l} \leftarrow \Delta_j^l a_k^{l-1}$
-        \State update $b_j^l$ and $W_{jk}^l$.
+        \State $\Delta_j^\ell \leftarrow \left(\sum_k \Delta_k^{\ell+1}W_{kj}^{\ell+1}\right) \sigma'(z_j^\ell)$
+        \State $\pdv*{E}{b_j^\ell} \leftarrow \Delta_j^\ell$
+        \State $\pdv*{E}{W_{jk}^\ell} \leftarrow \Delta_j^\ell a_k^{\ell-1}$
+        \State update $b_j^\ell$ and $W_{jk}^\ell$.
         \EndFor
         \EndFor
         \end{algorithmic}
