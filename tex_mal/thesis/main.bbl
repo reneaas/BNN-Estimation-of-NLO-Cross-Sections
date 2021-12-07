@@ -1,18 +1,5 @@
 \providecommand{\href}[2]{#2}\begingroup\raggedright\begin{thebibliography}{1}
 
-\bibitem{backprop}
-D.~E. Rumelhart, G.~E. Hinton and R.~J. Williams, \emph{Learning
-  representations by back-propagating errors},
-  \href{http://dx.doi.org/10.1038/323533a0}{\emph{Nature} {\bf 323} (1986)
-  533--536}.
-
-\bibitem{ml_for_physicists}
-P.~Mehta, M.~Bukov, C.-H. Wang, A.~G. Day, C.~Richardson, C.~K. Fisher et~al.,
-  \emph{A high-bias, low-variance introduction to machine learning for
-  physicists},
-  \href{http://dx.doi.org/10.1016/j.physrep.2019.03.001}{\emph{Physics Reports}
-  {\bf 810} (May, 2019) }.
-
 \bibitem{metropolis}
 N.~Metropolis, A.~W. Rosenbluth, M.~N. Rosenbluth, A.~H. Teller and E.~Teller,
   \emph{{E}quation of {S}tate {C}alculations by {F}ast {C}omputing {M}achines},
@@ -43,5 +30,18 @@ R.~Neal, \emph{Handbook of Markov Chain Monte Carlo}, ch.~5.
 \newblock \href{http://arxiv.org/abs/http://dx.doi.org/10.1201/b10905}{{\tt
   http://dx.doi.org/10.1201/b10905}}.
 \newblock 10.1201/b10905.
+
+\bibitem{backprop}
+D.~E. Rumelhart, G.~E. Hinton and R.~J. Williams, \emph{Learning
+  representations by back-propagating errors},
+  \href{http://dx.doi.org/10.1038/323533a0}{\emph{Nature} {\bf 323} (1986)
+  533--536}.
+
+\bibitem{ml_for_physicists}
+P.~Mehta, M.~Bukov, C.-H. Wang, A.~G. Day, C.~Richardson, C.~K. Fisher et~al.,
+  \emph{A high-bias, low-variance introduction to machine learning for
+  physicists},
+  \href{http://dx.doi.org/10.1016/j.physrep.2019.03.001}{\emph{Physics Reports}
+  {\bf 810} (May, 2019) }.
 
 \end{thebibliography}\endgroup

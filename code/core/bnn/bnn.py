@@ -4,7 +4,8 @@ import tensorflow_probability as tfp
 
 
 def dense(inputs, w, b, activation=tf.identity):
-    return activation(tf.matmul(inputs, w) + b)
+    return activation(tf.einsum("ij,...j->...j", w, inputs) + b)
+    #return activation(tf.matmul(inputs, w) + b)
 
 def build_net(params, activation=tf.nn.relu):
     def model(X, training=True):
@@ -18,6 +19,8 @@ def build_net(params, activation=tf.nn.relu):
             return tfp.distributions.Normal(loc=y_pred, scale=tf.sqrt(y_var))
         return y_pred, y_var
     return model
+
+
 
 def bnn_log_prob_fn(X, y, params, get_mean=False):
     """Compute log likelihood of predicted labels y given features X and params.
@@ -49,8 +52,7 @@ def target_log_prob_fn_factory(w_prior, b_prior, X_train, y_train):
     def target_log_prob_fn(*params):
         if not isinstance(params[0], (list, tuple)):
             params = chunks(params, 2)
-        log_prob = prior_log_prob_fn(w_prior, b_prior, params)
-        log_prob += bnn_log_prob_fn(X_train, y_train, params)
+        log_prob = prior_log_prob_fn(w_prior, b_prior, params) + bnn_log_prob_fn(X_train, y_train, params)
         return log_prob
     return target_log_prob_fn
 

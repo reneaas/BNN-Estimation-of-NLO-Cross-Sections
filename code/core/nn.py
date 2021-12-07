@@ -51,15 +51,17 @@ def scale_data(x, y):
     x_std = tf.math.reduce_std(x, axis=1)
     x = (x - x_mean[..., None]) / x_std[..., None]
     y_mean = tf.math.reduce_mean(y)
-    y_std = tf.math.reduce_std(y)
-    y = (y - y_mean[..., None]) / y_std[..., None]
+
+    y = tf.math.log(y)
+    #y_std = tf.math.reduce_std(y)
+    #y = (y - y_mean[..., None]) / y_std[..., None]
     return x, y
 
 
 def get_model(optimizer, loss_fn, metrics):
     model = keras.Sequential(
         [
-            layers.Dense(1000, activation="relu", input_shape=(10,)),
+            layers.Dense(100, activation="relu", input_shape=(5,)),
             layers.Dense(1000, activation="relu"),
             # layers.Dropout(rate=0.2),
             layers.Dense(1000, activation="relu"),
@@ -72,7 +74,7 @@ def get_model(optimizer, loss_fn, metrics):
 
 def fit(model, x_train, y_train, x_val, y_val):
     history = model.fit(
-            x_train, y_train, batch_size=512, epochs=100, validation_data=(x_val, y_val)
+            x_train, y_train, batch_size=16, epochs=100, validation_data=(x_val, y_val)
     )
     return model, history
 
@@ -92,27 +94,27 @@ if __name__ == "__main__":
     target_dir = "./targets"
     feat_dir = "./features"
     features, targets = get_dataset(feat_dir, target_dir, ids)
-    ds = create_dataset(features, targets, batch_size=16)
-    optimizer = keras.optimizers.Adam()
-    loss = (keras.losses.MeanSquaredError(),)
-    bnn_model = get_bnn(optimizer, loss)
-    print(bnn_model.summary())
-    print(bnn_model(features[0]))
-
-
-    # # optimizer = keras.optimizers.RMSprop(learning_rate = 0.001),
-    # # optimizer = keras.optimizers.SGD(learning_rate = 0.1)
+    # ds = create_dataset(features, targets, batch_size=16)
     # optimizer = keras.optimizers.Adam()
     # loss = (keras.losses.MeanSquaredError(),)
-    # metrics = [keras.metrics.MeanSquaredError()]
-    # model = get_model(optimizer, loss, metrics)
-    # model.summary()
-    # x_train, y_train, x_val, y_val, x_test, y_test = split_data(features, targets)
-    # model, history = fit(bnn_model, x_train, y_train, x_val, y_val)
+    # model = get_model(optimizer, loss)
+    # print(model.summary())
+    # print(model(features[0]))
 
-    # plt.plot(history.history["loss"], label = "training")
-    # plt.plot(history.history["val_loss"], label = "validation")
-    # plt.xlabel("epochs")
-    # plt.ylabel("loss")
-    # plt.legend()
-    # plt.show()
+
+    # optimizer = keras.optimizers.RMSprop(learning_rate = 0.001),
+    # optimizer = keras.optimizers.SGD(learning_rate = 0.1)
+    optimizer = keras.optimizers.Adam()
+    loss = (keras.losses.MeanSquaredError(),)
+    metrics = [keras.metrics.MeanSquaredError()]
+    model = get_model(optimizer, loss, metrics)
+    model.summary()
+    x_train, y_train, x_val, y_val, x_test, y_test = split_data(features, targets)
+    model, history = fit(model, x_train, y_train, x_val, y_val)
+
+    plt.plot(history.history["loss"], label = "training")
+    plt.plot(history.history["val_loss"], label = "validation")
+    plt.xlabel("epochs")
+    plt.ylabel("loss")
+    plt.legend()
+    plt.show()
