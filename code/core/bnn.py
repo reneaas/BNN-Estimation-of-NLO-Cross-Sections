@@ -2,6 +2,7 @@ import numpy as np
 from tqdm import trange
 import matplotlib.pyplot as plt
 import seaborn as sns
+import time
 
 np.random.seed(100)
 
@@ -315,13 +316,17 @@ class DenseLayer(object):
 
 if __name__ == "__main__":
     f = lambda x: np.sin(x)
-    layers = [1, 20, 1]
-    bnn = BNNregression(layers, lr=0.0001, lamb=1e-5, activation="sigmoid")
-    n_train = 1000
-    x_train = np.random.normal(0, 2, size=(n_train, 1))
+    layers = [1, 50, 1]
+    bnn = BNNregression(layers, lr=0.0001, lamb=0.0, activation="sigmoid")
+    n_train = 5000
+    x_train = np.random.normal(0, 3, size=(n_train, 1))
     y_train = f(x_train)
     #bnn.fit(x_train, y_train, epochs=1000)
+    start = time.perf_counter()
     bnn.bayesian_fit(x=x_train, y=y_train, num_samples=1000, L=60, eps=0.001)
+    end = time.perf_counter()
+    timeused = end - start 
+    print(f"{timeused=} seconds by hmc sampling")
 
     n_test = 1000
     x_test = np.random.normal(0, 2, size=(n_test, 1))

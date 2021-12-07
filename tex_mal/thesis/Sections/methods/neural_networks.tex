@@ -1,6 +1,7 @@
 \section{Neural Networks}\label{sec:neural_networks}
 In this chapter, I'll introduce the mathematical formalism underpinning
-neural networks.
+neural networks. For convenience, well adopt the terminology used by Tensorflow\cite{tf} 
+to help make the transition from mathematics to their machine learning framework easier.
 A neural network is most generally defined as a non-linear function $f : \mathbb{R}^p \to \mathbb{R}^d$. This non-linear function is built-up as follows:
 \begin{itemize}
     \item An input layer where a real observable $x \in \mathbb{R}^p$ is fed.
@@ -9,11 +10,18 @@ A neural network is most generally defined as a non-linear function $f : \mathbb
 \end{itemize}
 
 \subsection{Basic mathematical structure}
-Denote a layer of the network as $\ell$. Assume there are $L$ layers in total, such that $\ell \in \{1,2,...,L\}$. Denote the activation at layer $\ell$ as $a_j^\ell$ and its bias as $b_j^\ell$. Moreover, denote its logits as $z_j^\ell$. The following recursive equation defines the general structure of a neural network
+Denote a layer of the network as $\ell$. Assume there are $L$ layers in total, such that $\ell \in \{1,2,...,L\}$. 
+Denote the \textit{activation} at layer $\ell$ as $a_j^\ell$ and its \textit{bias} as $b_j^\ell$. 
+Moreover, denote its \textit{logits} as $z_j^\ell$. The following recursive equation 
+defines the general structure of a neural network
 \begin{equation}
     a_j^\ell = \sigma_\ell \left(\sum_k W_{jk}^\ell a_j^{\ell - 1} + b_j^\ell\right) \equiv \sigma_\ell(z_j^\ell), 
 \end{equation}
-where $\sigma_\ell$ denotes some possibly non-linear function associated with layer $\ell$, $W_{jk}^\ell$ denotes the weights connecting layer $\ell-1$ to layer $\ell$, and $b_j^\ell$ denotes the bias at layer $\ell$. Typically $\sigma_\ell$ is called an activation function. The weights and biases of the network serve as the adjustable or \textit{learnable} parameters of the model.
+where $\sigma_\ell$ denotes some possibly non-linear function associated 
+with layer $\ell$, $W_{jk}^\ell$ denotes the \textit{kernel} of layer $\ell$ connecting the activation from layer $\ell-1$ to layer $\ell$, 
+and $b_j^\ell$ is again the bias of layer $\ell$. Typically $\sigma_\ell$ is called an \textit{activation} function. 
+Together, the kernel and the bias are called the \textit{weights} of layer $\ell$. 
+The weights of the network serve as the adjustable or \textit{learnable} parameters of the model.
 
 \subsection{Backpropagation}
 The standard approach to train a neural network is minimization of some cost function by employing the \textit{backpropagation} algorithm\cite{backprop}. The algorithm boils down to four equations defining a recursive algorithm that approximates the gradient with respect to the parameters of the model.
@@ -26,7 +34,7 @@ The second equation allows us to compute the error at layer $\ell$ given we know
 \begin{equation}\label{eq:backprop2}
     \Delta_j^\ell = \left(\sum_k \Delta_k^{\ell+1}W_{kj}^{\ell+1}\right)\sigma_\ell'(z_j^\ell).
 \end{equation}
-The final two equations relate these errors to the gradient of the cost function with respect to the model parameters. For the weights, we have
+The final two equations relate these errors to the gradient of the cost function with respect to the model parameters. For the kernels, we have
 \begin{equation}
     \pdv{E}{W_{jk}^\ell} = \pdv{E}{z_j^\ell}\pdv{z_j^\ell}{W_{jk}^\ell} = \Delta_j^\ell a_k^{\ell-1}.
 \end{equation}
@@ -34,7 +42,8 @@ For the biases, the gradients are
 \begin{equation}
     \pdv{E}{b_j^\ell} = \pdv{E}{z_j^\ell}\pdv{z_j^\ell}{b_j^\ell} = \Delta_j^\ell.
 \end{equation}
-With these four equations, we can fit the neural network using simple minimization techniques such as stochastic gradient descent or more complex methods such as ADAM (pages 13-19 in \cite{ml_for_physicists}). 
+With these four equations, we can fit the neural network using minimization techniques such as stochastic gradient descent or more complex methods such as ADAM (pages 13-19 in \cite{ml_for_physicists}). 
+Although not the focus of this thesis, we might use these methods in conjunction with HMC to speed up convergence to the stationary distribution.
 
 \subsection{Cost function for regression}
 In this thesis, we're concerned with regression tasks. The activation function of the final layer $\sigma_L$ is then just the identity function. The typical cost function chosen to solve regression tasks is the $L_2$-norm, which for a single output can be written as 

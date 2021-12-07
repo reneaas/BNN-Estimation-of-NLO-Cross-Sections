@@ -4,12 +4,32 @@ from tqdm import trange
 import matplotlib.pyplot as plt
 import seaborn as sns
 import numpy as np
+import time
 
 np.random.seed(1)
 tf.random.set_seed(1)
 
 
 class BayesianNeuralNetworkHMC:
+    """Class for a Bayesian neural network (BNN) using Hamiltonian Monte Carlo (HMC)
+    and its derivatives as a sampling method to sample from its posterier.
+
+        Args:
+            layers (list, optional)             :   List containing the nodes of each layer. Shape is
+                                                    [input_size, nodes_of_layer1, ..., nodes_of_layerN, num_outputs]
+            activation (str, optional)          :   Specifying activation function. Options:
+                                                    `sigmoid`, `relu`, `leaky_relu`. 
+                                                    Default: None.
+                                                    The hidden layers are then set to `sigmoid`.
+            top_layer_activation                :   Default: tf.identity
+            kernel_prior (tfp.distributions)    :   If set to None, it defaults to tfp.distributions.Normal
+            bias_prior (tfp.distributions)      :   If set to None, it defaults to tfp.distributions.Normal
+            prior_mean (float)                  :   Mean value of the tfp.distribution.Normal. 
+                                                    Default: `prior_mean = 0.0`
+            prior_stddev (float)                :   Standard deviation of tfp.distribution.Normal
+                                                    Default: `prior_stddev = 0.01`
+            lamb (float)                        :   Regularization parameter. Default `lamb = 0.0`.
+    """
     def __init__(
         self,
         layers=None,
@@ -186,7 +206,7 @@ if __name__ == "__main__":
         layers = [1, 50, 1]
 
         # Create training data
-        n_train = 1000
+        n_train = 5000
         dims = 1
         f = lambda x: tf.math.sin(x)
         x_train = tf.random.normal(shape=(n_train, dims), mean=0.0, stddev=3.0)
@@ -199,8 +219,10 @@ if __name__ == "__main__":
         num_results = 1000
         num_burnin_steps = 1000
         num_leapfrog_steps = 60
-        step_size = 0.01
+        step_size = 0.001
         bnn = BayesianNeuralNetworkHMC(layers=layers, activation=tf.nn.sigmoid)
+
+        start = time.perf_counter()
         chain = bnn.hmc_chain(
             x=x_train,
             y=y_train,
@@ -209,6 +231,9 @@ if __name__ == "__main__":
             num_leapfrog_steps=num_leapfrog_steps,
             step_size=step_size,
         )
+        end = time.perf_counter()
+        timeused = end - start
+        print(f"{timeused=} seconds of hmc sampling")
 
         # test the model
         n_test = 1000

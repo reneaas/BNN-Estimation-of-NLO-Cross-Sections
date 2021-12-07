@@ -54,3 +54,18 @@ which is an approximation to the \textit{maximum likelihood estimate} (MLE). Fur
 \begin{equation}
   \text{Var} (y) = \frac{1}{n-1}\sum_i (\hat{y} - y_i)^2,
 \end{equation}
+
+
+\section{Bayesian learning using HMC}
+To implement learn from the data $D$ using HMC, we need to define a potential energy function $V(q)$ 
+and a kinetic energy function $K(p)$. To this end, we need to specify
+\begin{enumerate}
+  \item A prior for the network parameters, i.e the kernels $W_{ij}^\ell$ and the biases $b_j^{\ell}$,
+  \item A prior for the corresponding momenta $p$,
+  \item A likelihood function given an input $(x, y)$,
+\end{enumerate}
+from which we can define the potential energy as follows:
+\begin{equation}
+  V(W, b) = - \sum_{\ell}\log P(W_{ij}^\ell) - \sum_{\ell}\log P(b_j^\ell) - \sum_i \log P(y^{(i)}| x^{(i)}, W, b), 
+\end{equation}
+where $W$ denotes all the kernels and $b$ denotes all the biases of the model.
