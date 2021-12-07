@@ -6,8 +6,10 @@ import seaborn as sns
 import tensorflow_probability as tfp
 from bayesian_dense_layer import BayesianDenseLayer
 
-np.random.seed(100)
-tf.random.set_seed(100)
+import sys
+
+np.random.seed(1)
+tf.random.set_seed(1)
 
 
 def get_model_bnn(layers, input_shape, activation):
@@ -61,24 +63,7 @@ def get_kinetic_energy(momenta):
     K = tf.reduce_sum([tf.reduce_sum(p ** 2) for p in momenta])
     return K
 
-def bayesian_fit(model, x, y, L, eps, num_burnin_steps, num_samples):
-    num_accepted = 0
-    for i in trange(num_burnin_steps, desc="Burn in iterations"):
-        current_state = model.get_weights()
-        model, accepted = hmc_step(model, x, y, L, eps, current_state)
-
-    samples = []
-    for i in trange(num_samples, desc="Generating samples"):
-        current_state = model.get_weights()
-        model, accepted = hmc_step(model, x, y, L, eps, current_state)
-        if accepted:
-            num_accepted += 1
-        samples.append(model.get_weights())
-    
-    print(f"Accepted states = {num_accepted}/{num_samples}")
-
-    return model, samples
-
+@tf.function
 def sample_chain(*args, **kwargs):
     return tfp.mcmc.sample_chain(*args, **kwargs)
 
@@ -86,11 +71,12 @@ def sample_chain(*args, **kwargs):
 def predict_from_chain(x_test, chain, model):
     predictions = []
     for weights in chain:
-        model.set_weights(weights)
+        model = build_model(weights)
         predictions.append(model(x_test).numpy())
     return predictions
 
-def prior_log_prob_fn(params, lamb = 1):
+@tf.function
+def prior_log_prob_fn(params, lamb = 0.):
     log_prob = 0
     for w in params:
         log_prob -= tf.reduce_sum(w ** 2)
@@ -108,8 +94,8 @@ def bnn_log_prob_fn(X, y, params, get_mean=False):
     Returns:
         tf.tensor: Sum or mean of log probabilities of all labels.
     """
-    #net = build_net(params)
-    model.set_weights(params)
+    model = build_model(params)
+    #model.set_weights(params)
     yhat = model(X)
 
     return -0.5 * tf.reduce_sum((y - yhat)**2)
@@ -122,28 +108,76 @@ def target_log_prob_fn_factory(X_train, y_train):
     return target_log_prob_fn
 
 
+def dense(x, w, b, activation):
+    return activation(tf.matmul(x, w) + b)
+
+def build_model(params, activation=tf.nn.sigmoid):
+    
+    
+    def model(x):
+        kernel = params[::2]
+        bias = params[1::2]
+        for w, b in zip(kernel[:-1], bias[:-1]):
+            x = activation(tf.matmul(x, w) + b)
+            #x = dense(x, w, b, activation)
+        x = tf.matmul(x, kernel[-1]) + bias[-1]
+        return x
+    return model
+
+# def build_net(params, activation=tf.nn.relu):
+#     def model(X, training=True):
+#         for w, b in params[:-1]:
+#             X = dense(X, w, b, activation)
+#         # final linear layer
+#         X = dense(X, *params[-1])
+#         y_pred, y_log_var = tf.unstack(X, axis=-1)
+#         y_var = tf.exp(y_log_var)
+#         if training:
+#             return tfp.distributions.Normal(loc=y_pred, scale=tf.sqrt(y_var))
+#         return y_pred, y_var
+#     return model
+
 
 if __name__ == "__main__":
     
     with tf.device("/CPU:0"):
-        layers = [50, 1]
-        input_shape = (1,)
-        model = get_model(layers, input_shape, activation="sigmoid")
-        print(model.summary())
+        layers = [1, 20, 1]
+        #input_shape = (1,)
+        #model = get_model(layers, input_shape, activation="sigmoid")
+        #print(model.summary())
         f = lambda x: tf.math.sin(x)
 
-        n_train = 100
+        n_train = 1000
         dims = 1
-        x_train = tf.random.normal(shape=(n_train, dims), mean=0., stddev=2.)
+        x_train = tf.random.normal(shape=(n_train, dims), mean=0., stddev=3.)
         y_train = f(x_train)
 
+        #yhat = model(x_train)
+        #print(yhat.shape)
+
+
+
+        kernel_prior = tfp.distributions.Normal(loc=0., scale=0.01)
+        bias_prior = tfp.distributions.Normal(loc=0., scale=0.01)
+
+        current_state = [
+            (kernel_prior.sample(sample_shape=(n, m)), bias_prior.sample(sample_shape=(m,)))
+            for n, m in zip(layers[:-1], layers[1:])
+        ]
+        tmp = []
+        for weights in current_state:
+            kernel, bias = weights
+            tmp.append(kernel)
+            tmp.append(bias)
+        current_state = tmp
+        for weights in current_state:
+            print(weights.shape)
+
+        model = build_model(current_state)
         yhat = model(x_train)
+        print(yhat.shape)
 
 
-
-
-        w_prior = tfp.distributions.Normal(loc=0., scale=0.01)
-        b_prior = tfp.distributions.Normal(loc=0., scale=0.01)
 
         target_log_prob_fn = target_log_prob_fn_factory(x_train, y_train)
 
@@ -151,7 +185,7 @@ if __name__ == "__main__":
             target_log_prob_fn=target_log_prob_fn,
             step_size=0.01,
             num_leapfrog_steps=60,
-            #store_parameters_in_results=True
+            store_parameters_in_results=None
         )
 
         # adaptive_kernel = tfp.mcmc.SimpleStepSizeAdaptation(
@@ -170,15 +204,18 @@ if __name__ == "__main__":
 
         
         num_results = 1000
-        num_burnin_steps = 500
-        current_state = model.get_weights()
-        current_state = [np.array(w) for w in current_state]
-        current_state_shapes = [arr.shape for arr in current_state]
+        num_burnin_steps = 1000
+        #current_state = model.get_weights()
+        #current_state = [tf.convert_to_tensor(w) for w in current_state]
+
+        # current_state = [np.array(w) for w in current_state]
+        # current_state_shapes = [arr.shape for arr in current_state]
         chain = sample_chain(   
             kernel=kernel,
             current_state=current_state,
             num_results=num_results,
             num_burnin_steps=num_burnin_steps,
+            num_steps_between_results=0,
             trace_fn=None,
         )
         #Sort chain according to complete networks.

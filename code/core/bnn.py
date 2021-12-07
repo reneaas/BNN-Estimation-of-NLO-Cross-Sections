@@ -4,7 +4,6 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 
 np.random.seed(100)
-import numba
 
 class BNNregression(object):
     """Implements a simple Bayesian neural network
@@ -157,10 +156,10 @@ class BNNregression(object):
         self.num_samples = num_samples
 
         for i in trange(num_burn_in):
-            self.hmc_step(self, x, y, burn_in=True)
+            self.hmc_step(x, y, burn_in=True)
 
         for i in trange(self.num_samples):
-            self.hmc_step(self, x, y, burn_in=False)
+            self.hmc_step(x, y, burn_in=False)
 
     def bayesian_predict(self, x):
         predictions = []
@@ -316,12 +315,12 @@ class DenseLayer(object):
 
 if __name__ == "__main__":
     f = lambda x: np.sin(x)
-    layers = [1, 50, 1]
+    layers = [1, 20, 1]
     bnn = BNNregression(layers, lr=0.0001, lamb=1e-5, activation="sigmoid")
-    n_train = 100
+    n_train = 1000
     x_train = np.random.normal(0, 2, size=(n_train, 1))
     y_train = f(x_train)
-    bnn.fit(x_train, y_train, epochs=1000)
+    #bnn.fit(x_train, y_train, epochs=1000)
     bnn.bayesian_fit(x=x_train, y=y_train, num_samples=1000, L=60, eps=0.001)
 
     n_test = 1000
