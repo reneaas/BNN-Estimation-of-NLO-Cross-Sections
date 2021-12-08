@@ -14,7 +14,6 @@ tf.random.set_seed(1)
 class BayesianNeuralNetworkHMC:
     """Class for a Bayesian neural network (BNN) using Hamiltonian Monte Carlo (HMC)
     and its derivatives as a sampling method to sample from its posterier.
-
         Args:
             layers (list, optional)             :   List containing the nodes of each layer. Shape is
                                                     [input_size, nodes_of_layer1, ..., nodes_of_layerN, num_outputs]
@@ -42,9 +41,7 @@ class BayesianNeuralNetworkHMC:
         prior_mean=0.0,
         prior_stddev=0.01,
         lamb=0.0,
-        batch_size=10,
     ):
-        self.batch_size = batch_size #Parameter batch_size. Number of independent chains.
         self.lamb = lamb  # Regularization parameter.
         # Set priors of kernel
         if kernel_prior:
@@ -76,8 +73,8 @@ class BayesianNeuralNetworkHMC:
     def _create_layers(self, layers):
         tmp = [
             (
-                self.kernel_prior.sample(sample_shape=(self.batch_size, n, m)),
-                self.bias_prior.sample(sample_shape=(self.batch_size, m)),
+                self.kernel_prior.sample(sample_shape=(n, m)),
+                self.bias_prior.sample(sample_shape=(m,)),
             )
             for n, m in zip(layers[:-1], layers[1:])
         ]
@@ -101,27 +98,20 @@ class BayesianNeuralNetworkHMC:
     @tf.function
     def prior_log_prob_fn(self, weights):
         """Log prior probability function of the weights of the network.
-        Currently set to be exp(-lamb * w ** 2) according to Radford Neals treatment
+        Currently set to be exp(-lamb * w ** 2) according to Radfor Neals treatment
         of BNNs. `lamb` is the analogue to a regularization
         hyperparameter in L2-regularization and serves the same purpose for BNNs.
-
         Args:
             weights (list[tf.Tensor])   :   List containing tensors with kernels and biases.
         """
-        kernel = weights[::2]
-        bias = weights[1::2]
-        kernel_sum = tf.reduce_sum([tf.reduce_sum(w ** 2, axis=(-1,-2)) for w in kernel], axis=0)
-        bias_sum = tf.reduce_sum([tf.reduce_sum(b ** 2, axis=-1) for b in bias], axis=0)
-        return -0.5 * self.lamb * (kernel_sum + bias_sum)
+        return -0.5 * self.lamb * tf.reduce_sum([tf.reduce_sum(w ** 2) for w in weights])
 
     def log_likelihood(self, x, y, weights):
         """Computes log likelihood of predicted target y given features `x` and `weights`.
-
         Args:
             x  (tf.Tensor)              :   Input features of shape [num_points, num_features]
             y   (tf.Tensor)             :   Predicted targets of shape [num_points, num_outputs]
             weights (list[tf.Tensor])   :   list of weights of the network.
-
         Returns:
             The log likelihood of yhat as the mean value given target y.
             Equivalent to the residual sum of squares (RSS).
@@ -129,19 +119,17 @@ class BayesianNeuralNetworkHMC:
 
         model = self.build_model(weights)
         yhat = model(x)
-        return -0.5 * tf.reduce_sum((y - yhat) ** 2, axis=(1,2))
+        return -0.5 * tf.reduce_sum((y - yhat) ** 2)
 
 
     def create_log_prob_fn(self, x, y):
         """Returns the combines log probability function needed to
         use tf.mcmc.sample_chain.
-
         Args:
             x (tf.Tensor)   :   Input features of shape [num_points, num_features].
                                 Usually only used with training data.
             y (tf.Tensor)   :   Predicted targets of shape [num_points, num_outputs].
                                 Usually only used with training data.
-
         Returns:
             target_log_prob_fn (target log probability function used in the MCMC chain).
         """
@@ -155,10 +143,8 @@ class BayesianNeuralNetworkHMC:
     def build_model(self, weights):
         """Creates a feed-forward densely connected neural network
         given input weights.
-
         Args:
             weights (list)  :   List containing the weights of the network.
-
         Returns:
             model (function)    :   Python callable that computes a forward pass
                                     of the densely connected neural network.
@@ -201,12 +187,10 @@ class BayesianNeuralNetworkHMC:
 
     def create_dataset(self, x, y, batch_size=16):
         """Creates a tf.data.Dataset object from training data.
-
         Args:
             x   (tf.Tensor)             :   Training features of shape [num_train, num_features]
-            y   (tf.Tensor)             :   Training targets of shape [num_train, num_outputs] 
-            batch_size (optional, int)  :   Batch size of dataset. Default: batch_size=16.   
-
+            y   (tf.Tensor)             :   Training targets of shape [num_train, num_outputs]
+            batch_size (optional, int)  :   Batch size of dataset. Default: batch_size=16.
         Returns:
             ds (tf.data.Dataset)    :   Dataset split into batches of size `batch_size`.
         """
@@ -218,14 +202,12 @@ class BayesianNeuralNetworkHMC:
         self, x, y, num_results, num_burnin_steps, num_leapfrog_steps, step_size
     ):
         """Runs the MCMC chain using Hamiltonian Monte Carlo (HMC).
-
         Args:
             x   (tf.Tensor)             :   Training features of shape [num_points, num_features]
             y   (tf.Tensor)             :   Training targets of shape [num_points, num_outputs]
             num_burnin_steps (int)      :   Number of burn-in steps in the MCMC chain.
             num_leapfrog_steps (int)    :   Number of leapfrog steps in HMC.
             step_size   (float)         :   Step size used in the leapfrog scheme in HMC.
-
         Returns:
             self.chain (list)           :   List of sampled network parameters. Each element
                                             in the list is a densely connected neural network.
@@ -273,7 +255,7 @@ if __name__ == "__main__":
         # kernel_prior = tfp.distributions.Normal(loc=0., scale=0.01)
         # bias_prior = tfp.distributions.Normal(loc=0., scale=0.01)
 
-        num_results = 100
+        num_results = 1000
         num_burnin_steps = 1000
         num_leapfrog_steps = 60
         step_size = 0.001
@@ -281,16 +263,7 @@ if __name__ == "__main__":
         yhat = bnn(x_train)
         print(yhat.shape)
 
-        weights = bnn.weights
-        print(weights[0].shape)
-        target_log_prob_fn = bnn.create_log_prob_fn(x_train, y_train)
-        res = target_log_prob_fn(*weights)
-        print(tf.size(res))
-        res1 = bnn.prior_log_prob_fn(weights)
-        res2 = bnn.log_likelihood(x_train, y_train, weights)
-        print(f"{res1.shape=}")
-        print(f"{res2.shape=}")
-
+        #sys.exit()
         start = time.perf_counter()
         chain = bnn.hmc_chain(
             x=x_train,
@@ -311,7 +284,7 @@ if __name__ == "__main__":
         print(f"{x_test.shape=}")
         print(f"{predictions.shape=}")
 
-        x = np.array(list(x_test.numpy().squeeze(-1)) * num_results * 10)
+        x = np.array(list(x_test.numpy().squeeze(-1)) * num_results)
         predictions = np.array(predictions)
         predictions = predictions.squeeze(-1).ravel()
         print(f"{x.shape=}")
