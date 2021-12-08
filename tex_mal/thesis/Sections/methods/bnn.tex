@@ -10,7 +10,7 @@ Some useful terminology is in order. $P(\theta)$ is called the \textit{prior} di
 \begin{equation}
   L(\theta) \equiv L(\theta|D) = P(D|\theta).
 \end{equation}
-One should remember that this is specific to the data $D$, even though it's sometimes written as $L(\theta)$. The \textit{posterior} distribution $P(\theta|D)$ models our belief about the distribution of $\theta$ after observer $D$. More succinctly, we can write Bayes' theorem as
+One should remember that this is specific to the data $D$, even though it's sometimes written as $L(\theta)$. The \textit{posterior} distribution $P(\theta|D)$ models our belief about the distribution of $\theta$ after the data $D$ is observed. More succinctly, we can write Bayes' theorem as
 \begin{equation}
   P(\theta|D) \propto L(\theta|D)P(\theta),
 \end{equation}
@@ -42,17 +42,25 @@ In the context of regression, the conditional distribution is chosen to be
 \end{equation}
 where $f(x)$, the neural network output, is the mean of $y$ and $\sigma$ is the noise of $y$.
 
-In practice, however, we instead sample a set of network paramters $\{\theta_1, ..., \theta_n\}$ from which can produce a set of predictions $\{\hat{y}_1,\ldots \hat{y}_n\}$ from the neural network model 
+In practice, however, we instead sample a set of network paramters $\{\theta_1, ..., \theta_n\}$ from the posterior distribution
+\begin{equation}
+  P(\theta|D) \propto P(D|\theta)P(\theta),
+\end{equation}
+from which can can produce a set of predictions $\{\hat{y}_1,\ldots \hat{y}_n\}$ from the neural network model 
 \begin{equation}
   \hat{y}_i = f(x, \theta_i).
 \end{equation}
-From there we can compute the sample mean
+Given this set of predictions, we can compute the sample mean
 \begin{equation}
-  \hat{y} = \frac{1}{n}\sum_i f(x, \theta_i),
+  \hat{y}_\text{MLE} = \frac{1}{n}\sum_i f(x, \theta_i),
 \end{equation}
 which is an approximation to the \textit{maximum likelihood estimate} (MLE). Furthermore, an estimate of the error is provided by the sample variance
 \begin{equation}
-  \text{Var} (y) = \frac{1}{n-1}\sum_i (\hat{y} - y_i)^2,
+  \text{Var} (y) = \frac{1}{n-1}\sum_i (\hat{y}_\text{MLE} - \hat{y}_i)^2,
+\end{equation}
+which is we typically report as the root of, which we may call the standard error
+\begin{equation}
+  \sigma = \sqrt{\text{Var}(\hat{y})}.
 \end{equation}
 
 
@@ -66,6 +74,11 @@ and a kinetic energy function $K(p)$. To this end, we need to specify
 \end{enumerate}
 from which we can define the potential energy as follows:
 \begin{equation}
-  V(W, b) = - \sum_{\ell}\log P(W_{ij}^\ell) - \sum_{\ell}\log P(b_j^\ell) - \sum_i \log P(y^{(i)}| x^{(i)}, W, b), 
+  V(W, b) = - \log Z - \sum_{\ell}\log P(W_{ij}^\ell) - \sum_{\ell}\log P(b_j^\ell) - \sum_i \log P(y^{(i)}| x^{(i)}, W, b), 
 \end{equation}
-where $W$ denotes all the kernels and $b$ denotes all the biases of the model.
+where $W$ denotes all the kernels and $b$ denotes all the biases of the model. Note that $Z$ here is some appropriate constant that doesn't really matter for the sampling process, but would serve as part of the normalization constant of the probability distributions $P \propto \exp(-V)$.
+The priors for the momenta are typically chosen to be 
+\begin{equation}
+  P(p) \propto \prod_i \exp \left(- \frac{p_i^2}{2m_i}\right).
+\end{equation}
+Once these are chosen, we can form the Hamiltonian used in HMC and proceed to sample from the desired distribution.

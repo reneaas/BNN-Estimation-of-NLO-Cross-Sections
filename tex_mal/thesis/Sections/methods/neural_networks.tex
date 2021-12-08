@@ -1,6 +1,6 @@
 \section{Neural Networks}\label{sec:neural_networks}
 In this chapter, I'll introduce the mathematical formalism underpinning
-neural networks. For convenience, well adopt the terminology used by Tensorflow\cite{tf} 
+neural networks. For convenience, we'll adopt the terminology used by Tensorflow\cite{tf} 
 to help make the transition from mathematics to their machine learning framework easier.
 A neural network is most generally defined as a non-linear function $f : \mathbb{R}^p \to \mathbb{R}^d$. This non-linear function is built-up as follows:
 \begin{itemize}
@@ -28,7 +28,7 @@ The standard approach to train a neural network is minimization of some cost fun
 Consider $E$ as the so-called \textit{loss} functions (which in the case of Bayesian neural network is the potential energy function $V(q)$).
 The first of the four equations quantifes the error, 
 \begin{equation}\label{eq:backprop1}
-    \Delta_j^L = \pdv{E}{z_j^L}.
+    \Delta_j^L = \pdv{V}{z_j^L}.
 \end{equation}
 The second equation allows us to compute the error at layer $\ell$ given we know the error at layer $\ell+1$,
 \begin{equation}\label{eq:backprop2}
@@ -43,7 +43,8 @@ For the biases, the gradients are
     \pdv{E}{b_j^\ell} = \pdv{E}{z_j^\ell}\pdv{z_j^\ell}{b_j^\ell} = \Delta_j^\ell.
 \end{equation}
 With these four equations, we can fit the neural network using minimization techniques such as stochastic gradient descent or more complex methods such as ADAM (pages 13-19 in \cite{ml_for_physicists}). 
-Although not the focus of this thesis, we might use these methods in conjunction with HMC to speed up convergence to the stationary distribution.
+Although not the focus of this thesis, we might use these methods in conjunction with HMC to speed up convergence to the stationary distribution. Furthermore, the computation of gradients in combination with
+HMC can be performed with the backpropagation algorithm, but will in this thesis be performed using \textit{automatic differentiation} with Tensorflow.
 
 \subsection{Cost function for regression}
 In this thesis, we're concerned with regression tasks. The activation function of the final layer $\sigma_L$ is then just the identity function. The typical cost function chosen to solve regression tasks is the $L_2$-norm, which for a single output can be written as 

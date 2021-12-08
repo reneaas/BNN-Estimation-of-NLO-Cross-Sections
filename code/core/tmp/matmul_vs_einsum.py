@@ -10,7 +10,7 @@ w = tf.random.normal(shape=(m, m))
 
 
 start = time.perf_counter()
-res = tf.einsum("...j,ij->...i", x, w, optimize="auto")
+res = tf.einsum("...j,ij->...i", x, w)
 end = time.perf_counter()
 timeused = end - start
 print(f"{timeused=} seconds with einsum")
