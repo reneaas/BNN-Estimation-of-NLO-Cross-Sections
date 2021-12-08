@@ -42,7 +42,7 @@ class BayesianNeuralNetworkHMC:
         prior_mean=0.0,
         prior_stddev=0.01,
         lamb=0.0,
-        batch_size=10,
+        batch_size=4,
     ):
         self.batch_size = batch_size #Parameter batch_size. Number of independent chains.
         self.lamb = lamb  # Regularization parameter.
@@ -152,6 +152,10 @@ class BayesianNeuralNetworkHMC:
             )
         return target_log_prob_fn
 
+    @tf.function
+    def dense_forward(self, x, w, b, activation):
+        return activation(tf.matmul(x, w) + b[..., None, :])
+
     def build_model(self, weights):
         """Creates a feed-forward densely connected neural network
         given input weights.
@@ -164,14 +168,20 @@ class BayesianNeuralNetworkHMC:
                                     of the densely connected neural network.
         """
 
+        # def model(x):
+        #     kernel = weights[::2]
+        #     bias = weights[1::2]
+        #     for w, b in zip(kernel[:-1], bias[:-1]):
+        #         x = self.activation(tf.matmul(x, w) + b[..., None, :])
+        #     x = self.top_layer_activation(tf.matmul(x, kernel[-1]) + bias[-1][..., None, :])
+        #     return x
         def model(x):
             kernel = weights[::2]
             bias = weights[1::2]
             for w, b in zip(kernel[:-1], bias[:-1]):
-                x = self.activation(tf.matmul(x, w) + b[..., None, :])
-            x = self.top_layer_activation(tf.matmul(x, kernel[-1]) + bias[-1][..., None, :])
+                x = self.dense_forward(x, w, b, self.activation)
+            x = self.dense_forward(x, kernel[-1], bias[-1], self.top_layer_activation)
             return x
-
         return model
 
     def predict_from_chain(self, x, chain=None):
@@ -180,17 +190,7 @@ class BayesianNeuralNetworkHMC:
         else:
             predictions = self(x, self.chain)
         return predictions
-    # def predict_from_chain(self, x, chain=None):
-    #     predictions = []
-    #     if chain:
-    #         for weights in chain:
-    #             model = self.build_model(weights)
-    #             predictions.append(model(x).numpy())
-    #     else:
-    #         for weights in self.chain:
-    #             model = self.build_model(weights)
-    #             predictions.append(model(x).numpy())
-    #     return predictions
+
 
     @tf.function
     def sample_chain(self, *args, **kwargs):
@@ -215,7 +215,7 @@ class BayesianNeuralNetworkHMC:
         return ds
 
     def hmc_chain(
-        self, x, y, num_results, num_burnin_steps, num_leapfrog_steps, step_size
+        self, x, y, num_results_per_batch, num_burnin_steps, num_leapfrog_steps, step_size
     ):
         """Runs the MCMC chain using Hamiltonian Monte Carlo (HMC).
 
@@ -239,12 +239,13 @@ class BayesianNeuralNetworkHMC:
             store_parameters_in_results=None,
         )
 
+        num_results = num_results_per_batch * self.batch_size
         self.chain = self.sample_chain(
             kernel=kernel,
             current_state=current_state,
-            num_results=num_results,
+            num_results=num_results_per_batch,
             num_burnin_steps=num_burnin_steps,
-            num_steps_between_results=10,
+            num_steps_between_results=0,
             trace_fn=None,
         )
 
@@ -272,12 +273,13 @@ if __name__ == "__main__":
         # Should not be needed.
         # kernel_prior = tfp.distributions.Normal(loc=0., scale=0.01)
         # bias_prior = tfp.distributions.Normal(loc=0., scale=0.01)
-
-        num_results = 100
+        batch_size = 1
+        num_results_per_batch = 1000
+        num_results = num_results_per_batch * batch_size
         num_burnin_steps = 1000
         num_leapfrog_steps = 60
         step_size = 0.001
-        bnn = BayesianNeuralNetworkHMC(layers=layers, activation=tf.nn.sigmoid)
+        bnn = BayesianNeuralNetworkHMC(layers=layers, activation=tf.nn.sigmoid, batch_size=batch_size)
         yhat = bnn(x_train)
         print(yhat.shape)
 
@@ -286,6 +288,7 @@ if __name__ == "__main__":
         target_log_prob_fn = bnn.create_log_prob_fn(x_train, y_train)
         res = target_log_prob_fn(*weights)
         print(tf.size(res))
+        #sys.exit()
         res1 = bnn.prior_log_prob_fn(weights)
         res2 = bnn.log_likelihood(x_train, y_train, weights)
         print(f"{res1.shape=}")
@@ -295,7 +298,7 @@ if __name__ == "__main__":
         chain = bnn.hmc_chain(
             x=x_train,
             y=y_train,
-            num_results=num_results,
+            num_results_per_batch=num_results_per_batch,
             num_burnin_steps=num_burnin_steps,
             num_leapfrog_steps=num_leapfrog_steps,
             step_size=step_size,
@@ -311,7 +314,7 @@ if __name__ == "__main__":
         print(f"{x_test.shape=}")
         print(f"{predictions.shape=}")
 
-        x = np.array(list(x_test.numpy().squeeze(-1)) * num_results * 10)
+        x = np.array(list(x_test.numpy().squeeze(-1)) * num_results)
         predictions = np.array(predictions)
         predictions = predictions.squeeze(-1).ravel()
         print(f"{x.shape=}")

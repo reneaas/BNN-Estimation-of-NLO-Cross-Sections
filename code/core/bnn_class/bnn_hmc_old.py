@@ -226,7 +226,7 @@ class BayesianNeuralNetworkHMC:
             current_state=current_state,
             num_results=num_results,
             num_burnin_steps=num_burnin_steps,
-            num_steps_between_results=10,
+            num_steps_between_results=0,
             trace_fn=None,
         )
 
@@ -262,8 +262,12 @@ if __name__ == "__main__":
         bnn = BayesianNeuralNetworkHMC(layers=layers, activation=tf.nn.sigmoid)
         yhat = bnn(x_train)
         print(yhat.shape)
+        weights = bnn.weights
+        target_log_prob_fn = bnn.create_log_prob_fn(x_train, y_train)
+        res = target_log_prob_fn(*weights)
+        print(tf.size(res))
 
-        #sys.exit()
+
         start = time.perf_counter()
         chain = bnn.hmc_chain(
             x=x_train,
