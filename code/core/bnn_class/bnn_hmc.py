@@ -44,7 +44,9 @@ class BayesianNeuralNetworkHMC:
         lamb=0.0,
         batch_size=4,
     ):
-        self.batch_size = batch_size #Parameter batch_size. Number of independent chains.
+        self.batch_size = (
+            batch_size  # Parameter batch_size. Number of independent chains.
+        )
         self.lamb = lamb  # Regularization parameter.
         # Set priors of kernel
         if kernel_prior:
@@ -97,7 +99,6 @@ class BayesianNeuralNetworkHMC:
             model = self.build_model(self.weights)
         return model(x)
 
-
     @tf.function
     def prior_log_prob_fn(self, weights):
         """Log prior probability function of the weights of the network.
@@ -110,7 +111,9 @@ class BayesianNeuralNetworkHMC:
         """
         kernel = weights[::2]
         bias = weights[1::2]
-        kernel_sum = tf.reduce_sum([tf.reduce_sum(w ** 2, axis=(-1,-2)) for w in kernel], axis=0)
+        kernel_sum = tf.reduce_sum(
+            [tf.reduce_sum(w ** 2, axis=(-1, -2)) for w in kernel], axis=0
+        )
         bias_sum = tf.reduce_sum([tf.reduce_sum(b ** 2, axis=-1) for b in bias], axis=0)
         return -0.5 * self.lamb * (kernel_sum + bias_sum)
 
@@ -129,8 +132,7 @@ class BayesianNeuralNetworkHMC:
 
         model = self.build_model(weights)
         yhat = model(x)
-        return -0.5 * tf.reduce_sum((y - yhat) ** 2, axis=(1,2))
-
+        return -0.5 * tf.reduce_sum((y - yhat) ** 2, axis=(1, 2))
 
     def create_log_prob_fn(self, x, y):
         """Returns the combines log probability function needed to
@@ -147,13 +149,12 @@ class BayesianNeuralNetworkHMC:
         """
 
         def target_log_prob_fn(*weights):
-            return self.prior_log_prob_fn(weights) + self.log_likelihood(
-                x, y, weights
-            )
+            return self.prior_log_prob_fn(weights) + self.log_likelihood(x, y, weights)
+
         return target_log_prob_fn
 
     @tf.function
-    def dense_forward(self, x, w, b, activation):
+    def dense_layer(self, x, w, b, activation):
         return activation(tf.matmul(x, w) + b[..., None, :])
 
     def build_model(self, weights):
@@ -168,20 +169,14 @@ class BayesianNeuralNetworkHMC:
                                     of the densely connected neural network.
         """
 
-        # def model(x):
-        #     kernel = weights[::2]
-        #     bias = weights[1::2]
-        #     for w, b in zip(kernel[:-1], bias[:-1]):
-        #         x = self.activation(tf.matmul(x, w) + b[..., None, :])
-        #     x = self.top_layer_activation(tf.matmul(x, kernel[-1]) + bias[-1][..., None, :])
-        #     return x
         def model(x):
             kernel = weights[::2]
             bias = weights[1::2]
             for w, b in zip(kernel[:-1], bias[:-1]):
-                x = self.dense_forward(x, w, b, self.activation)
-            x = self.dense_forward(x, kernel[-1], bias[-1], self.top_layer_activation)
+                x = self.dense_layer(x, w, b, self.activation)
+            x = self.dense_layer(x, kernel[-1], bias[-1], self.top_layer_activation)
             return x
+
         return model
 
     def predict_from_chain(self, x, chain=None):
@@ -190,7 +185,6 @@ class BayesianNeuralNetworkHMC:
         else:
             predictions = self(x, self.chain)
         return predictions
-
 
     @tf.function
     def sample_chain(self, *args, **kwargs):
@@ -204,8 +198,8 @@ class BayesianNeuralNetworkHMC:
 
         Args:
             x   (tf.Tensor)             :   Training features of shape [num_train, num_features]
-            y   (tf.Tensor)             :   Training targets of shape [num_train, num_outputs] 
-            batch_size (optional, int)  :   Batch size of dataset. Default: batch_size=16.   
+            y   (tf.Tensor)             :   Training targets of shape [num_train, num_outputs]
+            batch_size (optional, int)  :   Batch size of dataset. Default: batch_size=16.
 
         Returns:
             ds (tf.data.Dataset)    :   Dataset split into batches of size `batch_size`.
@@ -214,8 +208,57 @@ class BayesianNeuralNetworkHMC:
         ds = ds.batch(batch_size=batch_size)
         return ds
 
+    def no_u_turn_chain(
+        self, x, y, num_results_per_batch, num_burnin_steps, step_size, adaptation=None
+    ):
+        """Runs the MCMC chain using the No U-turn sampler.
+
+        Args:
+            x   (tf.Tensor)             :   Training features of shape [num_points, num_features]
+            y   (tf.Tensor)             :   Training targets of shape [num_points, num_outputs]
+            num_burnin_steps (int)      :   Number of burn-in steps in the MCMC chain.
+            step_size   (float)         :   Step size used with the No U-turn sampler.
+
+        Returns:
+            self.chain (list)           :   List of sampled network parameters. Each element
+                                            in the list is a densely connected neural network.
+        """
+        current_state = self.weights
+        target_log_prob_fn = self.create_log_prob_fn(x, y)
+        kernel = tfp.mcmc.NoUTurnSampler(
+            target_log_prob_fn=target_log_prob_fn, step_size=step_size
+        )
+
+        if adaptation == "simple":
+            kernel = tfp.mcmc.SimpleStepSizeAdaptation(
+                inner_kernel=kernel,
+                num_adaptation_steps=10,
+            )
+        elif adaptation == "dual":
+            kernel = tfp.mcmc.DualAveragingStepSizeAdaptation(
+                inner_kernel=kernel,
+                num_adaptation_steps=10,
+            )
+
+        self.chain = self.sample_chain(
+            kernel=kernel,
+            current_state=current_state,
+            num_results=num_results_per_batch,
+            num_burnin_steps=num_burnin_steps,
+            num_steps_between_results=0,
+            trace_fn=None,
+        )
+        return self.chain
+
     def hmc_chain(
-        self, x, y, num_results_per_batch, num_burnin_steps, num_leapfrog_steps, step_size
+        self,
+        x,
+        y,
+        num_results_per_batch,
+        num_burnin_steps,
+        num_leapfrog_steps,
+        step_size,
+        adaptation=None,
     ):
         """Runs the MCMC chain using Hamiltonian Monte Carlo (HMC).
 
@@ -238,8 +281,18 @@ class BayesianNeuralNetworkHMC:
             num_leapfrog_steps=num_leapfrog_steps,
             store_parameters_in_results=None,
         )
+        if adaptation == "simple":
+            kernel = tfp.mcmc.SimpleStepSizeAdaptation(
+                inner_kernel=kernel,
+                num_adaptation_steps=10,
+            )
+        elif adaptation == "dual":
+            kernel = tfp.mcmc.DualAveragingStepSizeAdaptation(
+                inner_kernel=kernel,
+                num_adaptation_steps=10,
+            )
+            
 
-        num_results = num_results_per_batch * self.batch_size
         self.chain = self.sample_chain(
             kernel=kernel,
             current_state=current_state,
@@ -248,13 +301,6 @@ class BayesianNeuralNetworkHMC:
             num_steps_between_results=0,
             trace_fn=None,
         )
-
-        # self.chain = [
-        #     [sample[i] for sample in self.chain] for i in range(len(self.chain[0]))
-        # ]
-
-
-
         return self.chain
 
 
@@ -263,12 +309,11 @@ if __name__ == "__main__":
         layers = [1, 50, 1]
 
         # Create training data
-        n_train = 100
+        n_train = 1000
         dims = 1
         f = lambda x: tf.math.sin(x)
         x_train = tf.random.normal(shape=(n_train, dims), mean=0.0, stddev=3.0)
         y_train = f(x_train)
-
 
         # Should not be needed.
         # kernel_prior = tfp.distributions.Normal(loc=0., scale=0.01)
@@ -277,9 +322,11 @@ if __name__ == "__main__":
         num_results_per_batch = 1000
         num_results = num_results_per_batch * batch_size
         num_burnin_steps = 1000
-        num_leapfrog_steps = 60
-        step_size = 0.001
-        bnn = BayesianNeuralNetworkHMC(layers=layers, activation=tf.nn.sigmoid, batch_size=batch_size)
+        num_leapfrog_steps = 20
+        step_size = 0.0001
+        bnn = BayesianNeuralNetworkHMC(
+            layers=layers, activation=tf.nn.sigmoid, batch_size=batch_size
+        )
         yhat = bnn(x_train)
         print(yhat.shape)
 
@@ -288,7 +335,7 @@ if __name__ == "__main__":
         target_log_prob_fn = bnn.create_log_prob_fn(x_train, y_train)
         res = target_log_prob_fn(*weights)
         print(tf.size(res))
-        #sys.exit()
+        # sys.exit()
         res1 = bnn.prior_log_prob_fn(weights)
         res2 = bnn.log_likelihood(x_train, y_train, weights)
         print(f"{res1.shape=}")
@@ -302,7 +349,17 @@ if __name__ == "__main__":
             num_burnin_steps=num_burnin_steps,
             num_leapfrog_steps=num_leapfrog_steps,
             step_size=step_size,
+            adaptation="dual"
         )
+
+        # chain = bnn.no_u_turn_chain(
+        #     x=x_train,
+        #     y=y_train,
+        #     num_results_per_batch=num_results_per_batch,
+        #     num_burnin_steps=num_burnin_steps,
+        #     step_size=step_size,
+        #     adaptation=True
+        # )
         end = time.perf_counter()
         timeused = end - start
         print(f"{timeused=} seconds of hmc sampling")
