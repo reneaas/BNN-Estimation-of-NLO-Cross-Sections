@@ -99,9 +99,9 @@ class BayesianNeuralNetworkHMC:
         """Performs a simple forward pass with set of weighs and a given input x
 
         Args:
-            x (tf.Tensor)                           :   Input features of shape [num_points, num_features]
+            x (tf.Tensor)                           :   Input features of shape (num_points, num_features)
             weights (optional, list[tf.Tensor])     :   List of weights of the network of shape
-                                                        [batch_size, n, m].
+                                                        (batch_size, n, m).
                                                         Default: `weights=None`. In this case, it defaults 
                                                         to the weights stored in the class.
 
@@ -137,8 +137,8 @@ class BayesianNeuralNetworkHMC:
         """Computes log likelihood of predicted target y given features `x` and `weights`.
 
         Args:
-            x  (tf.Tensor)              :   Input features of shape [num_points, num_features]
-            y   (tf.Tensor)             :   Predicted targets of shape [num_points, num_outputs]
+            x  (tf.Tensor)              :   Input features of shape (num_points, num_features)
+            y   (tf.Tensor)             :   Predicted targets of shape (num_points, num_outputs)
             weights (list[tf.Tensor])   :   list of weights of the network.
 
         Returns:
@@ -155,9 +155,9 @@ class BayesianNeuralNetworkHMC:
         use tf.mcmc.sample_chain.
 
         Args:
-            x (tf.Tensor)   :   Input features of shape [num_points, num_features].
+            x (tf.Tensor)   :   Input features of shape (num_points, num_features).
                                 Usually only used with training data.
-            y (tf.Tensor)   :   Predicted targets of shape [num_points, num_outputs].
+            y (tf.Tensor)   :   Predicted targets of shape (num_points, num_outputs).
                                 Usually only used with training data.
 
         Returns:
@@ -171,6 +171,18 @@ class BayesianNeuralNetworkHMC:
 
     @tf.function
     def dense_layer(self, x, w, b, activation):
+        """Computes the output of a dense layer.
+
+        Args:
+            x   (tf.Tensor)     :   Input features of shape (num_points, num_features)
+            w   (tf.Tensor)     :   Kernel of layer. Shape: (batch_size, n, m)
+            b   (tf.Tensor)     :   Bias of layer. Shape: (batch_size, m, )
+            activation (tf.nn)  :   Activation function of type tf.nn. 
+                                    E.g tf.nn.sigmoid or tf.nn.relu.
+        
+        Returns:
+            Computes activations of shape (batch_size, num_points, num_outputs)
+        """
         return activation(tf.matmul(x, w) + b[..., None, :])
 
     def build_model(self, weights):
@@ -199,14 +211,14 @@ class BayesianNeuralNetworkHMC:
         """Computes predictions of a given x from from a chain of samples from the MCMC chain.
         
         Args:
-            x   (tf.Tensor)         :   Input features of shape [num_points, num_features]
+            x   (tf.Tensor)         :   Input features of shape (num_points, num_features)
             chain (optional, list)  :   List of weights samples from the MCMC chain
                                         of length num_kernels + num_biases.
                                         Each kernel is of shape (batch_size, m, n)
                                         Each bias is of shape (batch_size, m)
 
         Returns
-            Predictions (list)      :   List of predictions. Shape: (batch_size, num_points, num_outputs)
+            Predictions (list)      :   List of predictions. Shape: (batch_size, num_points, num_outputs).
         """
         if chain:
             predictions = self(x, chain)
@@ -225,8 +237,8 @@ class BayesianNeuralNetworkHMC:
         """Creates a tf.data.Dataset object from training data.
 
         Args:
-            x   (tf.Tensor)             :   Training features of shape [num_train, num_features]
-            y   (tf.Tensor)             :   Training targets of shape [num_train, num_outputs]
+            x   (tf.Tensor)             :   Training features of shape (num_train, num_features)
+            y   (tf.Tensor)             :   Training targets of shape (num_train, num_outputs)
             batch_size (optional, int)  :   Batch size of dataset. Default: batch_size=16.
 
         Returns:
@@ -242,8 +254,8 @@ class BayesianNeuralNetworkHMC:
         """Runs the MCMC chain using the No U-turn sampler.
 
         Args:
-            x   (tf.Tensor)             :   Training features of shape [num_points, num_features]
-            y   (tf.Tensor)             :   Training targets of shape [num_points, num_outputs]
+            x   (tf.Tensor)             :   Training features of shape (num_points, num_features)
+            y   (tf.Tensor)             :   Training targets of shape (num_points, num_outputs)
             num_burnin_steps (int)      :   Number of burn-in steps in the MCMC chain.
             step_size   (float)         :   Step size used with the No U-turn sampler.
 
@@ -291,8 +303,8 @@ class BayesianNeuralNetworkHMC:
         """Runs the MCMC chain using Hamiltonian Monte Carlo (HMC).
 
         Args:
-            x   (tf.Tensor)             :   Training features of shape [num_points, num_features]
-            y   (tf.Tensor)             :   Training targets of shape [num_points, num_outputs]
+            x   (tf.Tensor)             :   Training features of shape (num_points, num_features)
+            y   (tf.Tensor)             :   Training targets of shape (num_points, num_outputs)
             num_burnin_steps (int)      :   Number of burn-in steps in the MCMC chain.
             num_leapfrog_steps (int)    :   Number of leapfrog steps in HMC.
             step_size   (float)         :   Step size used in the leapfrog scheme in HMC.
@@ -357,7 +369,6 @@ if __name__ == "__main__":
         yhat = bnn(x_train)
         print(yhat.shape)
 
-        sys.exit()
 
         start = time.perf_counter()
         # chain = bnn.hmc_chain(
@@ -376,7 +387,7 @@ if __name__ == "__main__":
             num_results_per_batch=num_results_per_batch,
             num_burnin_steps=num_burnin_steps,
             step_size=step_size,
-            adaptation="dual",
+            adaptation=None,
         )
         end = time.perf_counter()
         timeused = end - start
