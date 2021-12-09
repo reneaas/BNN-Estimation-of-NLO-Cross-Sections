@@ -17,8 +17,9 @@
 \contentsline {section}{\numberline {2.2}Interpretations of probability}{9}{section.2.2}%
 \contentsline {section}{\numberline {2.3}Bayesian inference}{9}{section.2.3}%
 \contentsline {section}{\numberline {2.4}Bayesian framework for neural networks}{9}{section.2.4}%
-\contentsline {section}{\numberline {2.5}Bayesian learning using HMC}{10}{section.2.5}%
-\contentsline {chapter}{Conclusion}{12}{chapter*.12}%
-\contentsline {chapter}{Appendices}{13}{section*.13}%
-\contentsline {chapter}{Appendix A}{15}{appendix*.14}%
-\contentsline {section}{\numberline {A.1}Appendix 1 title }{15}{section.Alph0.1}%
+\contentsline {section}{\numberline {2.5}Sources of uncertainty}{10}{section.2.5}%
+\contentsline {section}{\numberline {2.6}Bayesian learning using HMC}{11}{section.2.6}%
+\contentsline {chapter}{Conclusion}{14}{chapter*.12}%
+\contentsline {chapter}{Appendices}{15}{section*.13}%
+\contentsline {chapter}{Appendix A}{17}{appendix*.14}%
+\contentsline {section}{\numberline {A.1}Appendix 1 title }{17}{section.Alph0.1}%

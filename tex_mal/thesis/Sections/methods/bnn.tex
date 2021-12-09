@@ -63,6 +63,24 @@ which is we typically report as the root of, which we may call the standard erro
   \sigma = \sqrt{\text{Var}(\hat{y})}.
 \end{equation}
 
+\section{Sources of uncertainty}
+The main motivation utilizing Bayesian inference to neural networks is to be able to quantify uncertainty. 
+Uncertainty can be further divided into two categories:
+\begin{itemize}
+  \item \textbf{Epistemic uncertainty}: the systematic uncertainty. It practice, this uncertainty can be quantified by 
+  the posterior of the model $P(\theta|D)$. Thus it quantifies the uncertainty in the model itself.
+  \item \textbf{Aleatoric uncertainty}: the statistical uncertainty, related to the conditional distribution $P(y|x, \theta)$.
+  This uncertainty quantifies the error due to random chance, and measures the random noise in the data.
+\end{itemize}
+In principle, in the infinite data limit, both errors goes to zero as there's only a single parametrization $\theta$ that explains all data $D$,
+and there's only a single output $y$ for a given $x$ and $\theta$. However, neural networks as so-called \textit{over-parametrized}
+models in the sense that they have many equivalent parametrizations. These occur due to underlying symmetries of the model, 
+two of which are \textit{weight-space symmetry} and \textit{scaling symmetry}. The former means that we can permute parameters
+in two adjacent and produce the same output as before the permutation. 
+The latter case occur when the network uses non-linear activation that obey $\sigma(\alpha x) = \alpha \sigma(x)$. 
+This relation implies that we can rescale the parameters 
+of two adjacent layers by a factor of $\alpha$ and $1/\alpha$ respectively and produce the same output. Thus a parametrization
+that explains a set of observations does not exist for sufficiently complex models.
 
 \section{Bayesian learning using HMC}
 To implement learn from the data $D$ using HMC, we need to define a potential energy function $V(q)$ 
@@ -74,9 +92,18 @@ and a kinetic energy function $K(p)$. To this end, we need to specify
 \end{enumerate}
 from which we can define the potential energy as follows:
 \begin{equation}
-  V(W, b) = - \log Z - \sum_{\ell}\log P(W_{ij}^\ell) - \sum_{\ell}\log P(b_j^\ell) - \sum_i \log P(y^{(i)}| x^{(i)}, W, b), 
+  V(W, b) = - \log Z - \lambda_W\sum_{\ell,i,j}\log P(W_{ij}^\ell) - \lambda_b\sum_{\ell,j}\log P(b_j^\ell) - \sum_i \log P(y^{(i)}| x^{(i)}, W, b), 
 \end{equation}
-where $W$ denotes all the kernels and $b$ denotes all the biases of the model. Note that $Z$ here is some appropriate constant that doesn't really matter for the sampling process, but would serve as part of the normalization constant of the probability distributions $P \propto \exp(-V)$.
+where $W$ denotes all the kernels and $b$ denotes all the biases of the model, 
+and $\lambda_W$ and $\lambda_b$ are regularization strenghts for the kernels and biases, respectively. 
+These play the same role as in typical machine learning applications - to limit the magnitude of the parameters in the model.
+Note that $Z$ here is some appropriate constant that doesn't really matter for the sampling process, 
+but would serve as part of the normalization constant of the probability distributions $P \propto \exp(-V)$.
+The priors of the kernels and biases are chosen to obey
+\begin{equation}
+  \log P(W_{ij}^\ell) = -\frac{1}{2}(W_{ij}^\ell)^2, \qquad \log P(b_j^\ell) = -\frac{1}{2}(b_j^\ell)^2,
+\end{equation}
+which is the equivalent to the typical $L_2$ regularization terms for the parameters of the model.
 The priors for the momenta are typically chosen to be 
 \begin{equation}
   P(p) \propto \prod_i \exp \left(- \frac{p_i^2}{2m_i}\right).

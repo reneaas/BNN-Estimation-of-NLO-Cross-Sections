@@ -30,6 +30,9 @@ class BayesianNeuralNetworkHMC:
             prior_stddev (float)                :   Standard deviation of tfp.distribution.Normal
                                                     Default: `prior_stddev = 0.01`
             lamb (float)                        :   Regularization parameter. Default `lamb = 0.0`.
+            batch_size (int)                    :   Batch size of the parameters to be updated using MCMC methods.
+                                                    If `batch_size` > 1, the MCMC chains will run multiple chains
+                                                    in parallell. Default: `batch_size=1`.
     """
 
     def __init__(
@@ -42,7 +45,7 @@ class BayesianNeuralNetworkHMC:
         prior_mean=0.0,
         prior_stddev=0.01,
         lamb=0.0,
-        batch_size=4,
+        batch_size=1,
     ):
         self.batch_size = (
             batch_size  # Parameter batch_size. Number of independent chains.
@@ -291,7 +294,6 @@ class BayesianNeuralNetworkHMC:
                 inner_kernel=kernel,
                 num_adaptation_steps=10,
             )
-            
 
         self.chain = self.sample_chain(
             kernel=kernel,
@@ -306,12 +308,12 @@ class BayesianNeuralNetworkHMC:
 
 if __name__ == "__main__":
     with tf.device("/CPU:0"):
-        layers = [1, 50, 1]
+        layers = [1, 10, 10, 1]
 
         # Create training data
         n_train = 1000
         dims = 1
-        f = lambda x: tf.math.sin(x)
+        f = lambda x: tf.math.sin(x) * tf.math.cos(x)
         x_train = tf.random.normal(shape=(n_train, dims), mean=0.0, stddev=3.0)
         y_train = f(x_train)
 
@@ -322,10 +324,10 @@ if __name__ == "__main__":
         num_results_per_batch = 1000
         num_results = num_results_per_batch * batch_size
         num_burnin_steps = 1000
-        num_leapfrog_steps = 20
-        step_size = 0.0001
+        num_leapfrog_steps = 60
+        step_size = 0.001
         bnn = BayesianNeuralNetworkHMC(
-            layers=layers, activation=tf.nn.sigmoid, batch_size=batch_size
+            layers=layers, activation=tf.nn.sigmoid, lamb=1e-3, batch_size=batch_size
         )
         yhat = bnn(x_train)
         print(yhat.shape)
@@ -342,24 +344,24 @@ if __name__ == "__main__":
         print(f"{res2.shape=}")
 
         start = time.perf_counter()
-        chain = bnn.hmc_chain(
-            x=x_train,
-            y=y_train,
-            num_results_per_batch=num_results_per_batch,
-            num_burnin_steps=num_burnin_steps,
-            num_leapfrog_steps=num_leapfrog_steps,
-            step_size=step_size,
-            adaptation="dual"
-        )
-
-        # chain = bnn.no_u_turn_chain(
+        # chain = bnn.hmc_chain(
         #     x=x_train,
         #     y=y_train,
         #     num_results_per_batch=num_results_per_batch,
         #     num_burnin_steps=num_burnin_steps,
+        #     num_leapfrog_steps=num_leapfrog_steps,
         #     step_size=step_size,
-        #     adaptation=True
+        #     adaptation="dual",
         # )
+
+        chain = bnn.no_u_turn_chain(
+            x=x_train,
+            y=y_train,
+            num_results_per_batch=num_results_per_batch,
+            num_burnin_steps=num_burnin_steps,
+            step_size=step_size,
+            adaptation="dual"
+        )
         end = time.perf_counter()
         timeused = end - start
         print(f"{timeused=} seconds of hmc sampling")
