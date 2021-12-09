@@ -96,6 +96,19 @@ class BayesianNeuralNetworkHMC:
         return weights
 
     def __call__(self, x, weights=None):
+        """Performs a simple forward pass with set of weighs and a given input x
+
+        Args:
+            x (tf.Tensor)                           :   Input features of shape [num_points, num_features]
+            weights (optional, list[tf.Tensor])     :   List of weights of the network of shape
+                                                        [batch_size, n, m].
+                                                        Default: `weights=None`. In this case, it defaults 
+                                                        to the weights stored in the class.
+
+        Returns:
+            The computed outputs of the forward pass. A tf.Tensor object of shape [num_weights, num_points, num_outputs]
+
+        """
         if weights:
             model = self.build_model(weights)
         else:
@@ -183,6 +196,18 @@ class BayesianNeuralNetworkHMC:
         return model
 
     def predict_from_chain(self, x, chain=None):
+        """Computes predictions of a given x from from a chain of samples from the MCMC chain.
+        
+        Args:
+            x   (tf.Tensor)         :   Input features of shape [num_points, num_features]
+            chain (optional, list)  :   List of weights samples from the MCMC chain
+                                        of length num_kernels + num_biases.
+                                        Each kernel is of shape (batch_size, m, n)
+                                        Each bias is of shape (batch_size, m)
+
+        Returns
+            Predictions (list)      :   List of predictions. Shape: (batch_size, num_points, num_outputs)
+        """
         if chain:
             predictions = self(x, chain)
         else:
@@ -332,16 +357,7 @@ if __name__ == "__main__":
         yhat = bnn(x_train)
         print(yhat.shape)
 
-        weights = bnn.weights
-        print(weights[0].shape)
-        target_log_prob_fn = bnn.create_log_prob_fn(x_train, y_train)
-        res = target_log_prob_fn(*weights)
-        print(tf.size(res))
-        # sys.exit()
-        res1 = bnn.prior_log_prob_fn(weights)
-        res2 = bnn.log_likelihood(x_train, y_train, weights)
-        print(f"{res1.shape=}")
-        print(f"{res2.shape=}")
+        sys.exit()
 
         start = time.perf_counter()
         # chain = bnn.hmc_chain(
@@ -360,7 +376,7 @@ if __name__ == "__main__":
             num_results_per_batch=num_results_per_batch,
             num_burnin_steps=num_burnin_steps,
             step_size=step_size,
-            adaptation="dual"
+            adaptation="dual",
         )
         end = time.perf_counter()
         timeused = end - start
