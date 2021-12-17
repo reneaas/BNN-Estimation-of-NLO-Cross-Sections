@@ -1,40 +1,44 @@
 \section{Neural Networks}\label{sec:neural_networks}
-In this chapter, I'll introduce the mathematical formalism underpinning
-neural networks. For convenience, we'll adopt the terminology used by Tensorflow\cite{tf} 
-to help make the transition from mathematics to their machine learning framework easier.
-A neural network is most generally defined as a non-linear function $f : \mathbb{R}^p \to \mathbb{R}^d$. This non-linear function is built-up as follows:
-\begin{itemize}
-    \item An input layer where a real observable $x \in \mathbb{R}^p$ is fed.
-    \item A set of hidden layers.
-    \item An output layer which consists of the output of the function.
-\end{itemize}
+In this chapter, we will introduce the mathematical formalism underpinning
+neural networks. For convenience, we will adopt the terminology used by Tensorflow\cite{tf} 
+to help make the transition from the mathematics to their machine learning framework easier.
+We will stay general and assume a set of inputs $x \in \mathbb{R}^p$ and corresponding targets $y \in \mathbb{R}^d$. 
+These serve as the training data on which the neural network is trained.
 
 \subsection{Basic mathematical structure}
-Denote a layer of the network as $\ell$. Assume there are $L$ layers in total, such that $\ell \in \{1,2,...,L\}$. 
-Denote the \textit{activation} at layer $\ell$ as $a_j^\ell$ and its \textit{bias} as $b_j^\ell$. 
-Moreover, denote its \textit{logits} as $z_j^\ell$. The following recursive equation 
-defines the general structure of a neural network
-\begin{equation}
-    a_j^\ell = \sigma_\ell \left(\sum_k W_{jk}^\ell a_j^{\ell - 1} + b_j^\ell\right) \equiv \sigma_\ell(z_j^\ell), 
-\end{equation}
-where $\sigma_\ell$ denotes some possibly non-linear function associated 
-with layer $\ell$, $W_{jk}^\ell$ denotes the \textit{kernel} of layer $\ell$ connecting the activation from layer $\ell-1$ to layer $\ell$, 
-and $b_j^\ell$ is again the bias of layer $\ell$. Typically $\sigma_\ell$ is called an \textit{activation} function. 
-Together, the kernel and the bias are called the \textit{weights} of layer $\ell$. 
-The weights of the network serve as the adjustable or \textit{learnable} parameters of the model.
+A neural network is most generally defined as a non-linear function $f : \mathbb{R}^p \to \mathbb{R}^d$.
+This non-linear function is built-up as follows:
+\begin{itemize}
+    \item A set of $L$ layers. Consider the $\ell$'th layer. It consists of $n_\ell$ nodes all of which has a one-to-one correspondence to a real number. The conventional representation is through a real-valued vector $a^\ell \in \mathbb{R}^{n_\ell}$, where $a^\ell$ is colloquially called the \textit{activation} of layer $\ell$.
+    \item For convenience, the layer with $\ell = 1$ is often called the \textit{input layer} and the layer with $\ell = L$ is
+    called the \textit{output layer}, and the layers in between for $\ell = 2, ..., L-1$ are called the \textit{hidden layers}. Although this distinction is merely conceptual and does not change the mathematics one bit, it provides useful categories for discussion later on.
+    \item Each layer $\ell$ is supplied with a (possibly) non-linear function $\sigma_\ell : \mathbb{R}^{n_{\ell - 1}} \to \mathbb{R}^{n_\ell}$. In other words, it defines a mapping $a^{\ell-1} \mapsto a^\ell$. The complete neural network function can thus be expressed as
+    \begin{equation}
+        f(x) = \left(\sigma_L \circ \sigma_{L-1} \circ \cdots \circ \sigma_\ell \circ \cdots \circ \sigma_2 \circ \sigma_1\right)(x).
+    \end{equation}
+    \item With each layer, we assign a \textit{kernel} $W^\ell \in \mathbb{R}^{{n_\ell} \times {n_{\ell - 1}}}$ and a \textit{bias} $b^\ell \in \mathbb{R}^{n_\ell}$. Together, these parameters are called the $weights$ of a layer. 
+    \item The complete set of neural network parameters $(W,b) = \{(W^\ell, b^\ell)\}_{\ell=1}^L$ are called the weights of the network. They serve as the \textit{learnable} or \textit{trainable} parameters of the model.
+    \item Finally, we introduce the \textit{logits} $z^\ell \in \mathbb{R}^{n_\ell}$ of layer $\ell$.
+    \item The permutation of chosen number of layers, number of nodes per layer and activation functions are collectively called the \textit{architecture} of the neural network. 
+\end{itemize}
+The activation in layer $\ell$ is computed through the recursive equation:
+\begin{equation}\label{eq:nn_forward_pass}
+    a_j^\ell = \sigma_\ell \left(\sum_k W_{jk}^\ell a_k^{\ell - 1} + b_j^\ell \right) \equiv \sigma_\ell(z_j^\ell), \qq{for} j = 1, 2, ..., n_\ell.
+\end{equation} 
+A special case of eq.~\eqref{eq:nn_forward_pass} applies to $\ell = 1$ where $a^0 = x \in \mathbb{R}^p$ is assumed. 
 
 \subsection{Backpropagation}
-The standard approach to train a neural network is minimization of some cost function by employing the \textit{backpropagation} algorithm\cite{backprop}. The algorithm boils down to four equations defining a recursive algorithm that approximates the gradient with respect to the parameters of the model.
-Consider $E$ as the so-called \textit{loss} functions (which in the case of Bayesian neural network is the potential energy function $V(q)$).
-The first of the four equations quantifes the error, 
+The standard approach to train a neural network is by minimization of some loss function by employing the \textit{backpropagation} algorithm\cite{backprop}. The algorithm boils down to four equations defining a recursive algorithm that approximates the gradient with respect to the parameters of the model.
+Consider $E$ as the loss function, quanitifying the error between the target and the model output.
+The first of the four equations quantifes the error in the output layer.
 \begin{equation}\label{eq:backprop1}
-    \Delta_j^L = \pdv{V}{z_j^L}.
+    \Delta_j^L = \pdv{E}{z_j^L}.
 \end{equation}
 The second equation allows us to compute the error at layer $\ell$ given we know the error at layer $\ell+1$,
 \begin{equation}\label{eq:backprop2}
     \Delta_j^\ell = \left(\sum_k \Delta_k^{\ell+1}W_{kj}^{\ell+1}\right)\sigma_\ell'(z_j^\ell).
 \end{equation}
-The final two equations relate these errors to the gradient of the cost function with respect to the model parameters. For the kernels, we have
+The final two equations relate these errors to the gradient of the loss function with respect to the model parameters. For the kernels, we have
 \begin{equation}
     \pdv{E}{W_{jk}^\ell} = \pdv{E}{z_j^\ell}\pdv{z_j^\ell}{W_{jk}^\ell} = \Delta_j^\ell a_k^{\ell-1}.
 \end{equation}
@@ -42,59 +46,74 @@ For the biases, the gradients are
 \begin{equation}
     \pdv{E}{b_j^\ell} = \pdv{E}{z_j^\ell}\pdv{z_j^\ell}{b_j^\ell} = \Delta_j^\ell.
 \end{equation}
+
 With these four equations, we can fit the neural network using minimization techniques such as stochastic gradient descent or more complex methods such as ADAM (pages 13-19 in \cite{ml_for_physicists}). 
 Although not the focus of this thesis, we might use these methods in conjunction with HMC to speed up convergence to the stationary distribution. Furthermore, the computation of gradients in combination with
-HMC can be performed with the backpropagation algorithm, but will in this thesis be performed using \textit{automatic differentiation} with Tensorflow.
+HMC can be performed with the backpropagation algorithm.
 
-\subsection{Cost function for regression}
-In this thesis, we're concerned with regression tasks. The activation function of the final layer $\sigma_L$ is then just the identity function. The typical cost function chosen to solve regression tasks is the $L_2$-norm, which for a single output can be written as 
+\subsection{Loss function for regression}
+In this thesis, we are concerned with regression tasks. The activation function of the final layer $\sigma_L$ is then just the identity function. The typical loss function chosen to solve regression tasks is the $L_2$-norm, which for a single output can be written as 
 \begin{equation}
     E(y, \hat{y}) = \frac{1}{2}\norm{y-\hat{y}}_2^2,
 \end{equation}
-where $\hat{y}$ denotes the model output and $y$ the ground-truth. Now, the model output in  this case is $\hat{y}_j = a_j^L = z_j^L$. Therefore, 
+where $\hat{y}$ denotes the model output and $y$ the ground-truth. Now, the model output in this case is $\hat{y}_j = a_j^L = z_j^L$. Therefore, 
 \begin{equation}
     \Delta_j^L = \pdv{E}{z_j^L} = a_j^L - y_j.
 \end{equation} 
 
-The backpropagation algorithm for a single datapoint can now be written down. The forward pass
-is found in algorithm \ref{algo:backprop_forward}. 
-
+We are now equipped to write down the backpropagation for a single datapoint. It's built up of a textit{forward pass} which takes an input $x$ and applies the recursive eq.~\eqref{eq:nn_forward_pass} which produces a model prediction $\hat{y} = a^L$. The second part of the algorithm 
+is the \textit{backward pass} which based on the prediction $\hat{y}$ and the target $y$, computes the gradients of the loss function with respect to the model parameters. The forward pass of the neural network
+is found in algorithm \ref{algo:forward_pass}. 
 \begin{figure}[H]
     \begin{algorithm}[H]
-        \caption{Backpropagation: forward pass}\label{algo:backprop_forward}
+        \caption{Backpropagation: Forward pass}\label{algo:forward_pass}
         \begin{algorithmic}
-        \State $a_j^0 = x_j$ \qq{for} $j = 1,..., p$ \Comment{Initialize input} 
-        \For {$\ell=1,2,.., L-1$}
-        \For{$j=1,2,.., n$}
-        \State $a_j^\ell \leftarrow \sigma\left(\sum_k W_{jk}^\ell a_k^{\ell-1} + b_j^\ell \right)$
+        \Procedure{ForwardPass}{$x$}
+        \State $a_j^0 = x_j$ \qq{for} $j = 1,\ldots, p$ \Comment{Initialize input} 
+        \For {$\ell=1,2,.., L$}
+        \For{$j=1,2,.., n_\ell$}
+        \State $a_j^\ell \leftarrow \sigma_\ell\left(\sum_k W_{jk}^\ell a_k^{\ell-1} + b_j^\ell \right)$
         \EndFor
         \EndFor
-        \For{$j=1,2,.., m$} \Comment{$m$ outputs}
-        \State $a_j^L \leftarrow \sigma\left(\sum_k W_{jk}^L a_k^{L-1} + b_j^L \right)$
-        \EndFor
+        \EndProcedure
         \end{algorithmic}
     \end{algorithm}
 \end{figure}
-The backward pass of the algorithm is stated in algorithm \ref{algo:backprop_backward}.
-
+The backward pass of the algorithm is stated in algorithm \ref{algo:backward_pass}.
 \begin{figure}[H]
     \begin{algorithm}[H]
-        \caption{Backpropagation: backward pass}\label{algo:backprop_backward}
+        \caption{Backpropagation: Backward pass}\label{algo:backward_pass}
         \begin{algorithmic}
-        \For{$j=1,2,.., m$} \Comment{$m$ outputs}
+        \Procedure{BackwardPass}{$y$}
+        \For{$j=1,2,\ldots, n_L$}
         \State $\Delta_j^L \leftarrow a_j^L - y_j$
         \State $\pdv*{E}{b_j^L} \leftarrow \Delta_j^L$
         \State $\pdv*{E}{W_{jk}^L} \leftarrow \Delta_j^L a_k^{L-1}$
         \EndFor
-        \For{$\ell = L-1, ..., 1$}
-        \For{$j = 1, ..., n$}
+        \For{$\ell = L-1, \ldots, 1$}
+        \For{$j = 1, \ldots, n$}
         \State $\Delta_j^\ell \leftarrow \left(\sum_k \Delta_k^{\ell+1}W_{kj}^{\ell+1}\right) \sigma'(z_j^\ell)$
         \State $\pdv*{E}{b_j^\ell} \leftarrow \Delta_j^\ell$
         \State $\pdv*{E}{W_{jk}^\ell} \leftarrow \Delta_j^\ell a_k^{\ell-1}$
         \State update $b_j^\ell$ and $W_{jk}^\ell$.
         \EndFor
         \EndFor
+        \EndProcedure
         \end{algorithmic}
     \end{algorithm}
 \end{figure}
+
+\subsection{Regularization}
+Neural networks often end up with a large number of parameters, which makes them prone to \textit{overfit} training data.
+This means that the trained parameters of the model is adjusted to capture trends in the training data which may not represent
+the underlying process the model tries to learn. The consequence is that it \textit{generalizes} poorly to new unseen data, i.e its predictions are poor. A typical strategy to avoid this problem, is to introduce some form of \textit{regularization}. A common choice is $L^2$-\textit{regularization}, which for a neural network tacks on two additional sums to the loss function as follows:
+\begin{equation}
+    E = \frac{1}{2}\sum_i \norm{\hat{y}^{(i)} - y^{(i)}}_2^2 + \frac{\lambda_W}{2}\sum_\ell \norm{W^\ell}_2^2 + \frac{\lambda_b}{2}\sum_\ell \norm{b^\ell}_2^2,
+\end{equation}
+where $\lambda_W$ and $\lambda_b$ are regularization strengths for the kernels and biases respectively. The $L^2$-norm $\norm{\cdot}_2$ is the standard Euclidean norm in the case of a vector. For a matrix, we mean the following. Consider a matrix $A \in \mathbb{R}^{m \times n}$. The matrix norm $\norm{\cdot}_2$ is then given by \textit{Fröbenius norm}
+\begin{equation}
+    \norm{A}_2 = \sqrt{\sum_{i=1}^m \sum_{j=1}^n \abs{A_{ij}}^2}.
+\end{equation}
+
+$L^2$-regularization is sometimes called $L^2$-penalty because it penalizes assignment of large values to the model parameters. Its effect is thus shrinkage of the parameter space where accessible minima may reside. 
 

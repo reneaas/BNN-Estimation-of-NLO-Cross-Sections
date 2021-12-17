@@ -10,24 +10,48 @@ import sys
 np.random.seed(1)
 tf.random.set_seed(1)
 
-class BNN(tf.keras.Sequential):
+
+class BNNDense(tf.keras.layers.Dense):
     """Wrapper for Sequential model that modifies the `set_weights` method to
     allow for change of parameters in the computational graph.
     """
 
-    def __init__(self, layers=None):
-        super(BNN, self).__init__(layers=layers)
-    
-    def set_weights(self, weights):
-        kernel = weights[::2]
-        bias = weights[1::2]
-        for layer, w, b in zip(self.layers, kernel, bias):
-            layer._weights = [w, b]
-            layer._kernel = w
-            layer._bias = b
+    def __init__(
+        self,
+        units,
+        activation=None,
+        use_bias=True,
+        kernel_initializer="glorot_uniform",
+        bias_initializer="zeros",
+        kernel_regularizer=None,
+        bias_regularizer=None,
+        activity_regularizer=None,
+        kernel_constraint=None,
+        bias_constraint=None,
+        **kwargs
+    ):
+        super(BNNDense, self).__init__(
+            units=units,
+            activation=activation,
+            use_bias=use_bias,
+            bias_initializer=bias_initializer,
+            kernel_regularizer=kernel_regularizer,
+            bias_regularizer=bias_regularizer,
+            activity_regularizer=activity_regularizer,
+            kernel_constraint=kernel_constraint,
+            bias_constraint=bias_constraint,
+            **kwargs
+        )
+
+    def set_weights(self, kernel, bias):
+        self._weights = [kernel, bias]
+        self._kernel = tf.Variable(kernel)
+        self._bias = tf.Variable(bias)
+        print(type(self._kernel))
+        #self._weights = [tf.Variable(kernel), tf.Variable(bias)]
 
 
-class BayesianNeuralNetworkHMC:
+class BayesianNeuralNetworkHMC(tf.keras.Sequential):
     """Class for a Bayesian neural network (BNN) using Hamiltonian Monte Carlo (HMC)
     and its derivatives as a sampling method to sample from its posterier.
 
@@ -54,8 +78,7 @@ class BayesianNeuralNetworkHMC:
     def __init__(
         self,
         layers=None,
-        activation=None,
-        top_layer_activation=tf.identity,
+        input_shape=None,
         kernel_prior=None,
         bias_prior=None,
         prior_mean=0.0,
@@ -63,6 +86,9 @@ class BayesianNeuralNetworkHMC:
         lamb=0.0,
         batch_size=1,
     ):
+
+        super(BayesianNeuralNetworkHMC, self).__init__(layers=layers, name=None)
+
         self.batch_size = (
             batch_size  # Parameter batch_size. Number of independent chains.
         )
@@ -83,16 +109,25 @@ class BayesianNeuralNetworkHMC:
                 loc=prior_mean, scale=prior_stddev
             )
 
-        # Get initial parameters, if layers are provided.
-        if layers:
-            self.weights = self._create_layers(layers)
+    # def create_layers(self, layers, input_shape, activation):
+    #     self.add(tf.keras.layers.Dense(units=layers[0], input_shape=input_shape, activation=activation))
+    #     for n in layers[1:-1]:
+    #         self.add(tf.keras.layers.Dense(units=n, activation=activation))
+    #     self.add(tf.keras.layers.Dense(units=layers[-1], activation=None)) #Default for regression
 
-        if activation:
-            self.activation = activation
-        else:
-            self.activation = tf.nn.sigmoid
+    def create_layers(self, layers, input_shape, activation):
+        self.add(
+            BNNDense(units=layers[0], input_shape=input_shape, activation=activation)
+        )
+        for units in layers[1:-1]:
+            self.add(BNNDense(units=units, activation=activation))
+        self.add(BNNDense(units=layers[-1], activation=None))
 
-        self.top_layer_activation = top_layer_activation
+    def set_weights(self, weights):
+        kernel = weights[::2]
+        bias = weights[1::2]
+        for layer, w, b in zip(self.layers, kernel, bias):
+            layer.set_weights(w, b)
 
     def _create_layers(self, layers):
         tmp = [
@@ -111,26 +146,25 @@ class BayesianNeuralNetworkHMC:
         del tmp  # Delete reference to tmp. Served its purpose.
         return weights
 
+    # def __call__(self, x, weights=None):
+    #     """Performs a simple forward pass with set of weighs and a given input x
 
-    def __call__(self, x, weights=None):
-        """Performs a simple forward pass with set of weighs and a given input x
+    #     Args:
+    #         x (tf.Tensor)                           :   Input features of shape (num_points, num_features)
+    #         weights (optional, list[tf.Tensor])     :   List of weights of the network of shape
+    #                                                     (batch_size, n, m).
+    #                                                     Default: `weights=None`. In this case, it defaults
+    #                                                     to the weights stored in the class.
 
-        Args:
-            x (tf.Tensor)                           :   Input features of shape (num_points, num_features)
-            weights (optional, list[tf.Tensor])     :   List of weights of the network of shape
-                                                        (batch_size, n, m).
-                                                        Default: `weights=None`. In this case, it defaults
-                                                        to the weights stored in the class.
+    #     Returns:
+    #         The computed outputs of the forward pass. A tf.Tensor object of shape [num_weights, num_points, num_outputs]
 
-        Returns:
-            The computed outputs of the forward pass. A tf.Tensor object of shape [num_weights, num_points, num_outputs]
-
-        """
-        if weights:
-            model = self.build_model(weights)
-        else:
-            model = self.build_model(self.weights)
-        return model(x)
+    #     """
+    #     if weights:
+    #         model = self.build_model(weights)
+    #     else:
+    #         model = self.build_model(self.weights)
+    #     return model(x)
 
     @tf.function
     def loss_grad(self, x, y):
@@ -163,7 +197,7 @@ class BayesianNeuralNetworkHMC:
                 losses.append(loss)
         return loss
 
-    @tf.function
+    #@tf.function
     def prior_log_prob_fn(self, weights):
         """Log prior probability function of the weights of the network.
         Currently set to be exp(-lamb * w ** 2) according to Radford Neals treatment
@@ -176,9 +210,9 @@ class BayesianNeuralNetworkHMC:
         kernel = weights[::2]
         bias = weights[1::2]
         kernel_sum = tf.reduce_sum(
-            [tf.reduce_sum(w ** 2, axis=(-1, -2)) for w in kernel], axis=0
+            [tf.reduce_sum(w ** 2) for w in kernel]
         )
-        bias_sum = tf.reduce_sum([tf.reduce_sum(b ** 2, axis=-1) for b in bias], axis=0)
+        bias_sum = tf.reduce_sum([tf.reduce_sum(b ** 2) for b in bias])
         return -0.5 * self.lamb * (kernel_sum + bias_sum)
 
     def log_likelihood(self, x, y, weights):
@@ -194,9 +228,10 @@ class BayesianNeuralNetworkHMC:
             Equivalent to the residual sum of squares (RSS).
         """
 
-        model = self.build_model(weights)
-        yhat = model(x)
-        return -0.5 * tf.reduce_sum((y - yhat) ** 2, axis=(1, 2))
+        # model = self.build_model(weights)
+        self.set_weights(weights)
+        yhat = self(x)
+        return -0.5 * tf.reduce_sum((y - yhat) ** 2, axis=0)
 
     def create_log_prob_fn(self, x, y):
         """Returns the combines log probability function needed to
@@ -393,7 +428,8 @@ class BayesianNeuralNetworkHMC:
 
 if __name__ == "__main__":
     with tf.device("/CPU:0"):
-        layers = [1, 100, 100, 1]
+        layers = [50, 1]
+        input_shape = (1,)
 
         # Create training data
         n_train = 1000
@@ -405,23 +441,35 @@ if __name__ == "__main__":
         # Should not be needed.
         # kernel_prior = tfp.distributions.Normal(loc=0., scale=0.01)
         # bias_prior = tfp.distributions.Normal(loc=0., scale=0.01)
+
         batch_size = 1
-        num_results_per_batch = 100
+        num_results_per_batch = 10
         num_results = num_results_per_batch * batch_size
         num_burnin_steps = 1000
         num_leapfrog_steps = 60
         step_size = 0.001
-        bnn = BayesianNeuralNetworkHMC(
-            layers=layers, activation=tf.nn.sigmoid, lamb=1e-3, batch_size=batch_size
-        )
+        bnn = BayesianNeuralNetworkHMC(layers=None, lamb=1e-3, batch_size=batch_size)
+        bnn.create_layers(layers, input_shape, activation="sigmoid")
         yhat = bnn(x_train)
         print(yhat.shape)
 
-        start = time.perf_counter()
-        bnn.mle_fit(x_train, y_train, epochs=1000, lr=0.001, batch_size=100)
-        end = time.perf_counter()
-        timeused = end - start
-        print(f"{timeused=} seconds of mle fit")
+        weights = bnn.get_weights()
+        new_weights = [tf.Variable(tf.random.normal(w.shape)) for w in weights]
+        print(new_weights[0].shape)
+        #bnn.set_weights(new_weights)
+
+        target_prob_fn = bnn.create_log_prob_fn(x_train, y_train)
+        p = target_prob_fn(new_weights)
+        print(p)
+
+        #yhat = bnn(x_train)
+        #print(yhat.shape)
+
+        # start = time.perf_counter()
+        # bnn.mle_fit(x_train, y_train, epochs=1000, lr=0.001, batch_size=100)
+        # end = time.perf_counter()
+        # timeused = end - start
+        # print(f"{timeused=} seconds of mle fit")
 
         start = time.perf_counter()
         chain = bnn.hmc_chain(
@@ -442,31 +490,32 @@ if __name__ == "__main__":
         #     step_size=step_size,
         #     adaptation=None,
         # )
-        end = time.perf_counter()
-        timeused = end - start
-        print(f"{timeused=} seconds of hmc sampling")
 
-        # test the model
-        n_test = 1000
-        x_test = tf.random.normal(shape=(n_test, 1), mean=0.0, stddev=3.0)
-        # predictions = bnn(x_test)
-        # print(predictions.shape)
-        predictions = bnn.predict_from_chain(x_test)
-        print(f"{x_test.shape=}")
-        print(f"{predictions.shape=}")
+        # end = time.perf_counter()
+        # timeused = end - start
+        # print(f"{timeused=} seconds of hmc sampling")
 
-        x = np.array(list(x_test.numpy().squeeze(-1)) * num_results)
-        predictions = np.array(predictions)
-        predictions = predictions.squeeze(-1).ravel()
-        print(f"{x.shape=}")
-        print(f"{predictions.shape=}")
-        sns.lineplot(x, predictions, ci="sd")
-        # plt.scatter(x_test, predictions, label="model", color="r")
+        # # test the model
+        # n_test = 1000
+        # x_test = tf.random.normal(shape=(n_test, 1), mean=0.0, stddev=3.0)
+        # # predictions = bnn(x_test)
+        # # print(predictions.shape)
+        # predictions = bnn.predict_from_chain(x_test)
+        # print(f"{x_test.shape=}")
+        # print(f"{predictions.shape=}")
 
-        x = np.linspace(-2 * np.pi, 2 * np.pi, 1001)
-        plt.plot(x, f(x), label="True function", color="r")
-        plt.scatter(x_train, y_train, label="observed data")
-        plt.legend()
-        plt.xlabel("x")
-        plt.ylabel("y")
-        plt.show()
+        # x = np.array(list(x_test.numpy().squeeze(-1)) * num_results)
+        # predictions = np.array(predictions)
+        # predictions = predictions.squeeze(-1).ravel()
+        # print(f"{x.shape=}")
+        # print(f"{predictions.shape=}")
+        # sns.lineplot(x, predictions, ci="sd")
+        # # plt.scatter(x_test, predictions, label="model", color="r")
+
+        # x = np.linspace(-2 * np.pi, 2 * np.pi, 1001)
+        # plt.plot(x, f(x), label="True function", color="r")
+        # plt.scatter(x_train, y_train, label="observed data")
+        # plt.legend()
+        # plt.xlabel("x")
+        # plt.ylabel("y")
+        # plt.show()

@@ -94,7 +94,6 @@ class BayesianNeuralNetworkHMC:
             model = self.build_model(self.weights)
         return model(x)
 
-
     @tf.function
     def prior_log_prob_fn(self, weights):
         """Log prior probability function of the weights of the network.
@@ -104,7 +103,9 @@ class BayesianNeuralNetworkHMC:
         Args:
             weights (list[tf.Tensor])   :   List containing tensors with kernels and biases.
         """
-        return -0.5 * self.lamb * tf.reduce_sum([tf.reduce_sum(w ** 2) for w in weights])
+        return (
+            -0.5 * self.lamb * tf.reduce_sum([tf.reduce_sum(w ** 2) for w in weights])
+        )
 
     def log_likelihood(self, x, y, weights):
         """Computes log likelihood of predicted target y given features `x` and `weights`.
@@ -121,7 +122,6 @@ class BayesianNeuralNetworkHMC:
         yhat = model(x)
         return -0.5 * tf.reduce_sum((y - yhat) ** 2)
 
-
     def create_log_prob_fn(self, x, y):
         """Returns the combines log probability function needed to
         use tf.mcmc.sample_chain.
@@ -135,9 +135,8 @@ class BayesianNeuralNetworkHMC:
         """
 
         def target_log_prob_fn(*weights):
-            return self.prior_log_prob_fn(weights) + self.log_likelihood(
-                x, y, weights
-            )
+            return self.prior_log_prob_fn(weights) + self.log_likelihood(x, y, weights)
+
         return target_log_prob_fn
 
     def build_model(self, weights):
@@ -155,7 +154,9 @@ class BayesianNeuralNetworkHMC:
             bias = weights[1::2]
             for w, b in zip(kernel[:-1], bias[:-1]):
                 x = self.activation(tf.matmul(x, w) + b[..., None, :])
-            x = self.top_layer_activation(tf.matmul(x, kernel[-1]) + bias[-1][..., None, :])
+            x = self.top_layer_activation(
+                tf.matmul(x, kernel[-1]) + bias[-1][..., None, :]
+            )
             return x
 
         return model
@@ -166,6 +167,7 @@ class BayesianNeuralNetworkHMC:
         else:
             predictions = self(x, self.chain)
         return predictions
+
     # def predict_from_chain(self, x, chain=None):
     #     predictions = []
     #     if chain:
@@ -234,8 +236,6 @@ class BayesianNeuralNetworkHMC:
         #     [sample[i] for sample in self.chain] for i in range(len(self.chain[0]))
         # ]
 
-
-
         return self.chain
 
 
@@ -249,7 +249,6 @@ if __name__ == "__main__":
         f = lambda x: tf.math.sin(x)
         x_train = tf.random.normal(shape=(n_train, dims), mean=0.0, stddev=3.0)
         y_train = f(x_train)
-
 
         # Should not be needed.
         # kernel_prior = tfp.distributions.Normal(loc=0., scale=0.01)
@@ -266,7 +265,6 @@ if __name__ == "__main__":
         target_log_prob_fn = bnn.create_log_prob_fn(x_train, y_train)
         res = target_log_prob_fn(*weights)
         print(tf.size(res))
-
 
         start = time.perf_counter()
         chain = bnn.hmc_chain(

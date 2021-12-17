@@ -316,16 +316,20 @@ class DenseLayer(object):
 
 if __name__ == "__main__":
     f = lambda x: np.sin(x)
-    layers = [1, 50, 1]
+    layers = [1, 100, 100, 1]
     bnn = BNNregression(layers, lr=0.0001, lamb=0.0, activation="sigmoid")
-    n_train = 5000
+    n_train = 1000
     x_train = np.random.normal(0, 3, size=(n_train, 1))
     y_train = f(x_train)
-    #bnn.fit(x_train, y_train, epochs=1000)
+    start = time.perf_counter()
+    bnn.fit(x_train, y_train, epochs=1000)
+    end = time.perf_counter()
+    timeused = end - start
+    print(f"{timeused=} seconds")
     start = time.perf_counter()
     bnn.bayesian_fit(x=x_train, y=y_train, num_samples=1000, L=60, eps=0.001)
     end = time.perf_counter()
-    timeused = end - start 
+    timeused = end - start
     print(f"{timeused=} seconds by hmc sampling")
 
     n_test = 1000

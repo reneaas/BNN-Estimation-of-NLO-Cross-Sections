@@ -1,8 +1,8 @@
-In this chapter, I'll explain the details of the Hamiltonian Monte Carlo (HMC) method.
-It's a Markov Chain Monte Carlo (MCMC) sampling technique that merges Gibbs sampling and a modified version of Metropolis sampling
+In this chapter, we will study the details of the Hamiltonian Monte Carlo (HMC) method.
+It is a Markov Chain Monte Carlo (MCMC) sampling technique that merges Gibbs sampling and a modified version of Metropolis sampling
 with Hamiltonian dynamics. It avoids the random walk behaviour of the Metropolis algorithm
-and generates successive samples with smaller correlation. In this chapter, the first thing I'll discuss is Markov chains.
-From that, follows an outline of Gibbs- and Metropolis sampling. After that, I'll deal with Hamiltonian dynamics before I bring it all together
+and generates successive samples with smaller correlation. In this chapter, the first thing we will discuss is Markov chains.
+From that, follows an outline of Gibbs- and Metropolis sampling. After that, we will deal with Hamiltonian dynamics before we bring it all together
 to form the Hamiltonian Monte Carlo algorithm for sampling. This forms the basis for the practical Bayesian learning of the neural networks studied in this thesis.
 
 \section{Markov Chain Monte Carlo}\label{sec:mcmc}
@@ -24,41 +24,47 @@ Two important principles, originally found by Metropolis et. al \cite{metropolis
 \end{comment}
 
 Monte Carlo Markov chain (MCMC) is a scheme to sample points $\theta$ proportional to a distribution $\pi(\theta)$. It generates a new point $\theta_i$ given a point $\theta_{i-1}$. 
-By Markov chain, we mean a sequence of points $\theta_1, \theta_2, \ldots$ that are possibly dependent, but are each occuring in the sequence in proportion to $\pi(\theta)$. Note that $\pi(\theta)$ here is not an exact probability distribution because it need not be normalized to unity.
+By Markov chain, we mean a sequence of points $\theta_1, \theta_2, \ldots$ that are possibly dependent, but are occuring in the sequence in proportion to $\pi(\theta)$. Note that $\pi(\theta)$ here is not an exact probability distribution because it need not be normalized to unity.
 However, suppose $P(\theta)$ is the underlying probability distribution, then $\pi(\theta) \propto P(\theta)$. Typically, in Bayesian applications, we have a prior $P(\theta)$ and a likelihood $P(D|\theta)$. In this case $\pi(\theta) = P(D|\theta)P(\theta)$ and 
-$\pi(\theta) \propto P(\theta|D)$, that is, it's proportional to the posterior distribution. 
+$\pi(\theta) \propto P(\theta|D)$, that is, it's proportional to the posterior distribution.
+
+
 A few important properties of the Markov chain, originally introduced by Metropolis et. al and built upon by Hastings \cite{metropolis}:
 \begin{enumerate}
-  \item \textbf{Ergodicity}. Each point $\theta_i$ is chosen from a distribution that only depends on the previous point in the sequence, $\theta_{i-1}$. For this, we introduce a transition probability $T(\theta_i|\theta_{i-1})$. Conceptually,
-  means that any point $\theta$ can be reached given a long enough sequence of samples.
+  \item \textbf{Ergodicity}. Each point $\theta_i$ is chosen from a distribution that only depends on the previous point in the sequence, $\theta_{i-1}$. For this, we introduce a transition probability that is  $T(\theta_i|\theta_{i-1})$. This ensures that any point $\theta$ can eventually be reached given a long enough sequence of samples \cite{numerical_recipies}. 
   \item \textbf{Detailed balance}. The transition probability is chosen to obey $$\pi(\theta)T(\theta'|\theta) = \pi(\theta')T(\theta|\theta'),$$ which ensures that the Markov chain is ergodic. Mathematically, we can express this condition as
   $$\pi(\theta') = \int \pi(\theta)T(\theta'|\theta)\dd\theta.$$
   \item We allow the transition $\theta \to \theta$, hence the transition probability $T(\theta|\theta)$ may be non-zero.
   \item The transition probablities integrate to unity, thus $$\int T(\theta'|\theta)\dd\theta = 1.$$
-  \item Finally, the transition probabilities are required to be time-independent.
+  \item Finally, the transition probabilities are required to be time--independent.
 \end{enumerate}
 
 
 \section{Gibbs sampling}
-Gibbs sampling \cite{gibbs} is a sampling technique for multi-dimensional parameters $\gamma \in \mathbb{R}^d$, for $d > 1$.
-Suppose $\gamma^{(t)}$ is the parameters at iteration $t$. Then the parameters $\gamma^{(t+1)}$ at iteration $t+1$ are generated from $\gamma^{(t)}$ by the algorithm
-
+Gibbs sampling \cite{gibbs} is a sampling technique used to generate a Markov chain sequence from an underlying multivariate distribution $P(\gamma)$ for a multi-dimensional parameter $\gamma = (\gamma_1, \ldots \gamma_d) \in \mathbb{R}^d$, for $d > 1$.
+Suppose $\gamma^{(t)}$ is the parameters at iteration $t$. Then the parameters $\gamma^{(t+1)}$ at iteration $t+1$ are generated from $\gamma^{(t)}$ by the following procedure.
 \begin{figure}[H]
   \begin{algorithm}[H]
     \caption{Gibbs sampling}
     \begin{algorithmic}
-      \State Sample $\gamma^{(t+1)}_1 \sim P(\gamma_1|\gamma_2^{(t)},...,\gamma_d^{(t)})$ \\
-      \State Sample $\gamma^{(t+1)}_2 \sim P(\gamma_2|\gamma_1^{(t+1)},...,\gamma_d^{(t)})$\\
-      \State $\vdots$ \qquad  \qquad $\vdots$ \qquad  \qquad $\vdots$ \qquad \qquad $\vdots$\\
-      \State Sample $\gamma^{(t+1)}_d \sim P(\gamma_d|\gamma_1^{(t+1)},...,\gamma_{d-1}^{(t+1)})$
+      \Procedure{GIBBS}{$\gamma^{(t)}$}\\
+        \State Sample $\gamma^{(t+1)}_1 \sim P(\gamma_1|\gamma_2^{(t)},...,\gamma_d^{(t)})$ \\
+        \State Sample $\gamma^{(t+1)}_2 \sim P(\gamma_2|\gamma_1^{(t+1)},...,\gamma_d^{(t)})$\\
+        \State $\vdots$ \qquad  \qquad $\vdots$ \qquad  \qquad $\vdots$ \qquad \qquad $\vdots$\\
+        \State Sample $\gamma^{(t+1)}_d \sim P(\gamma_d|\gamma_1^{(t+1)},...,\gamma_{d-1}^{(t+1)})$\\
+      \EndProcedure
     \end{algorithmic}
   \end{algorithm}
 \end{figure}
-
+\noindent Thus each new sample $\gamma^{(t+1)}_i$ is only dependent on the prior state of the other parameters through
+\begin{equation}
+  \gamma_i^{(t+1)} \sim P(\gamma_i|\gamma_{1}^{(t+1)}, \ldots \gamma_{i-1}^{(t+1)}, \gamma_{i+1}^{(t)}, \ldots, \gamma_{d}^{(t)}),
+\end{equation}
+which by definition makes it a Markov chain.
 
 
 \section{The Metropolis-Hastings algorithm}
-The Metropolis algorithm \cite{metropolis} is a sampling algorithm based on random walks in parameter space. Albeit efficient for some
+The Metropolis algorithm \cite{metropolis} is a sampling algorithm based on random walks in parameter space used in MCMC chains to generate a new point $\theta'$ given a point $\theta$. Albeit efficient for some
 problems, it's not a suitable sampling technique in the context of neural networks. However, a rudimentary understanding of the algorithm will be useful before we embark upon the HMC sampling algorithm. 
 
 The transition probability in the Metropolis algorithm is chosen to be
@@ -70,33 +76,33 @@ where $q(\theta'|\theta)$ is called the proposal distribution and $A(\theta, \th
   A(\theta, \theta') = \min \left(1, \frac{\pi(\theta')q(\theta|\theta')}{\pi(\theta)q(\theta'|\theta)}\right).
 \end{equation}
 The point $\theta'$ is accepted with probability $A(\theta, \theta')$. 
-
 \begin{figure}[H]
   \begin{algorithm}[H]
     \caption{Metropolis-Hastings}
     \begin{algorithmic}
+      \Procedure{METROPOLIS-HASTINGS}{$\theta$}\\
       \State Sample $\theta' \sim q(\theta'|\theta)$\\
-      \State $p = \min \left(1, \frac{\pi(\theta')q(\theta|\theta')}{\pi(\theta)q(\theta'|\theta)}\right)$\\
+      \State $p \leftarrow \min \left(1, \frac{\pi(\theta')q(\theta|\theta')}{\pi(\theta)q(\theta'|\theta)}\right)$\\
+      \State Sample $u$ uniformly on $(0,1)$. \\
       \If {$p \geq u$}
-        \State $\theta \to \theta'$ \Comment{Accept transition}
+        \State $\theta \leftarrow \theta'$ \Comment{Accept transition}
       \Else
-        \State $\theta \to \theta$  \Comment{Reject transition}
-      \EndIf
+        \State $\theta \leftarrow \theta$  \Comment{Reject transition}
+      \EndIf\\
+      \EndProcedure
     \end{algorithmic}
   \end{algorithm}
 \end{figure}
 
-
 \section{Hamiltonian dynamics}\label{sec:hamiltonian_dynamics}
-Hamiltonian dynamics \cite{classical_mechanics} plays a central part in the HMC algorithm. For completeness, I'll first give a brief survey of Lagrangian mechanics from which we derive the Hamiltonian. The Hamiltonian then lays the foundation for the Hamiltonian dynamics.
+Hamiltonian dynamics \cite{classical_mechanics} plays a central part in the HMC algorithm. For completeness, we will first survey Lagrangian mechanics from which we derive the Hamiltonian. The Hamiltonian then lays the foundation for the Hamiltonian dynamics.
 
 \subsection{Lagrangian Mechanics}
 Assume a set of \textit{generalized coordinates} $q = (q_1, ..., q_n)$. Generally, the Lagrangian can be written as
 \begin{equation}
   L(q, \dot{q}, t) = K(q, \dot{q}, t) - V(q, \dot{q}, t),
 \end{equation}
-where $K$ is the kinetic energy and $V$ is the potential energy of the system. I'll restrict the treatment to the case where there's no explicit dependence on time $t$. The solutions $q(t)$ can be found by solving the Euler-Lagrange equations given by
-
+where $K$ is the kinetic energy and $V$ is the potential energy of the system. We shall restrict the treatment to the case where there is no explicit dependence on time $t$. The solutions $q(t)$ can be found by solving the \textit{Euler--Lagrange} equations given by
 \begin{equation}
   \dv{}{t}\pdv{L}{\dot{q}_i} - \pdv{L}{q_i} = 0.
 \end{equation}
@@ -104,61 +110,69 @@ where $K$ is the kinetic energy and $V$ is the potential energy of the system. I
 \subsection{Hamiltonian Mechanics}
 The Hamiltonian is constructed by the Legendre transformation,
 \begin{equation}
-  H(q, p, t) = \sum_i p_i \dot{q}_i(p_i) - L(q, \dot{q}(p), t),
+  H(q, p, t) = \sum_i p_i \dot{q}_i(q, p) - L(q, \dot{q}(q, p), t),
 \end{equation}
 where
 \begin{equation}
-  p_i = \pdv{L}{\dot{q}_i}
+  p_i = \pdv{L}{\dot{q}_i}.
 \end{equation}
 The equations of motion, known as \textit{Hamilton's} equations, are given by
-\begin{equation}
-  \dv{p_i}{t} = \pdv{H}{p_i}, \qquad \dv{p_i}{t} = - \pdv{H}{q_i}.
+\begin{equation}\label{eq:eom}
+  \dv{q_i}{t} = \pdv{H}{p_i}, \qquad \dv{p_i}{t} = - \pdv{H}{q_i}.
 \end{equation}
+
 For the purpose of utilizing this framework in the context of HMC, it's assumed that the form of the Lagrangian is
 \begin{equation}
   L(q, \dot{q}) = K(\dot{q}) - V(q),
 \end{equation}
 where
-\begin{equation}
+\begin{equation}\label{eq:kinetic_energy}
   K(\dot{q}) = \sum_i \frac{1}{2}m_i\dot{q}^2_i.
 \end{equation}
-The generalized momentum is thus
+The generalized momentum of coordinate $q_i$ is
 \begin{equation}
   p_i = \pdv{K}{\dot{q}_i} = m\dot{q}_i,
 \end{equation}
-from it follows that
-\begin{equation}
+from which it follows that the Legendre transformed kinetic energy can be written as
+\begin{equation}\label{eq:kinetic_energy}
+  K(p) = \sum_i \frac{p_i^2}{2m_i}.
+\end{equation}
+Finally, we can write down the Hamiltonian as
+\begin{equation}\label{eq:hamiltonian}
   H(q, p) = K(p) + V(q) = \sum_i \frac{p_i^2}{2m_i} + V(q).
 \end{equation}
 
 \subsection{Leapfrog integration}
-To run one step of HMC, we need to simulate a Hamiltonian system of the form discussed in the former section.
-The common choice of algorithm to integrate the equations is \textit{leapfrog} integration \cite{leapfrog}. This integrator is \textit{symplectic}, which means it conserves local volumes in phase space. This effectively translates to an approximately conserved value of $H(q,p)$ throughout a simulation, with slight oscillations about a mean value.
+To run one step of HMC, we need to compute the time evolution of a Hamiltonian system of the form discussed in the former section,
+where the neural network parameters will play the role as the generalized coordinates $q$.
+The common choice of algorithm to integrate the equations of motion in eq.~\eqref{eq:eom} is \textit{Leapfrog} integration \cite{leapfrog}. This integrator is \textit{symplectic}, which means it conserves local volumes in phase space. This effectively translates to an approximately conserved value of $H(q,p)$ throughout a simulation, with slight oscillations about a mean value.
 
-Assume we approximate the true coordinates and momenta by $(\hat{q}, \hat{p})$. A single leapfrog integration step can then be written as in algorithm \ref{algo:leapfrog}. $h$ represents the stepsize used in the algorithm.
+Assume we approximate the true coordinates and momenta by $(\hat{q}, \hat{p})$. A single Leapfrog integration step can then be written as in algorithm \ref{algo:leapfrog}. Here $h$ represents the stepsize used in the algorithm.
 \begin{figure}[H]
 	\begin{algorithm}[H]
 		\caption{Leapfrog integration (single step)}\label{algo:leapfrog}
 		\begin{algorithmic}
-			\State 1. $\hat{p}_i(t + h/2) = \hat{p}_i(t) - \frac{h}{2}\pdv*{V(\hat{q}(t))}{q_i} $\\
-			\State 2. $\hat{q_i}(t+h) = \hat{q}_i(t) + \frac{h}{m_i}\hat{p}_i(t+h/2)$\\
-			\State 3. $\hat{p_i}(t+h) = \hat{p}_i(t + h/2) -  \frac{h}{2}\pdv*{V(\hat{q}(t+h))}{q_i}$
+      \Procedure{LEAPFROG}{$q, p, \lambda$}
+			\State 1. $\hat{p}_i(t + h/2) = \hat{p}_i(t) - \lambda\frac{h}{2}\pdv*{V(\hat{q}(t))}{q_i} $\\
+			\State 2. $\hat{q_i}(t+h) = \hat{q}_i(t) + \lambda\frac{h}{m_i}\hat{p}_i(t+h/2)$\\
+			\State 3. $\hat{p_i}(t+h) = \hat{p}_i(t + h/2) -  \lambda\frac{h}{2}\pdv*{V(\hat{q}(t+h))}{q_i}$
+      \EndProcedure
 		\end{algorithmic}
 	\end{algorithm}
 \end{figure}
 
 \section{Hamiltonian Monte Carlo}
-Hamiltonian Monte Carlo \cite{hmc} is largely developed and expanded upon by R. Neal. The probability distribution to sample from
+Hamiltonian Monte Carlo is largely developed and expanded upon by Radford Neal \cite{hmc}. The probability distribution to sample from
 is expressed in terms the Canonical distribution
 \begin{equation}
   P(q) \propto \exp(-V(q)),
 \end{equation}
 where $q$ represents the parameters of the model. $V(q)$ can then always be expressed as
 \begin{equation}
-  V(q) = -\log P(q) - \log Z,
+  V(q) = -\log Z - \log P(q)
 \end{equation}
 for some $Z$. To utilize the framework of Hamiltonian dynamics explained in section \ref{sec:hamiltonian_dynamics}, we introduce momentum variables
-$p_i$ such that we can expressed the total Hamiltonian as
+$p_i$ such that we can express the total Hamiltonian as
 \begin{equation}
   H(q, p) = K(p) + V(q),
 \end{equation}
@@ -166,24 +180,28 @@ with a corresponding canonical distribution over phase-space
 \begin{equation}
   P(q, p) \propto \exp\left(-H(q,p)\right).
 \end{equation}
-The algorithm is summarized in 
 
+The algorithm is summarized in 
 \begin{figure}[H]
 	\begin{algorithm}[H]
 		\caption{Hamiltonian Monte Carlo}\label{algo:hmc}
 		\begin{algorithmic}
-      \State Randomly choose $\lambda = \pm 1$
-      \State Randomly sample $p$ with Gibbs sampling
-      \State Start from current state $(q, p)$ 
-      \For{$l = 1, ..., L$}
-        \State $(q', p') \leftarrow$ Leapfrog$(q, p)$
+      \Procedure{HMC}{$L, q, p$}
+      \State Sample $u \sim U(0,1)$.
+      \State $\lambda = 1 \qq{if} u \geq 1/2 \qq{else} \lambda = -1$
+      \State $(q^*, p^*) \leftarrow (q, p)$    \Comment{Start from initial state.}
+      \State $p^* \leftarrow \text{GIBBS}(p^*)$
+      \For{$l = 1, ..., L$} \Comment{$L$ Leapfrog steps.}
+        \State $(q^*, p^*) \leftarrow$ LEAPFROG$(q^*, p^*, \lambda)$
       \EndFor
-      \State $p = \min \left(1, \exp\left[-\left(H(q',p') - H(q, p)\right)\right]\right)$
-      \If {$p \geq u$}
-        \State $(q, p) \leftarrow (q', p')$
+      \State $P = \min \left(1, \exp\left[-\left(H(q^*,p^*) - H(q, p)\right)\right]\right)$
+      \State Sample $u \sim U(0,1)$ \Comment{Uniform distribution on $(0,1)$.}
+      \If {$P \geq u$}
+        \State $(q, p) \leftarrow (q^*, p^*)$ \Comment{Accept proposed state.}
       \Else
-        \State $(q, p) \leftarrow (q, p)$
+        \State $(q, p) \leftarrow (q, p)$ \Comment{Reject proposed state.}
       \EndIf
+      \EndProcedure
 		\end{algorithmic}
 	\end{algorithm}
 \end{figure}

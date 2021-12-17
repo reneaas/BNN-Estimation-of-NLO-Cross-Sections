@@ -2,51 +2,54 @@
 
 
 \section{Bayesian inference}
-Given a series of observations $D = \{ x^{(1)}, ... , x^{(n)} \}$, one defines a probabilistic model $P(x^{(i)}, \theta)$ for a set of parameters $\theta$.  The foundation for Bayesian inference is Bayes' theorem, which can be formulated as
+The foundation for Bayesian inference is Bayes' theorem, which can be formulated as
 \begin{equation}
-	P(\theta | D) = \frac{P(D|\theta)P(\theta)}{P(D)}
+	P(\theta | D) = \frac{P(D|\theta)P(\theta)}{P(D)}.
 \end{equation}
-Some useful terminology is in order. $P(\theta)$ is called the \textit{prior} distribution and embodies our prior knowledge of the distribution of $\theta$ before any new observations are considered. $P(D|\theta)$ is called the \textit{likelihood} function and provides information about $\theta$ learned from observing the data $D$. The likelihood function is often written
+where $D$ is observed data and $\theta$ are the model parameters.
+Some useful terminology is in order. $P(\theta)$ is called the \textit{prior} distribution and embodies our prior knowledge of $\theta$ before any new observations are considered. $P(D|\theta)$ is called the \textit{likelihood} function and provides information about $\theta$ learned from observing the data $D$. The \textit{posterior} distribution $P(\theta|D)$ models our belief about $\theta$ after the data $D$ is observed. More succinctly, we can write Bayes' theorem as
 \begin{equation}
-  L(\theta) \equiv L(\theta|D) = P(D|\theta).
-\end{equation}
-One should remember that this is specific to the data $D$, even though it's sometimes written as $L(\theta)$. The \textit{posterior} distribution $P(\theta|D)$ models our belief about the distribution of $\theta$ after the data $D$ is observed. More succinctly, we can write Bayes' theorem as
-\begin{equation}
-  P(\theta|D) \propto L(\theta|D)P(\theta),
+  P(\theta|D) \propto P(\theta|D)P(\theta),
 \end{equation}
 because its rarely of interest, or tractable, to compute $P(D)$, known as the \textit{evidence}.
 
-The objective of Bayesian inference is to compute the \textit{predictive} distribution, which can be expressed as
-the integral over all parameters of the posterior distribution weighted by the likelihood. Mathematically,
+The objective of Bayesian inference is to compute the \textit{predictive} distribution for an unseen datapoint $y^*$, which can be expressed as
+the integral over all parameters of the posterior distribution weighted by the likelihood. Given a dataset of observations $D = \{y^{(1)}, \ldots y^{(n)}\}$, this implies
 \begin{equation}
-  P(x^{(n+1)}|D) = \int P(x^{(n+1)}|\theta)P(\theta|D)\dd \theta = \int L(\theta|x^{(n+1)})P(\theta|D)\dd \theta.
+  P(y^*|D) = \int P(y^*, \theta|D)\dd\theta =\int P(y^*|\theta, D)P(\theta|D)\dd \theta = \int P(y^*|\theta)P(\theta|D)\dd\theta,
 \end{equation}
+which loosely describes the probability of observing $y^*$ given the observations in $D$.
 
 
 \section{Bayesian framework for neural networks}
 
 We can specialize the equations used in Bayesian inference for neural networks in the context of regression.
-The predictive distribution $P(y|x)$ seeks to model a function $f : \mathbb{R}^p \to \mathbb{R}$ that for a given $x$ produces an output $y$. In the infinite data limit, the distribution should be a Dirac Delta function. For finite datasets, however, we instead seek a distribution of outputs given the input features.
+The predictive distribution $P(y|x, \theta)$ seeks to model a function $f : \mathbb{R}^p \to \mathbb{R}^d$ that for a given $x \in \mathbb{R}^p$ produces an output $y \in \mathbb{R}^d$. In the infinite data limit, the distribution should be a Dirac delta function. For finite datasets, however, we instead seek a distribution of outputs given the input features.
 
-Consider a set of observations $D = \{(x^{(1)}, y^{(1)}), ..., (x^{(n)}, y^{(n)})\}$, where $x^{(i)} \in \mathbb{R}^p$ are the input features and $y^{(i)} \in \mathbb{R}$ are the \textit{targets}. The equation for the predictive distribution changes to
+Consider a set of observations $D = \{(x^{(1)}, y^{(1)}), ..., (x^{(n)}, y^{(n)})\}$, where $x^{(i)} \in \mathbb{R}^p$ are the input features and $y^{(i)} \in \mathbb{R}^d$ are the targets. The equation for the predictive distribution of $y^*$ given an input $x^*$ changes to
 \begin{equation}
-  P(y^{(n+1)}|x^{(n+1)}, D) = \int L(\theta, y^{(n+1)}|x^{(n+1)})P(\theta|D)\dd \theta.
+  P(y^*|x^*, D) = \int P(y^*|x^*, \theta)P(\theta|D)\dd \theta.
 \end{equation}
 Assuming that the the observations in $D$ are drawn independently, the likelihood function can be expressed as
 \begin{equation}
-  L(\theta|D) = \prod_{i=1}^n L(\theta, y^{(i)}|x^{(i)}) = \prod_{i=1}^n P(y^{(i)}|x^{(i)}, \theta).
+  P(D|\theta) = \prod_{i=1}^n P(y^{(i)}|x^{(i)}, \theta).
 \end{equation}
-In the context of regression, the conditional distribution is chosen to be
-\begin{equation}
-  P(y|x, \theta) = \frac{1}{\sqrt{2\pi}\sigma}\exp\left(-\frac{(f(x) - y)^2}{2\sigma^2}\right),
+In the context of regression, the likelihood for a given observation $(x,y)$ is commonly chosen to be
+\begin{comment}
+  \begin{equation}
+    P(y|x, \theta) \propto \exp\left(-\frac{(y - f(x; \theta))^2}{2\sigma^2}\right),
+  \end{equation}
+\end{comment}
+\begin{equation}\label{eq:nn_likelihood}
+  P(y|x, \theta) \propto \exp\left(-\frac{\lambda}{2}\norm{y - f(x;\theta)}_2^2\right).
 \end{equation}
-where $f(x)$, the neural network output, is the mean of $y$ and $\sigma$ is the noise of $y$.
+where $f(x; \theta)$ is the output of the neural network and $\lambda$ is a hyperparameter typically chosen to be identical for all inputs $(x, y)$ during training. The likelihood found eq.~\eqref{eq:nn_likelihood} is equivalent to using $L^2$-norm as a loss function with regularization strength $\lambda$ when framed as a minimization problem, which we will see shortly.
 
-In practice, however, we instead sample a set of network paramters $\{\theta_1, ..., \theta_n\}$ from the posterior distribution
+In practice, however, we instead sample a set of network parameters $\{\theta_1, ..., \theta_n\}$ from the posterior distribution
 \begin{equation}
   P(\theta|D) \propto P(D|\theta)P(\theta),
 \end{equation}
-from which can can produce a set of predictions $\{\hat{y}_1,\ldots \hat{y}_n\}$ from the neural network model 
+from which we can produce a set of predictions $\{\hat{y}_1,\ldots \hat{y}_n\}$ from the neural network model 
 \begin{equation}
   \hat{y}_i = f(x, \theta_i).
 \end{equation}
@@ -54,14 +57,11 @@ Given this set of predictions, we can compute the sample mean
 \begin{equation}
   \hat{y}_\text{MLE} = \frac{1}{n}\sum_i f(x, \theta_i),
 \end{equation}
-which is an approximation to the \textit{maximum likelihood estimate} (MLE). Furthermore, an estimate of the error is provided by the sample variance
-\begin{equation}
-  \text{Var} (y) = \frac{1}{n-1}\sum_i (\hat{y}_\text{MLE} - \hat{y}_i)^2,
+which is an approximation to the \textit{maximum likelihood estimate} (MLE). Furthermore, an estimate of the error is provided by the sample \textit{covariance}
+\begin{equation}\label{eq:covariance}
+  \text{Cov}(\hat{y}) = \frac{1}{n-1}\sum_i (\hat{y}^{(i)} - \hat{y}_\text{MLE})(\hat{y}^{(i)} - \hat{y}_\text{MLE})^T.
 \end{equation}
-which is we typically report as the root of, which we may call the standard error
-\begin{equation}
-  \sigma = \sqrt{\text{Var}(\hat{y})}.
-\end{equation}
+The diagonal terms of eq.~\eqref{eq:covariance} yields the sample \textit{variance} of the components of $\{\hat{y}^{(i)}\}_{i=1}^n$.
 
 \section{Sources of uncertainty}
 The main motivation utilizing Bayesian inference to neural networks is to be able to quantify uncertainty. 
@@ -83,29 +83,29 @@ of two adjacent layers by a factor of $\alpha$ and $1/\alpha$ respectively and p
 that explains a set of observations does not exist for sufficiently complex models.
 
 \section{Bayesian learning using HMC}
-To implement learn from the data $D$ using HMC, we need to define a potential energy function $V(q)$ 
+To learn from the data $D$ using HMC, we need to define a potential energy function $V(q)$ 
 and a kinetic energy function $K(p)$. To this end, we need to specify
 \begin{enumerate}
-  \item A prior for the network parameters, i.e the kernels $W_{ij}^\ell$ and the biases $b_j^{\ell}$,
-  \item A prior for the corresponding momenta $p$,
+  \item A prior for the network parameters, i.e the kernels $W_{ij}^\ell$ and the biases $b_j^{\ell}$. A common choice is
+  \begin{equation}\label{eq:model_priors}
+    P(W^\ell) \propto \exp\left(-\frac{\lambda_W}{2}\norm{W^\ell}_2^2\right), \qquad P(b^\ell) \propto \exp\left(-\frac{\lambda_b}{2}\norm{b^\ell}_2^2\right).
+  \end{equation}
+  \item A distribution of the generalized momenta of the model. The kinetic energy in eq.~\eqref{eq:kinetic_energy} automatically imposes that
+  \begin{equation}\label{eq:momenta_distribution}
+    P(p) \propto \prod_i \exp\left(-\frac{p_i^2}{2m_i}\right),
+  \end{equation}
+  since $K(p) = -\log P(p)$.
   \item A likelihood function given an input $(x, y)$,
 \end{enumerate}
 from which we can define the potential energy as follows:
-\begin{equation}
-  V(W, b) = - \log Z - \lambda_W\sum_{\ell,i,j}\log P(W_{ij}^\ell) - \lambda_b\sum_{\ell,j}\log P(b_j^\ell) - \sum_i \log P(y^{(i)}| x^{(i)}, W, b), 
+\begin{equation}\label{eq:generic_potential_energy}
+  V(W, b) = - \log Z - \sum_{\ell}\log P(W^\ell) - \sum_{\ell}\log P(b^\ell) - \sum_i \log P(y^{(i)}| x^{(i)}, W, b), 
 \end{equation}
-where $W$ denotes all the kernels and $b$ denotes all the biases of the model, 
-and $\lambda_W$ and $\lambda_b$ are regularization strenghts for the kernels and biases, respectively. 
-These play the same role as in typical machine learning applications - to limit the magnitude of the parameters in the model.
+where $W$ denotes all the kernels and $b$ denotes all the biases of the model. Here $Z$ denotes the normalization constant of the distributino $P \propto \exp(-V(W, b))$, but is of no importance for the sampling procedure. Inserting the terms from eq.~\eqref{eq:model_priors} and eq.~\eqref{eq:nn_likelihood}, we get the following expression for the potential energy.
+\begin{equation}\label{eq:special_potential_energy}
+  V(W, b) = -\log Z + \frac{\lambda_W}{2} \sum_{\ell} \norm{W^\ell}_2^2 + \frac{\lambda_b}{2}\sum_{\ell} \norm{b^\ell}_2^2 + \frac{\lambda}{2}\sum_{i} \norm{y^{(i)} - f(x^{(i)}; W, b)}_2^2.  
+\end{equation}
+The terms in eq.~\eqref{eq:special_potential_energy} play the same role as in typical machine learning applications.
 Note that $Z$ here is some appropriate constant that doesn't really matter for the sampling process, 
-but would serve as part of the normalization constant of the probability distributions $P \propto \exp(-V)$.
-The priors of the kernels and biases are chosen to obey
-\begin{equation}
-  \log P(W_{ij}^\ell) = -\frac{1}{2}(W_{ij}^\ell)^2, \qquad \log P(b_j^\ell) = -\frac{1}{2}(b_j^\ell)^2,
-\end{equation}
-which is the equivalent to the typical $L_2$ regularization terms for the parameters of the model.
-The priors for the momenta are typically chosen to be 
-\begin{equation}
-  P(p) \propto \prod_i \exp \left(- \frac{p_i^2}{2m_i}\right).
-\end{equation}
-Once these are chosen, we can form the Hamiltonian used in HMC and proceed to sample from the desired distribution.
+
+With the ingredients introduced hitherto, we can proceed to sample from a network with an arbitrary network architecture.

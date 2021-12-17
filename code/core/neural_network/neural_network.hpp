@@ -91,6 +91,7 @@ public:
     void fit(int epochs, int batch_sz, double eta); //Fits the model
     double evaluate(arma::mat X_test, arma::mat y_test); //Evaluates the model according to the appropriate performance metric.
 
+    // void hmc_step(int num_leapfrog_steps, int step_size);
 
 };
 

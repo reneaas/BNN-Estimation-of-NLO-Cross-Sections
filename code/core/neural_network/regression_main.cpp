@@ -25,15 +25,15 @@ int main(int argc, char const *argv[]) {
     arma::mat y_train = f(x_train);
     int num_outputs = 1;
     string model_type = "regression";
-    double lamb = 1e-5;
-    double gamma = 0.9;
+    double lamb = 0.0;
+    double gamma = 0.0;
     string hidden_activation = "relu";
     FFNN neural_net(features, num_outputs, model_type, lamb, gamma, hidden_activation);
-    neural_net.add_layer(50, features);
-    neural_net.add_layer(num_outputs, 50);
+    neural_net.add_layer(100, features);
+    neural_net.add_layer(num_outputs, 100);
 
     int epochs = 1000;
-    int batch_sz = 100;
+    int batch_sz = 1000;
     double eta = 0.001;
     neural_net.init_data(x_train, y_train);
     neural_net.fit(epochs, batch_sz, eta);

@@ -6,6 +6,7 @@ from math import isnan
 import numpy as np
 import matplotlib.pyplot as plt
 import tensorflow_probability as tfp
+import time
 
 
 def get_dataset(feat_dir, target_dir, ids):
@@ -61,10 +62,10 @@ def scale_data(x, y):
 def get_model(optimizer, loss_fn, metrics):
     model = keras.Sequential(
         [
-            layers.Dense(100, activation="relu", input_shape=(5,)),
-            layers.Dense(1000, activation="relu"),
+            layers.Dense(50, activation="relu", input_shape=(1,)),
+            #layers.Dense(50, activation="relu"),
             # layers.Dropout(rate=0.2),
-            layers.Dense(1000, activation="relu"),
+            #layers.Dense(1000, activation="relu"),
             layers.Dense(1, activation="linear"),
         ]
     )
@@ -101,6 +102,11 @@ if __name__ == "__main__":
     # print(model.summary())
     # print(model(features[0]))
 
+    n_train = 1000
+    f = lambda x: tf.math.sin(x) * tf.math.cos(x)
+    x_train = tf.random.normal(shape=(n_train, 1))
+    y_train = f(x_train)
+
 
     # optimizer = keras.optimizers.RMSprop(learning_rate = 0.001),
     # optimizer = keras.optimizers.SGD(learning_rate = 0.1)
@@ -109,12 +115,18 @@ if __name__ == "__main__":
     metrics = [keras.metrics.MeanSquaredError()]
     model = get_model(optimizer, loss, metrics)
     model.summary()
-    x_train, y_train, x_val, y_val, x_test, y_test = split_data(features, targets)
-    model, history = fit(model, x_train, y_train, x_val, y_val)
-
-    plt.plot(history.history["loss"], label = "training")
-    plt.plot(history.history["val_loss"], label = "validation")
-    plt.xlabel("epochs")
-    plt.ylabel("loss")
-    plt.legend()
-    plt.show()
+    #x_train, y_train, x_val, y_val, x_test, y_test = split_data(features, targets)
+    #model, history = fit(model, x_train, y_train, x_val, y_val)
+    #model, history = fit(model, x_train, y_train)
+    with tf.device("/CPU:0"):
+        start = time.perf_counter()
+        model.fit(x_train, y_train, epochs = 10000, batch_size=1000)
+        end = time.perf_counter()
+        timeused = end - start
+        print(f"{timeused=} seconds ")
+    # plt.plot(history.history["loss"], label = "training")
+    # plt.plot(history.history["val_loss"], label = "validation")
+    # plt.xlabel("epochs")
+    # plt.ylabel("loss")
+    # plt.legend()
+    # plt.show()

@@ -330,7 +330,7 @@ double FFNN::compute_r2() {
         x = X_test_.col(i);
         y = y_test_.col(i);
         feed_forward(x);
-        diff = y(0) - layers_[l].activation_(0);
+        diff = layers_[l].activation_(0) - y(0);
         error += diff*diff;
         y_mean += y(0);
     }
@@ -422,3 +422,41 @@ arma::vec FFNN::binary_classifier(arma::vec z) {
     arma::vec s = 1./(1.+exp(z));
     return s.transform( [](double val){return (val > 0.5);});
 }
+
+// std::vector<arma::mat> hmc_step(arma::vec x, arma::vec y, int num_leapfrog_steps, int step_size){
+    
+//     //generate initial momentum states with Gibbs sampling.
+//     std::vector<arma::mat> init_kernel.reserve(num_layers_);
+//     std::vector<arma::mat> init_bias.reserve(num_layers_);
+
+
+//     std::vector<arma::mat> momenta_kernel;
+//     std::vector<arma::mat> momenta_bias;
+//     for (int l = 0; l < num_layers_; l++) {
+//         init_kernel[l] = layers_[l].weights_;
+//         init_bias[l] = layers_[l].bias_;
+
+//         momenta_kernel.push_back(
+//             arma::mat(layers_[l].rows, layers_[l].cols).randn();
+//         )
+//         momenta_bias.push_back(
+//             arma::vec(layers_[l].rows).randn();
+//         )
+//     }
+
+//     double lamb = arma::uniform() > 0.5 ? 1. : 0.;
+
+//     for (int i = 0; i < num_leapfrog_steps; i++) {
+        
+//     }
+    
+
+
+
+
+
+
+//     //Perform a first update of weights.
+
+
+// }

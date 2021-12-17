@@ -8,6 +8,12 @@ N.~Metropolis, A.~W. Rosenbluth, M.~N. Rosenbluth, A.~H. Teller and E.~Teller,
   [\href{http://arxiv.org/abs/https://doi.org/10.1063/1.1699114}{{\tt
   https://doi.org/10.1063/1.1699114}}].
 
+\bibitem{numerical_recipies}
+W.~H.~P. et. al, \emph{Numerical recipes in C : the art of scientific
+  computing}, pp.~824--826.
+\newblock Second edition. Cambridge [Cambridgeshire] ; New York : Cambridge
+  University Press, 1992., 1992.
+
 \bibitem{gibbs}
 S.~Geman and D.~Geman, \emph{{S}tochastic relaxation, {G}ibbs {D}istributions,
   and the {B}ayesian {R}estoration of {I}mages},
