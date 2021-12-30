@@ -10,6 +10,7 @@ import sys
 np.random.seed(1)
 tf.random.set_seed(1)
 
+
 class BNN(tf.keras.Sequential):
     """Wrapper for Sequential model that modifies the `set_weights` method to
     allow for change of parameters in the computational graph.
@@ -17,7 +18,7 @@ class BNN(tf.keras.Sequential):
 
     def __init__(self, layers=None):
         super(BNN, self).__init__(layers=layers)
-    
+
     def set_weights(self, weights):
         kernel = weights[::2]
         bias = weights[1::2]
@@ -63,9 +64,7 @@ class BayesianNeuralNetworkHMC:
         lamb=0.0,
         batch_size=1,
     ):
-        self.batch_size = (
-            batch_size  # Parameter batch_size. Number of independent chains.
-        )
+        self.batch_size = batch_size
         self.lamb = lamb  # Regularization parameter.
         # Set priors of kernel
         if kernel_prior:
@@ -111,9 +110,9 @@ class BayesianNeuralNetworkHMC:
         del tmp  # Delete reference to tmp. Served its purpose.
         return weights
 
-
+    @tf.function
     def __call__(self, x, weights=None):
-        """Performs a simple forward pass with set of weighs and a given input x
+        """Performs a simple forward pass with set of weights and a given input x
 
         Args:
             x (tf.Tensor)                           :   Input features of shape (num_points, num_features)
@@ -127,28 +126,58 @@ class BayesianNeuralNetworkHMC:
 
         """
         if weights:
-            model = self.build_model(weights)
+            kernel = weights[::2]
+            bias = weights[1::2]
         else:
-            model = self.build_model(self.weights)
-        return model(x)
+            kernel = self.weights[::2]
+            bias = self.weights[1::2]
+        for w, b in zip(kernel[:-1], bias[:-1]):
+            x = self.dense_layer(x, w, b, self.activation)
+        x = self.dense_layer(x, kernel[-1], bias[-1], self.top_layer_activation)
+        return x
 
     @tf.function
     def loss_grad(self, x, y):
+        """Computes the gradient given an input (x,y).
+
+        Args:
+            x (tf.Tensor)   :   Input features of shape [num_points, num_features]
+            y (tf.Tensor)   :   Targets of shape [num_points, num_targets]
+
+        Returns:
+            loss (tf.Tensor)        :   loss of shape [num_chains]
+            grad (list[tf.Tensor])  :   List of gradients of the loss with respect to
+                                        weights of the network.
+        """
         with tf.GradientTape() as tape:
             tape.watch(self.weights)
-            yhat = self(x)
+            yhat = self(x, self.weights)
             loss = tf.reduce_sum((y - yhat) ** 2, axis=(1, 2))
         grad = tape.gradient(loss, self.weights)
         return loss, grad
 
-    def mle_fit(self, x, y, epochs, lr, batch_size=None):
+    def mle_fit(self, x, y, epochs, lr, batch_size=None, optimizer=None):
+        """Fits the network using the backpropagation algorithm, i.e maximum likelihood estimation (MLE).
 
-        optimizer = tf.keras.optimizers.Adam(learning_rate=lr)
+        Args:
+            x (tf.Tensor)                               :   Input features of shape [num_points, num_features]
+            y (tf.Tensor)                               :   Targets of shape [num_points, num_outputs]
+            epochs (int)                                :   Number of epochs to fit the network.
+            lr (float)                                  :   Learning rate.
+            batch_size (int, optional)                  :   Batch size used during training.
+            optimizer(tf.keras.optimizers, optional)    :   Optimizer used during training.
+
+        Returns:
+            loss (list[float])  : List containing the loss per epoch.
+        """
+        if not optimizer:
+            optimizer = tf.keras.optimizers.Adam(learning_rate=lr)
+
         losses = []
         self.weights = [tf.Variable(w) for w in self.weights]
         if batch_size:
             ds = self.get_dataset(x=x, y=y, batch_size=batch_size)
-            for i in trange(epochs, desc="Epochs"):
+            for _ in trange(epochs, desc="Epochs"):
                 tot_loss = 0
                 for x_, y_ in ds:
                     loss, grad = self.loss_grad(x_, y_)
@@ -157,7 +186,7 @@ class BayesianNeuralNetworkHMC:
                 losses.append(tot_loss)
 
         else:
-            for i in trange(epochs, desc="Epochs"):
+            for _ in trange(epochs, desc="Epochs"):
                 loss, grad = self.loss_grad(x, y)
                 optimizer.apply_gradients(zip(grad, self.weights))
                 losses.append(loss)
@@ -172,6 +201,9 @@ class BayesianNeuralNetworkHMC:
 
         Args:
             weights (list[tf.Tensor])   :   List containing tensors with kernels and biases.
+
+        Returns:
+            tf.Tensor with the computed prior log probability.
         """
         kernel = weights[::2]
         bias = weights[1::2]
@@ -181,6 +213,7 @@ class BayesianNeuralNetworkHMC:
         bias_sum = tf.reduce_sum([tf.reduce_sum(b ** 2, axis=-1) for b in bias], axis=0)
         return -0.5 * self.lamb * (kernel_sum + bias_sum)
 
+    @tf.function
     def log_likelihood(self, x, y, weights):
         """Computes log likelihood of predicted target y given features `x` and `weights`.
 
@@ -193,11 +226,10 @@ class BayesianNeuralNetworkHMC:
             The log likelihood of yhat as the mean value given target y.
             Equivalent to the residual sum of squares (RSS).
         """
-
-        model = self.build_model(weights)
-        yhat = model(x)
+        yhat = self(x, weights)
         return -0.5 * tf.reduce_sum((y - yhat) ** 2, axis=(1, 2))
 
+    # @tf.function
     def create_log_prob_fn(self, x, y):
         """Returns the combines log probability function needed to
         use tf.mcmc.sample_chain.
@@ -245,6 +277,7 @@ class BayesianNeuralNetworkHMC:
                                     of the densely connected neural network.
         """
 
+        @tf.function
         def model(x):
             kernel = weights[::2]
             bias = weights[1::2]
@@ -363,6 +396,7 @@ class BayesianNeuralNetworkHMC:
         """
         current_state = self.weights
         target_log_prob_fn = self.create_log_prob_fn(x, y)
+        # print(f"{tf.size(target_log_prob_fn(*current_state))=}")
         kernel = tfp.mcmc.HamiltonianMonteCarlo(
             target_log_prob_fn=target_log_prob_fn,
             step_size=step_size,
@@ -391,9 +425,26 @@ class BayesianNeuralNetworkHMC:
         return self.chain
 
 
+def get_model():
+    model = tf.keras.Sequential()
+    model.add(tf.keras.layer.Dense(units=50, input_shape=(1,), activation="relu"))
+    model.add(tf.keras.layer.Dense(units=1, activation=None))
+    return model
+
+
+def get_posterior_model(chain):
+    kernel = chain[::2]
+    bias = chain[1::2]
+
+    layers = []
+    for w, b in zip(kernel[:-1], bias[:-1]):
+        pass
+    return None
+
+
 if __name__ == "__main__":
     with tf.device("/CPU:0"):
-        layers = [1, 100, 100, 1]
+        layers = [1, 10, 10, 10, 1]
 
         # Create training data
         n_train = 1000
@@ -405,20 +456,20 @@ if __name__ == "__main__":
         # Should not be needed.
         # kernel_prior = tfp.distributions.Normal(loc=0., scale=0.01)
         # bias_prior = tfp.distributions.Normal(loc=0., scale=0.01)
-        batch_size = 1
-        num_results_per_batch = 100
+        batch_size = 4
+        num_results_per_batch = 250
         num_results = num_results_per_batch * batch_size
         num_burnin_steps = 1000
         num_leapfrog_steps = 60
         step_size = 0.001
         bnn = BayesianNeuralNetworkHMC(
-            layers=layers, activation=tf.nn.sigmoid, lamb=1e-3, batch_size=batch_size
+            layers=layers, activation=tf.nn.relu, lamb=1e-3, batch_size=batch_size
         )
         yhat = bnn(x_train)
         print(yhat.shape)
 
         start = time.perf_counter()
-        bnn.mle_fit(x_train, y_train, epochs=1000, lr=0.001, batch_size=100)
+        bnn.mle_fit(x_train, y_train, epochs=500, lr=0.1, batch_size=100)
         end = time.perf_counter()
         timeused = end - start
         print(f"{timeused=} seconds of mle fit")
@@ -431,7 +482,7 @@ if __name__ == "__main__":
             num_burnin_steps=num_burnin_steps,
             num_leapfrog_steps=num_leapfrog_steps,
             step_size=step_size,
-            adaptation=None,
+            adaptation="dual",
         )
 
         # chain = bnn.no_u_turn_chain(
@@ -440,7 +491,7 @@ if __name__ == "__main__":
         #     num_results_per_batch=num_results_per_batch,
         #     num_burnin_steps=num_burnin_steps,
         #     step_size=step_size,
-        #     adaptation=None,
+        #     adaptation="dual",
         # )
         end = time.perf_counter()
         timeused = end - start
@@ -448,9 +499,7 @@ if __name__ == "__main__":
 
         # test the model
         n_test = 1000
-        x_test = tf.random.normal(shape=(n_test, 1), mean=0.0, stddev=3.0)
-        # predictions = bnn(x_test)
-        # print(predictions.shape)
+        x_test = tf.random.normal(shape=(n_test, 1), mean=0.0, stddev=2.0)
         predictions = bnn.predict_from_chain(x_test)
         print(f"{x_test.shape=}")
         print(f"{predictions.shape=}")
@@ -461,7 +510,6 @@ if __name__ == "__main__":
         print(f"{x.shape=}")
         print(f"{predictions.shape=}")
         sns.lineplot(x, predictions, ci="sd")
-        # plt.scatter(x_test, predictions, label="model", color="r")
 
         x = np.linspace(-2 * np.pi, 2 * np.pi, 1001)
         plt.plot(x, f(x), label="True function", color="r")
@@ -470,3 +518,12 @@ if __name__ == "__main__":
         plt.xlabel("x")
         plt.ylabel("y")
         plt.show()
+
+        # Plot histogram of a kernel
+        num_params = 3
+        print(chain[0].shape)
+        for i in range(num_params):
+            param = chain[0][:, :, 0, i].numpy().ravel()
+            sns.kdeplot(param, fill=True)
+        plt.show()
+        # print(param)

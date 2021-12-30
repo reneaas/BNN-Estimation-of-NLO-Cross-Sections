@@ -13,11 +13,12 @@ private:
 
 
 public:
-
+    BNN(){}; //Empty constructor.
     BNN(std::vector<Layer> layers);
 
     int num_layers_;
     double learning_rate_;
+    double l2_strength_;
     void add(int n_rows, int n_cols, std::string activation);
     arma::mat forward(arma::mat x);
     void backward(arma::mat x, arma::mat y);
@@ -28,6 +29,8 @@ public:
         int num_epochs,
         double learning_rate
     );
+
+    double loss(arma::mat yhat, arma::mat y);
 
     std::vector<arma::mat> hmc_step(
         arma::mat x, 

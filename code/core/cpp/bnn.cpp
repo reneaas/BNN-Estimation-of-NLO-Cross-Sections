@@ -2,8 +2,11 @@
 
 using namespace std;
 
-BNN::BNN(std::vector<Layer> layers){
+BNN::BNN(
+    std::vector<Layer> layers
+) {
     layers_ = layers;
+    l2_strength_ = 1e-3;
 }
 
 
@@ -77,50 +80,27 @@ void BNN::backward(arma::mat x, arma::mat y) {
 
     //Output layer
     int l = num_layers_ - 1;
-    // layers_[l].err_ = arma::mean(layers_[l].a_ - y, 1);
-    // layers_[l].db = layers_[l].err_;
-    // layers_[l].dw_ = layers[l-1].a_
-    // cout << "err sz = " << arma::size(layers_[l].err_) << endl;
-
-    // cout << "OUTPUT LAYER" << endl;
     layers_[l].err_ = layers_[l].a_ - y;
-    layers_[l].dw_ = arma::mean(layers_[l - 1].a_ * layers_[l].err_.t(), 1).t() / num_points;
-    layers_[l].db_ = arma::mean(layers_[l].err_, 1);
-
-    // cout << "err sz = " << arma::size(layers_[l].err_) << endl;
-    // cout << "dw sz = " << arma::size(layers_[l].dw_) << endl;
-    // cout << "w sz = " << arma::size(layers_[l].dw_) << endl;
-    // cout << "db sz = " << arma::size(layers_[l].db_) << endl;
-    // cout << "b sz = " << arma::size(layers_[l].b_) << endl;
+    layers_[l].dw_ = arma::mean(layers_[l - 1].a_ * layers_[l].err_.t(), 1).t() / num_points
+                    + l2_strength_ * layers_[l].w_;
+    layers_[l].db_ = arma::mean(layers_[l].err_, 1) + l2_strength_ * layers_[l].b_;
 
 
-    // cout << "MID LAYER" << endl; 
     for (int l = num_layers_ - 2; l >= 1; l--) {
-        // cout << "l = " << l << endl;
-
-        layers_[l].err_ = layers_[l+1].w_.t() * layers_[l+1].err_;
-        layers_[l].db_ = arma::mean(layers_[l].err_, 1);
-        layers_[l].dw_ = (layers_[l - 1].a_ * layers_[l].err_.t()).t() / num_points;
-
-        //layers_[l].db_ = arma::mean(layers_[l].err_, 1);
-        //layers_[l].dw_ = arma::mean(layers_[l - 1].a_ * layers_[l].err_.t(), 1).t();
-        // cout << "a(l-1) sz = " << arma::size(layers_[l - 1].a_) << endl;
-        // cout << "err sz = " << arma::size(layers_[l].err_) << endl;
-        // cout << "dw sz = " << arma::size(layers_[l].dw_) << endl;
-        // cout << "w sz = " << arma::size(layers_[l].w_) << endl;
-        // cout << "db sz = " << arma::size(layers_[l].db_) << endl;
-        // cout << "b sz = " << arma::size(layers_[l].b_) << endl;
+        layers_[l].err_ = (layers_[l+1].w_.t() * layers_[l+1].err_) % layers_[l].a_ % (1 - layers_[l].a_);
+        layers_[l].db_ = arma::mean(layers_[l].err_, 1) + l2_strength_ * layers_[l].b_;
+        arma::mat tmp = layers_[l - 1].a_ * layers_[l].err_.t();
+        tmp = arma::mean(tmp, 1);
+        layers_[l].dw_ = layers_[l].err_ * layers_[l - 1].a_.t() / num_points
+                        + l2_strength_ * layers_[l].w_;
     }
 
-    // cout << "INPUT LAYER" << endl;
+    //Input layer 
     l = 0; 
     layers_[l].err_ = layers_[l+1].w_.t() * layers_[l+1].err_;
-    layers_[l].db_ = arma::mean(layers_[l].err_, 1);
-    layers_[l].dw_ = arma::mean(x * layers_[l].err_.t(), 0).t() / num_points;
-    // cout << "dw sz = " << arma::size(layers_[l].dw_) << endl;
-    // cout << "w sz = " << arma::size(layers_[l].dw_) << endl;
-    // cout << "db sz = " << arma::size(layers_[l].db_) << endl;
-    // cout << "b sz = " << arma::size(layers_[l].b_) << endl;
+    layers_[l].db_ = arma::mean(layers_[l].err_, 1) + l2_strength_ * layers_[l].b_;
+    layers_[l].dw_ = arma::mean(x * layers_[l].err_.t(), 0).t() / num_points
+                    + l2_strength_ * layers_[l].w_;
 
 }
 
@@ -142,6 +122,20 @@ void BNN::mle_fit(arma::mat x, arma::mat y, int num_epochs, double learning_rate
     }
 }
 
+double BNN::loss(
+    arma::mat yhat, arma::mat y
+) {
+    arma::mat diff = yhat - y;
+    double loss = arma::dot(diff, diff);
+    double l2_kernel = 0.;
+    double l2_bias = 0.;
+    for (auto layer : layers_) {
+        l2_kernel += arma::dot(layer.w_, layer.w_);
+        l2_bias += arma::dot(layer.b_, layer.b_);
+    }
+    return loss + l2_strength_ * (l2_kernel + l2_bias);
+}
+
 arma::mat BNN::compute_r2(arma::mat x, arma::mat y)
 {   
     arma::mat yhat = forward(x);
@@ -149,34 +143,10 @@ arma::mat BNN::compute_r2(arma::mat x, arma::mat y)
     arma::mat diff = yhat - y;
     arma::mat y_mean = arma::mean(y, 1);
     diff = diff % diff;
-
-    // y_mean.print("y mean = ");
-
     arma::mat err = arma::sum(diff, 1);
-    // err.print("err = ");
     diff = y - y_mean(0);
-    // cout << "diff sz = " << arma::size(diff) << endl;
     arma::mat tmp = arma::sum(diff % diff, 1);
     arma::mat r2 = 1 - err / tmp;
-
-    // double error = 0.;
-    // double y_mean = 0.;
-    // int l = num_layers_-1;
-    // for (int i = 0; i < num_test_; i++){
-    //     x = X_test_.col(i);
-    //     y = y_test_.col(i);
-    //     feed_forward(x);
-    //     diff = y(0) - layers_[l].activation_(0);
-    //     error += diff*diff;
-    //     y_mean += y(0);
-    // }
-    // y_mean *= (1./num_test_);
-    // double tmp = 0;
-
-    // for (int j = 0; j < num_test_; j++){
-    //     tmp += (y_test_(0, j)-y_mean)*(y_test_(0, j)-y_mean);
-    // }
-    // double r2 = 1 - error/tmp;
     return r2;
 }
 

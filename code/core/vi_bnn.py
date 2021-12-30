@@ -4,6 +4,7 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 from tqdm import trange
 import numpy as np
+import time
 
 
 # Define the prior weight distribution as Normal of mean=0 and stddev=1.
@@ -69,31 +70,10 @@ def get_model(layers, train_sz, activation):
             make_prior_fn=prior,
             kl_weight=1 / train_sz,
             activation=None,
-            )
         )
+    )
 
     return model
-
-
-# def create_bnn_model(train_size):
-#     inputs = create_model_inputs()
-#     features = keras.layers.concatenate(list(inputs.values()))
-#     features = layers.BatchNormalization()(features)
-
-#     # Create hidden layers with weight uncertainty using the DenseVariational layer.
-#     for units in hidden_units:
-#         features = tfp.layers.DenseVariational(
-#             units=units,
-#             make_prior_fn=prior,
-#             make_posterior_fn=posterior,
-#             kl_weight=1 / train_size,
-#             activation="sigmoid",
-#         )(features)
-
-#     # The output is deterministic: a single point estimate.
-#     outputs = layers.Dense(units=1)(features)
-#     model = keras.Model(inputs=inputs, outputs=outputs)
-#     return model
 
 def compute_predictions(model, x, num_results):
     predictions = []
@@ -107,15 +87,15 @@ def compute_predictions(model, x, num_results):
 
 
 #create training data
-n_train = 1000
-f = lambda x: tf.math.sin(x)
+n_train = 100
+f = lambda x: tf.math.sin(x) * tf.math.cos(x)
 x_train = tf.random.normal(shape=(n_train, 1), mean=0., stddev=2.)
 #x = np.linspace(-2 * np.pi, 2 * np.pi, 1001)
 # x = x[:, None]
 # x_train = tf.convert_to_tensor(x)
 y_train = f(x_train)
 
-layers = [50, 1]
+layers = [10, 10, 1]
 model = get_model(layers, n_train, activation="relu")
 model.compile(
     optimizer="adam",
@@ -123,8 +103,13 @@ model.compile(
 )
 
 with tf.device("/CPU:0"):
-    model.fit(x=x_train, y=y_train, batch_size=10, epochs=500)
-    num_results = 1000
+    start = time.perf_counter()
+    model.fit(x=x_train, y=y_train, batch_size=16, epochs=100)
+    end = time.perf_counter()
+    timeused = end - start
+    print(f"{timeused=} seconds")
+
+    num_results = 100
     n_test = 1000
     x_test = tf.random.normal(shape=(n_test, 1), mean=0., stddev=2.)
 
