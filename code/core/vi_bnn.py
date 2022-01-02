@@ -87,7 +87,7 @@ def compute_predictions(model, x, num_results):
 
 
 #create training data
-n_train = 100
+n_train = 1000
 f = lambda x: tf.math.sin(x) * tf.math.cos(x)
 x_train = tf.random.normal(shape=(n_train, 1), mean=0., stddev=2.)
 #x = np.linspace(-2 * np.pi, 2 * np.pi, 1001)
@@ -95,8 +95,8 @@ x_train = tf.random.normal(shape=(n_train, 1), mean=0., stddev=2.)
 # x_train = tf.convert_to_tensor(x)
 y_train = f(x_train)
 
-layers = [10, 10, 1]
-model = get_model(layers, n_train, activation="relu")
+layers = [100, 1]
+model = get_model(layers, n_train, activation="sigmoid")
 model.compile(
     optimizer="adam",
     loss="mse",
