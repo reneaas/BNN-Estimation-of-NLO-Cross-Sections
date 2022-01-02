@@ -12,8 +12,6 @@ np.random.seed(1)
 tf.random.set_seed(1)
 
 
-
-
 class BayesianNeuralNetworkHMC:
     """Class for a Bayesian neural network (BNN) using Hamiltonian Monte Carlo (HMC)
     and its derivatives as a sampling method to sample from its posterier.
@@ -156,7 +154,7 @@ class BayesianNeuralNetworkHMC:
         with tf.GradientTape() as tape:
             tape.watch(self.weights)
             yhat = self(x, self.weights)
-            loss = tf.reduce_sum((y - yhat) ** 2, axis=(1, 2))
+            loss = tf.reduce_sum((y - yhat) ** 2)
         grad = tape.gradient(loss, self.weights)
         return loss, grad
 
@@ -182,18 +180,8 @@ class BayesianNeuralNetworkHMC:
         Returns:
             loss (list[float])  : List containing the loss per epoch.
         """
-        if optimizer is None:
+        if not optimizer:
             optimizer = tf.keras.optimizers.Adam(learning_rate=lr)
-        else:
-            if isinstance(optimizer, tf.keras.optimizers.Optimizer) is False:
-                err_message = "\n".join(
-                    [
-                        f"{optimizer=} is not a valid optimizer.",
-                        "Provide an instance of tf.keras.optimizers.Optimizer",
-                        "or instances of classes derived from it."
-                    ]
-                )
-                raise ValueError(err_message)
 
         losses = []
         self.weights = [tf.Variable(w) for w in self.weights]
@@ -230,9 +218,9 @@ class BayesianNeuralNetworkHMC:
         kernel = weights[::2]
         bias = weights[1::2]
         kernel_sum = tf.reduce_sum(
-            [tf.reduce_sum(w ** 2, axis=(-1, -2)) for w in kernel], axis=0
+            [tf.reduce_sum(w ** 2) for w in kernel]
         )
-        bias_sum = tf.reduce_sum([tf.reduce_sum(b ** 2, axis=-1) for b in bias], axis=0)
+        bias_sum = tf.reduce_sum([tf.reduce_sum(b ** 2) for b in bias])
         return -0.5 * self.lamb * (kernel_sum + bias_sum)
 
     @tf.function
@@ -251,7 +239,7 @@ class BayesianNeuralNetworkHMC:
             Equivalent to the residual sum of squares (RSS).
         """
         yhat = self(x, weights)
-        return -0.5 * tf.reduce_sum((y - yhat) ** 2, axis=(-1, -2))
+        return -0.5 * tf.reduce_sum((y - yhat) ** 2)
 
     # @tf.function
     def create_log_prob_fn(self, x: tf.Tensor, y: tf.Tensor) -> Callable:
@@ -270,7 +258,6 @@ class BayesianNeuralNetworkHMC:
 
         def target_log_prob_fn(*weights):
             return self.prior_log_prob_fn(weights) + self.log_likelihood(x, y, weights)
-
         return target_log_prob_fn
 
     @tf.function
@@ -416,7 +403,6 @@ class BayesianNeuralNetworkHMC:
         x: tf.Tensor,
         y: tf.Tensor,
         num_results_per_chain: int,
-        batch_size: float,
         num_burnin_steps: int,
         num_leapfrog_steps: int,
         step_size: float,
@@ -458,19 +444,15 @@ class BayesianNeuralNetworkHMC:
                 num_adaptation_steps=int(0.8 * num_burnin_steps),
                 target_accept_prob=0.65,
             )
-        
-        #Perform burn-in 
+
         self.chain = self.sample_chain(
-                kernel=kernel,
-                current_state=current_state,
-                num_results=num_results_per_chain,
-                num_burnin_steps=num_burnin_steps,
-                num_steps_between_results=0,
-                trace_fn=None,
+            kernel=kernel,
+            current_state=current_state,
+            num_results=num_results_per_chain,
+            num_burnin_steps=num_burnin_steps,
+            num_steps_between_results=0,
+            trace_fn=None,
         )
-
-
-
         return self.chain
 
     def save_model(self, fname_prefix: str, chain: list[tf.Tensor]):
@@ -507,7 +489,7 @@ def get_posterior_model(chain):
 
 if __name__ == "__main__":
     with tf.device("/CPU:0"):
-        layers = [1, 50, 1]
+        layers = [1, 10, 1]
 
         # Create training data
         n_train = 1000
@@ -520,13 +502,13 @@ if __name__ == "__main__":
         # kernel_prior = tfp.distributions.Normal(loc=0., scale=0.01)
         # bias_prior = tfp.distributions.Normal(loc=0., scale=0.01)
         num_chains = 4
-        num_results_per_chain = 100
+        num_results_per_chain = 500
         num_results = num_results_per_chain * num_chains
-        num_burnin_steps = 1000
+        num_burnin_steps = 10000
         num_leapfrog_steps = 60
         step_size = 0.01
         bnn = BayesianNeuralNetworkHMC(
-            layers=layers, activation=tf.nn.tanh, lamb=1e-3, num_chains=num_chains
+            layers=layers, activation=tf.nn.sigmoid, lamb=1e-3, num_chains=num_chains
         )
         yhat = bnn(x_train)
         print(yhat.shape)
@@ -542,11 +524,10 @@ if __name__ == "__main__":
             x=x_train,
             y=y_train,
             num_results_per_chain=num_results_per_chain,
-            batch_size=int(0.01 * num_results_per_chain),
             num_burnin_steps=num_burnin_steps,
             num_leapfrog_steps=num_leapfrog_steps,
             step_size=step_size,
-            adaptation="dual",
+            adaptation=None,
         )
 
         # chain = bnn.no_u_turn_chain(

@@ -14,11 +14,15 @@ class SLHAloader(object):
         feat_dir (str)          :       root directory with features
 
         target_dir (str)        :       root directory with targets
-
-
     """
 
-    def __init__(self, particle_ids, feat_dir, target_dir, target_keys=["nlo"]):
+    def __init__(
+        self,
+        particle_ids: list[str],
+        feat_dir: str,
+        target_dir: str,
+        target_keys: list[str] = ["nlo"],
+    ):
 
         self.supported_ids = [
             "1000022",
@@ -67,25 +71,34 @@ class SLHAloader(object):
         # Raise ValueError if a particle id is invalid.
         for id in self.particle_ids:
             if str(abs(int(id))) not in self.supported_ids:
-                err_message = f"particle id = {id} is not a supported particle id. \n"
+                err_message = f"particle {id=} is not a supported particle id. \n"
                 err_message += "Supported particle ids: \n"
                 err_message += "\n".join(self.supported_ids)
                 raise ValueError(err_message)
 
-        #Raise Valueerror if a particle process is invalid.
-        self.process = str(tuple([int(i) for i in particle_ids]))
-        if self.process not in self.supported_processes:
-            err_message = f"{self.process=} is not a valid process.\n"
+        # Raise Valueerror if a particle process is invalid.
+        processes = [
+            str(tuple([int(i) for i in particle_ids])),
+            str(tuple([int(i) for i in particle_ids[::-1]])) #Permuted tuple.
+        ]
+        state = False
+        for process in processes:
+            if process in self.supported_processes:
+                state = True
+                self.process = process
+        if state is False:
+            err_message = "\n"
+            for process in processes:
+                err_message += f"{process=} is not a valid process.\n"
             err_message += "Supported processes:\n"
             err_message += "\n".join(self.supported_processes)
             raise ValueError(err_message)
-
 
         features = {"MASS": {}, "NMIX": {}, "VMIX": {}, "UMIX": {}}
 
         # Extract mass of particle_ids.
         df_mass = pd.read_pickle(feat_dir + "/" + "mass.pkl")[self.particle_ids]
-            
+
         dfs = []
         # Extract rest of features
         for id in self.particle_ids:
@@ -105,10 +118,9 @@ class SLHAloader(object):
         # Extract features and delete temporary dict
         self.features = {}
         for key in features:
-            if len(features[key]) != 0:
+            if features.get(key) is not None:
                 self.features[key] = features.get(key)
         del features  # Clear memory.
-
 
         # Merge dataframes
         dfs = []
@@ -129,24 +141,24 @@ class SLHAloader(object):
         for key in targets.keys():
             self.targets[key] = targets[key].get(self.process)
 
-    def to_numpy(self):
+    def to_numpy(self) -> tuple[np.ndarray]:
         """Converts the data to numpy arrays."""
         self.features = self.features.to_numpy()
-        for key in self.targets:
-            self.targets[key] = self.targets[key].to_numpy()
+        features = self.features.to_numpy()
+        targets = {key : val.numpy() for key, val in self.targets.items()}
+        return features, targets
 
-    def __getitem__(self, idx):
+    def __getitem__(self, idx: int):
         """Returns a datapoint (feature, target)
 
         Args:
             idx (int)   :   index of datapoint
         """
-        return None
+        return NotImplemented
 
 
-if __name__ == "__main__":
-
-    ids = ["1000025", "1000025"]
+def main():
+    ids = ["1000022", "-1000024"]
     # ids = ["2", "4"]
     target_dir = "../targets"
     feat_dir = "../features"
@@ -156,4 +168,8 @@ if __name__ == "__main__":
     print(dl.targets)
     # print(targets)
 
+
+
+if __name__ == "__main__":
+    main()
 

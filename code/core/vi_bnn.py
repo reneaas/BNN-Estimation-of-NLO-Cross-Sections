@@ -40,14 +40,14 @@ def posterior(kernel_size, bias_size, dtype=None):
 
 
 
-def get_model(layers, train_sz, activation):
+def get_model(layers, batch_size, activation):
     model = tf.keras.Sequential()
     model.add(
         tfp.layers.DenseVariational(
             units=layers[0],
             make_posterior_fn=posterior,
             make_prior_fn=prior,
-            kl_weight=1 / train_sz,
+            kl_weight=1 / batch_size,
             activation=activation,
         )
     )
@@ -57,7 +57,7 @@ def get_model(layers, train_sz, activation):
             units=units,
             make_posterior_fn=posterior,
             make_prior_fn=prior,
-            kl_weight=1 / train_sz,
+            kl_weight=1 / batch_size,
             activation=activation,
             )
         )
@@ -68,7 +68,7 @@ def get_model(layers, train_sz, activation):
             units=layers[-1],
             make_posterior_fn=posterior,
             make_prior_fn=prior,
-            kl_weight=1 / train_sz,
+            kl_weight=1 / batch_size,
             activation=None,
         )
     )
@@ -85,43 +85,45 @@ def compute_predictions(model, x, num_results):
     predictions = np.array(predictions)
     return X, predictions
 
+def main():
+    #create training data
+    n_train = 2500
+    batch_size = 100
+    f = lambda x: tf.math.sin(x) * tf.math.cos(x)
+    x_train = tf.random.normal(shape=(n_train, 1), mean=0., stddev=2.)
+    #x = np.linspace(-2 * np.pi, 2 * np.pi, 1001)
+    # x = x[:, None]
+    # x_train = tf.convert_to_tensor(x)
+    y_train = f(x_train)
 
-#create training data
-n_train = 1000
-f = lambda x: tf.math.sin(x) * tf.math.cos(x)
-x_train = tf.random.normal(shape=(n_train, 1), mean=0., stddev=2.)
-#x = np.linspace(-2 * np.pi, 2 * np.pi, 1001)
-# x = x[:, None]
-# x_train = tf.convert_to_tensor(x)
-y_train = f(x_train)
+    layers = [50, 1]
+    model = get_model(layers, n_train, activation="sigmoid")
+    model.compile(
+        optimizer="adam",
+        loss="mse",
+    )
 
-layers = [100, 1]
-model = get_model(layers, n_train, activation="sigmoid")
-model.compile(
-    optimizer="adam",
-    loss="mse",
-)
-
-with tf.device("/CPU:0"):
     start = time.perf_counter()
-    model.fit(x=x_train, y=y_train, batch_size=16, epochs=100)
+    model.fit(x=x_train, y=y_train, batch_size=batch_size, epochs=2500)
     end = time.perf_counter()
     timeused = end - start
     print(f"{timeused=} seconds")
 
-    num_results = 100
+    num_results = 1000
     n_test = 1000
-    x_test = tf.random.normal(shape=(n_test, 1), mean=0., stddev=2.)
+    x_test = tf.random.normal(shape=(n_test, 1), mean=0., stddev=3.)
 
     X, predictions = compute_predictions(model, x_test, num_results)
 
+    sns.lineplot(X.ravel(), predictions.ravel(), ci="sd")
 
-sns.lineplot(X.ravel(), predictions.ravel(), ci="sd")
+    x = np.linspace(-2 * np.pi, 2 * np.pi, 1001)
+    plt.plot(x, f(x), label="True function")
+    plt.xlabel("x")
+    plt.ylabel("y")
+    plt.show()
 
-x = np.linspace(-2 * np.pi, 2 * np.pi, 1001)
-plt.plot(x, f(x), label="True function")
-plt.xlabel("x")
-plt.ylabel("y")
-plt.show()
-
+if __name__ == "__main__":
+    with tf.device("/CPU:0"):
+        main()
 

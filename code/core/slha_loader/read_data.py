@@ -3,6 +3,7 @@ import pyslha
 import tqdm
 import numpy as np
 import pandas as pd
+from typing import Optional
 
 
 ids = ["1000022", "1000023", "1000025", "1000035", "1000024", "1000037"]
@@ -10,7 +11,7 @@ ids = [int(id) for id in ids]
 blocks = ["MASS", "NMIX", "VMIX", "UMIX"]
 
 
-def get_features(data, blocks, ids=None):
+def get_features(data, blocks: list[str], ids: Optional[list[str]] = None) -> dict:
     """Extracts features from a pyslha data object.
 
     Args:
@@ -26,7 +27,7 @@ def get_features(data, blocks, ids=None):
     for block in blocks:
         if block == "MASS":
             mass = {}
-            if ids == None:
+            if ids is None:
                 for id in data.blocks[block].keys():
                     mass[id] = data.blocks[block][id]
                 features[block] = mass
@@ -41,16 +42,7 @@ def get_features(data, blocks, ids=None):
     return features
 
 
-def get_features2(data, blocks, ids):
-    features = {}
-    for block in blocks:
-        features[block] = []
-        for key in data.blocks[block].keys():
-            features[block].append(data.blocks[block][key])
-    return features
-
-
-def get_targets(data, col_idx=8, block="PROSPINO_OUTPUT"):
+def get_targets(data, col_idx: int = 8, block: str = "PROSPINO_OUTPUT") -> dict:
     """Extracts targets from a pyslha object.
 
     Args:
@@ -71,7 +63,7 @@ def get_targets(data, col_idx=8, block="PROSPINO_OUTPUT"):
     return targets
 
 
-def merge_list_of_dicts(dicts):
+def merge_list_of_dicts(dicts: list[dict]) -> dict:
     """Merges a list of dictionaries to a single dictionary.
 
     Args:
@@ -96,7 +88,9 @@ def sort_targets(targets):
     return merge_list_of_dicts(targets)
 
 
-def get_data(root_dir, blocks, ids, col_idxs=[8, 7]):
+def get_data(
+    root_dir: str, blocks: list[str], ids: list[str], col_idxs: list[int] = [8, 7]
+) -> tuple[dict]:
     """Extracts data from a set of .slha files.
 
     Args:
@@ -138,7 +132,7 @@ def get_data(root_dir, blocks, ids, col_idxs=[8, 7]):
     return features, targets
 
 
-def merge_features(features, blocks):
+def merge_features(features: dict, blocks: list[str]) -> dict:
     """Merge features with respect to the blocks in the .slha files.
 
     Args:
@@ -163,7 +157,7 @@ def merge_features(features, blocks):
     return features
 
 
-def save_targets(targets):
+def save_targets(targets: dict) -> None:
     """Saves targets to a set of .npz file using the keys as filenames.
 
     Args:
@@ -179,7 +173,7 @@ def save_targets(targets):
     del targets
 
 
-def sort_nmix(features):
+def sort_nmix(features: dict) -> dict:
     """Sort NMIX according to particle ids
 
     Args:
@@ -202,7 +196,7 @@ def sort_nmix(features):
     return features
 
 
-def sort_vmix_umix(features):
+def sort_vmix_umix(features: dict) -> dict:
     """Sort VMIX and UMIX according to particle ids
 
     Args:
@@ -225,7 +219,7 @@ def sort_vmix_umix(features):
     return features
 
 
-def save_features(features):
+def save_features(features: dict) -> None:
     # Store masses
     features["MASS"] = pd.DataFrame(features["MASS"])
     features["MASS"].to_pickle("../features/mass.pkl")
@@ -256,7 +250,7 @@ def save_features(features):
         features["VMIX"][key].to_pickle(path)
 
 
-def save_targets(targets):
+def save_targets(targets: dict) -> None:
     for key in targets.keys():
         targets[key] = pd.DataFrame(targets[key])
 
