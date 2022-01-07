@@ -485,6 +485,12 @@ class BayesianNeuralNetworkHMC:
 
         if trace_fn is not None:
             self.chain, trace = self.chain
+
+            #Pattern matches all attributes of the returned instance
+            #of tfp.mcmc.StatesAndTrace that are magic methods
+            #i.e __call__, __getitem__ etc. We want to extract
+            #We extract trace variables such as 
+            #`is_accepted`, `log_prob`, `energy` and so on.
             pattern = r"(\_){1,2}(\w)+(\_){0,2}"
             attributes = [
                 attr
