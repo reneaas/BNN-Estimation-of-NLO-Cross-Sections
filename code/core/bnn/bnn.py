@@ -11,13 +11,14 @@ import itertools
 import pandas as pd
 import re
 
+
 tfd = tfp.distributions
 
 np.random.seed(1)
 tf.random.set_seed(1)
 
 
-class BayesianNeuralNetworkHMC:
+class BayesianNeuralNetwork:
     """Class for a Bayesian neural network (BNN) using Hamiltonian Monte Carlo (HMC)
     and its derivatives as a sampling method to sample from its posterier.
 
@@ -42,14 +43,12 @@ class BayesianNeuralNetworkHMC:
 
     def __init__(
         self,
-        layers: Optional[list[int]] = None,
-        activation: Union[list[Callable], Callable, None] = None,
-        kernel_prior: tfd.Distribution = None,
-        bias_prior: tfd.Distribution = None,
-        prior_mean: float = 0.0,
-        prior_stddev: float = 0.01,
-        lamb: float = 0.0,
-        num_chains: int = 1,
+        layers=None,
+        activation=None,
+        kernel_prior=None,
+        bias_prior=None,
+        lamb=0.0,
+        num_chains=1,
     ):
         self.num_chains = num_chains
         self.lamb = lamb
@@ -58,13 +57,13 @@ class BayesianNeuralNetworkHMC:
         if kernel_prior:
             self.kernel_prior = kernel_prior
         else:
-            self.kernel_prior = tfd.Normal(loc=prior_mean, scale=prior_stddev)
+            self.kernel_prior = tfd.Normal(loc=0.0, scale=0.01)
 
         # Set priors of bias
         if bias_prior:
             self.bias_prior = bias_prior
         else:
-            self.bias_prior = tfd.Normal(loc=prior_mean, scale=prior_stddev)
+            self.bias_prior = tfd.Normal(loc=0.0, scale=0.01)
 
         # Get initial parameters, if layers are provided.
         if layers is not None:
@@ -94,7 +93,7 @@ class BayesianNeuralNetworkHMC:
             self.activation = [tf.nn.sigmoid for _ in range(len(layers) - 1)]
             self.activation.append(tf.identity)
 
-    def _create_layers(self, layers: list[int]) -> list[tf.Tensor]:
+    def _create_layers(self, layers):
         weights = []
         for n, m in zip(layers[:-1], layers[1:]):
             weights.extend(
@@ -106,7 +105,7 @@ class BayesianNeuralNetworkHMC:
         return weights
 
     @tf.function
-    def __call__(self, x: tf.Tensor, weights: list[tf.Tensor] = None) -> tf.Tensor:
+    def __call__(self, x, weights=None):
         """Performs a simple forward pass with set of weights and a given input x
 
         Args:
@@ -132,39 +131,36 @@ class BayesianNeuralNetworkHMC:
         return x
 
     @tf.function
-    def loss_grad(
-        self, x: tf.Tensor, y: tf.Tensor
-    ) -> tuple[tf.Tensor, list[tf.Tensor]]:
-        """Computes the gradient given an input (x,y).
+    def train_step(self, x, y):
+        """Computes a training step in conjunction with the MLE fit
+        method.
 
         Args:
             x (tf.Tensor)   :   Input features of shape [num_points, num_features]
-            y (tf.Tensor)   :   Targets of shape [num_points, num_targets]
+            y (tf.Tensor)   :   Targets of shape [num_points, num_outputs]
 
         Returns:
-            loss (tf.Tensor)        :   loss of shape [num_chains]
-            grad (list[tf.Tensor])  :   List of gradients of the loss with respect to
-                                        weights of the network.
+            loss (tf.Tensor)    :   Loss of shape=().
         """
         with tf.GradientTape() as tape:
             tape.watch(self.weights)
-            yhat = self(x, self.weights)
-            loss = (
-                tf.reduce_sum((y - yhat) ** 2, axis=(1, 2))
-                + self.log_prior_prob_fn(self.weights)
-            )
+            y_pred = self(x, self.weights)
+            loss = tf.reduce_sum(
+                (y - y_pred) ** 2, axis=(1, 2)
+            ) + self.log_prior_prob_fn(self.weights)
         grad = tape.gradient(loss, self.weights)
-        return loss, grad
+        self.optimizer.apply_gradients(zip(grad, self.weights))
+        return loss
 
     def mle_fit(
         self,
-        x: tf.Tensor,
-        y: tf.Tensor,
-        epochs: int,
-        lr: float,
-        batch_size: int = None,
-        optimizer: tf.keras.optimizers.Optimizer = None,
-    ) -> list[tf.Tensor]:
+        x,
+        y,
+        epochs,
+        lr,
+        batch_size=None,
+        optimizer=None,
+    ):
         """Fits the network using the backpropagation algorithm, i.e maximum likelihood estimation (MLE).
 
         Args:
@@ -181,28 +177,30 @@ class BayesianNeuralNetworkHMC:
         if len(x.shape) != 2:
             raise ValueError(
                 f"""
-                {len(x.shape)=} != 2. The shape of the input features must be (num_points, num_features)
+                len(x.shape) = {len(x.shape)} != 2. The shape of the input features must be (num_points, num_features)
             """
             )
         if len(y.shape) != 2:
             raise ValueError(
                 f"""
-                {len(y.shape)=} != 2. The shape of the input targets must be (num_points, num_targets)
+                len(y.shape) = {len(y.shape)} != 2. The shape of the input targets must be (num_points, num_targets)
             """
             )
 
         if optimizer is None:
-            optimizer = tf.keras.optimizers.Adam(learning_rate=lr)
+            self.optimizer = tf.keras.optimizers.Adam(learning_rate=lr)
         else:
             if isinstance(optimizer, tf.keras.optimizers.Optimizer) is False:
                 err_message = "\n".join(
                     [
-                        f"{optimizer=} is not a valid optimizer.",
+                        f"optimizer = {optimizer} is not a valid optimizer.",
                         "Provide an instance of tf.keras.optimizers.Optimizer",
                         "or instances of classes derived from it.",
                     ]
                 )
                 raise ValueError(err_message)
+            else:
+                self.optimizer = optimizer
 
         losses = []
         self.weights = [tf.Variable(w) for w in self.weights]
@@ -211,20 +209,17 @@ class BayesianNeuralNetworkHMC:
             for _ in trange(epochs, desc="Epochs"):
                 tot_loss = 0
                 for x_, y_ in ds:
-                    loss, grad = self.loss_grad(x_, y_)
-                    optimizer.apply_gradients(zip(grad, self.weights))
+                    loss = self.train_step(x_, y_)
                     tot_loss += loss
                 losses.append(tot_loss)
 
         else:
             for _ in trange(epochs, desc="Epochs"):
-                loss, grad = self.loss_grad(x, y)
-                optimizer.apply_gradients(zip(grad, self.weights))
+                loss = self.train_step(x, y)
                 losses.append(loss)
         return loss
 
-    # @tf.function
-    def log_prior_prob_fn(self, weights: list[tf.Tensor]) -> tf.Tensor:
+    def log_prior_prob_fn(self, weights):
         """Log prior probability function of the weights of the network.
         Currently set to be exp(-lamb * w ** 2) according to Radford Neals treatment
         of BNNs. `lamb` is the analogue to a regularization
@@ -244,10 +239,7 @@ class BayesianNeuralNetworkHMC:
         bias_sum = tf.reduce_sum([tf.reduce_sum(b ** 2, axis=-1) for b in bias], axis=0)
         return -0.5 * self.lamb * (kernel_sum + bias_sum)
 
-    # @tf.function
-    def log_likelihood_fn(
-        self, x: tf.Tensor, y: tf.Tensor, weights: list[tf.Tensor]
-    ) -> tf.Tensor:
+    def log_likelihood_fn(self, x, y, weights):
         """Computes log likelihood of predicted target y given features `x` and `weights`.
 
         Args:
@@ -262,8 +254,7 @@ class BayesianNeuralNetworkHMC:
         yhat = self(x, weights)
         return -0.5 * tf.reduce_sum((y - yhat) ** 2, axis=(-1, -2))
 
-    # @tf.function
-    def get_target_log_prob_fn(self, x: tf.Tensor, y: tf.Tensor) -> Callable:
+    def get_target_log_prob_fn(self, x, y):
         """Returns the combines log probability function needed to
         use tf.mcmc.sample_chain.
 
@@ -278,13 +269,13 @@ class BayesianNeuralNetworkHMC:
         """
 
         def target_log_prob_fn(*weights):
-            return self.log_prior_prob_fn(weights) + self.log_likelihood_fn(x, y, weights)
+            return self.log_prior_prob_fn(weights) + self.log_likelihood_fn(
+                x, y, weights
+            )
+
         return target_log_prob_fn
 
-    # @tf.function
-    def dense_layer(
-        self, x: tf.Tensor, w: tf.Tensor, b: tf.Tensor, activation: Callable
-    ) -> tf.Tensor:
+    def dense_layer(self, x, w, b, activation):
         """Computes the output of a dense layer.
 
         Args:
@@ -299,31 +290,7 @@ class BayesianNeuralNetworkHMC:
         """
         return activation(tf.matmul(x, w) + b[..., None, :])
 
-    def build_model(self, weights: list[tf.Tensor]) -> Callable:
-        """Creates a feed-forward densely connected neural network
-        given input weights.
-
-        Args:
-            weights (list)  :   List containing the weights of the network.
-
-        Returns:
-            model (function)    :   Python callable that computes a forward pass
-                                    of the densely connected neural network.
-        """
-
-        # @tf.function
-        def model(x: tf.Tensor) -> tf.Tensor:
-            kernel = weights[::2]
-            bias = weights[1::2]
-            for w, b, activation in zip(kernel, bias, self.activation):
-                x = self.dense_layer(x, w, b, activation)
-            return x
-
-        return model
-
-    def predict_from_chain(
-        self, x: tf.Tensor, chain: list[tf.Tensor] = None
-    ) -> tf.Tensor:
+    def predict_from_chain(self, x, chain=None):
         """Computes predictions of a given x from from a chain of samples from the MCMC chain.
 
         Args:
@@ -349,15 +316,13 @@ class BayesianNeuralNetworkHMC:
         return predictions
 
     @tf.function
-    def sample_chain(self, *args, **kwargs):
+    def _sample_chain(self, *args, **kwargs):
         """A simple wrapper around tfp.mcmc.sample_chain that speeds up code
         by compiling to a computational graph using tf.function.
         """
         return tfp.mcmc.sample_chain(*args, **kwargs)
 
-    def get_dataset(
-        self, x: tf.Tensor, y: tf.Tensor, batch_size: int = 16
-    ) -> tf.data.Dataset:
+    def get_dataset(self, x, y, batch_size=16):
         """Creates a tf.data.Dataset object from training data.
 
         Args:
@@ -372,208 +337,44 @@ class BayesianNeuralNetworkHMC:
         ds = ds.batch(batch_size=batch_size)
         return ds
 
-    def hmc_chain_verbose(
+    def sample_chain(
         self,
-        x: tf.Tensor,
-        y: tf.Tensor,
-        num_results_per_chain: int,
-        num_burnin_steps: int,
-        num_leapfrog_steps: int,
-        step_size: float,
-        
-    ) -> list[tf.Tensor]:
-        current_state = self.weights
-        target_log_prob_fn = self.create_log_prob_fn(x, y)
-        kernel = tfp.mcmc.HamiltonianMonteCarlo(
-            num_leapfrog_steps=num_leapfrog_steps,
-            step_size=step_size,
-            target_log_prob_fn=target_log_prob_fn,
-        )
-        kernel_results = kernel.bootstrap_results(current_state)
-        
-        #Burn-in
-        current_state, kernel_results = self.sample_chain_verbose(
-            num_results=num_burnin_steps,
-            kernel=kernel,
-            current_state=current_state,
-            kernel_results=kernel_results,
-            burn_in=True
-        )
-
-        #Sample chain
-        chain = self.sample_chain_verbose(
-            num_results=num_results_per_chain,
-            kernel=kernel,
-            current_state=current_state,
-            kernel_results=kernel_results,
-            burn_in=False
-        )
-        return chain
-
-    @tf.function
-    def sample_chain_verbose(self, num_results, kernel, current_state, kernel_results, burn_in=False):
-        if burn_in is True:
-            for _ in trange(num_results + 1):
-                current_state, kernel_results = kernel.one_step(
-                    current_state, kernel_results
-                )
-            return current_state, kernel_results
-        else:
-            chain = []
-            for _ in trange(num_results):
-                current_state, kernel_results = kernel.one_step(
-                    current_state, kernel_results
-                )
-                chain = [tf.concat([i, e], axis=0) for i, e in zip(chain, current_state)]
-            return chain 
-
-
-
-    def no_u_turn_chain(
-        self,
-        x: tf.Tensor,
-        y: tf.Tensor,
-        num_results_per_chain: int,
-        num_burnin_steps: int,
-        step_size: float,
-        adaptation: str = None,
-        trace_fn: Callable = None,
-        parallel_iterations: int = 10,
-    ) -> list[tf.Tensor]:
-        """Runs the MCMC chain using the No U-turn sampler.
+        kernel,
+        num_results,
+        num_burnin_steps,
+        num_steps_between_results=0,
+        trace_fn=None,
+        parallel_iterations=10,
+    ):
+        """Produces a MCMC chain given a transition kernel.
 
         Args:
-            x   (tf.Tensor)                 :   Training features of shape (num_points, num_features)
-            y   (tf.Tensor)                 :   Training targets of shape (num_points, num_outputs)
-            num_results_per_chains (int)    :   Number of results per chain
-            num_burnin_steps (int)          :   Number of burn-in steps in the MCMC chain.
-            step_size   (float)             :   Step size used with the No U-turn sampler.
-            adaptation (str, optional)      :   Options: `simple`, `dual` or None.
-
-        Returns:
-            self.chain (list[tf.Tensor])    :   List of sampled network parameters. Each element
-                                                in the list is a densely connected neural network.
+            kernel (tfp.mcmc.TransitionKernel): Transition kernel to produce MCMC samples.
+            num_results (int): number of results per chain.
+            num_burnin_steps (int): Number of burn-in steps per chain
+            num_steps_between_results (int): Number of steps in between results. Thinning. 
+            trace_fn (callable): Python callable. Trace function that traces the MCMC chain.
+            parallel_iterations (int): Number of parallel iterations run on hardware supporting SIMD instructions.
         """
-        current_state = self.weights
-        target_log_prob_fn = self.get_target_log_prob_fn(x, y)
-        kernel = tfp.mcmc.NoUTurnSampler(
-            target_log_prob_fn=target_log_prob_fn, step_size=step_size
-        )
 
-        if adaptation == "simple":
-            kernel = tfp.mcmc.SimpleStepSizeAdaptation(
-                inner_kernel=kernel,
-                num_adaptation_steps=int(0.8 * num_burnin_steps),
-                target_accept_prob=0.75,
+        if isinstance(kernel, tfp.mcmc.TransitionKernel) is False:
+            raise TypeError(
+                f"""{kernel=} is not a valid kernel. Please provide an
+                instance of tfp.mcmc.TransitionKernel.
+                """
             )
-        elif adaptation == "dual":
-            kernel = tfp.mcmc.DualAveragingStepSizeAdaptation(
-                inner_kernel=kernel,
-                num_adaptation_steps=int(0.8 * num_burnin_steps),
-                target_accept_prob=0.75,
-            )
-
-        self.chain = self.sample_chain(
+        self.chain = self._sample_chain(
+            num_results=num_results,
             kernel=kernel,
-            current_state=current_state,
-            num_results=num_results_per_chain,
             num_burnin_steps=num_burnin_steps,
-            num_steps_between_results=0,
+            num_steps_between_results=num_steps_between_results,
             trace_fn=trace_fn,
-            parallel_iterations=parallel_iterations
+            parallel_iterations=parallel_iterations,
+            current_state=self.weights,
         )
-
-        if trace_fn is not None:
-            self.chain, trace = self.chain
-
-            #Pattern matches all attributes of the returned instance
-            #of tfp.mcmc.StatesAndTrace that are magic methods
-            #i.e __call__, __getitem__ etc. We want to extract
-            #We extract trace variables such as 
-            #`is_accepted`, `log_prob`, `energy` and so on.
-            pattern = r"(\_){1,2}(\w)+(\_){0,2}"
-            attributes = [
-                attr
-                for attr in dir(trace)
-                if re.match(pattern=pattern, string=attr) is None
-            ]
-            trace = {attr: getattr(trace, attr) for attr in attributes}
         return self.chain
 
-    # @tf.function(autograph=False, experimental_compile=True)
-    def hmc_chain(
-        self,
-        x: tf.Tensor,
-        y: tf.Tensor,
-        num_results_per_chain: int,
-        num_burnin_steps: int,
-        num_leapfrog_steps: int,
-        step_size: float,
-        step_adaptation: str = None,
-    ) -> list[tf.Tensor]:
-        """Runs the MCMC chain using Hamiltonian Monte Carlo (HMC).
-
-        Args:
-            x   (tf.Tensor)                     :   Training features of shape (num_points, num_features)
-            y   (tf.Tensor)                     :   Training targets of shape (num_points, num_outputs)
-            num_results_per_chain (int)         :   Number of results per chain.
-            num_burnin_steps (int)              :   Number of burn-in steps in the MCMC chain.
-            num_leapfrog_steps (int)            :   Number of leapfrog steps in HMC.
-            step_size   (float)                 :   Step size used in the leapfrog scheme in HMC.
-            step_adaptation (str, optional)     :   Step size adaptation. Options: `simple`, `dual` or None.
-        Returns:
-            self.chain (list[tf.Tensor])    :   List of sampled network parameters.
-                                                The elements of the list is structured as follows:
-                                                [kernel0, bias0, kernel1, bias1, ..., kernelN, biasN]
-
-        """
-        if len(x.shape) != 2:
-            raise ValueError(
-                f"""
-                {len(x.shape)=} != 2. The shape of the input features must be (num_points, num_features)
-            """
-            )
-        if len(y.shape) != 2:
-            raise ValueError(
-                f"""
-                {len(y.shape)=} != 2. The shape of the input targets must be (num_points, num_targets)
-            """
-            )
-
-        current_state = self.weights
-        target_log_prob_fn = self.get_target_log_prob_fn(x, y)
-        print(f"{tf.size(target_log_prob_fn(*current_state))=}")
-        kernel = tfp.mcmc.HamiltonianMonteCarlo(
-            target_log_prob_fn=target_log_prob_fn,
-            step_size=step_size,
-            num_leapfrog_steps=num_leapfrog_steps,
-            store_parameters_in_results=None,
-        )
-        if step_adaptation == "simple":
-            kernel = tfp.mcmc.SimpleStepSizeAdaptation(
-                inner_kernel=kernel,
-                num_adaptation_steps=int(0.8 * num_burnin_steps),
-                target_accept_prob=0.75,
-            )
-        elif step_adaptation == "dual":
-            kernel = tfp.mcmc.DualAveragingStepSizeAdaptation(
-                inner_kernel=kernel,
-                num_adaptation_steps=int(0.8 * num_burnin_steps),
-                target_accept_prob=0.75,
-            )
-
-        self.chain = self.sample_chain(
-            kernel=kernel,
-            current_state=current_state,
-            num_results=num_results_per_chain,
-            num_burnin_steps=num_burnin_steps,
-            num_steps_between_results=0,
-            trace_fn=None,
-        )
-
-        return self.chain
-
-    def save_model(self, fname_prefix: str, chain: list[tf.Tensor]):
+    def save_model(self, fname_prefix):
         """Saves a model given a chain of network samples
 
         Args:
@@ -594,106 +395,90 @@ def get_model():
     return model
 
 
+def plot_predictions(model, chain):
+    return NotImplemented
+
+
+def main():
+    layers = [1, 10, 1]
+    n_train = 1000
+    n_dims = 1
+    f = lambda x: x * tf.math.sin(x) * tf.math.cos(x)
+    x_train = tf.random.normal(shape=(n_train, n_dims), mean=0.0, stddev=3.0)
+    y_train = f(x_train)
+
+    num_chains = 100
+    num_results = 10
+    tot_num_results = num_results * num_chains
+    num_burnin_steps = 10
+    num_leapfrog_steps = 60
+    step_size = 0.01
+
+    bnn = BayesianNeuralNetwork(
+        layers=layers,
+        activation=tf.nn.tanh,
+        lamb=0.01,
+        num_chains=num_chains,
+    )
+
+    start = time.perf_counter()
+    loss = bnn.mle_fit(
+        x=x_train,
+        y=y_train,
+        epochs=1000,
+        lr=0.001,
+        batch_size=None,
+    )
+    end = time.perf_counter()
+    timeused = end - start
+    print(f"{timeused=} seconds on MLE fit.")
+
+    kernel = tfp.mcmc.HamiltonianMonteCarlo(
+        target_log_prob_fn=bnn.get_target_log_prob_fn(x_train, y_train),
+        num_leapfrog_steps=num_leapfrog_steps,
+        step_size=step_size,
+    )
+
+    # kernel = tfp.mcmc.NoUTurnSampler(
+    #     target_log_prob_fn=bnn.get_target_log_prob_fn(x_train, y_train),
+    #     step_size=step_size,
+    # )
+
+    #Adaptive kernel
+    kernel = tfp.mcmc.DualAveragingStepSizeAdaptation(
+        inner_kernel=kernel,
+        num_adaptation_steps=int(0.8 * num_burnin_steps)
+    )
+
+    start = time.perf_counter()
+    chain = bnn.sample_chain(
+        kernel=kernel,
+        num_results=num_results,
+        num_burnin_steps=num_burnin_steps,
+    )
+    end = time.perf_counter()
+    timeused = end - start
+    print(f"{timeused=} seconds on mcmc sample chain.")
+
+    # test the model
+    n_test = 1000
+    x_test = tf.random.normal(shape=(n_test, n_dims), mean=0.0, stddev=3.0)
+    predictions = bnn(x_test, weights=chain)
+
+    x = np.array(list(x_test.numpy().squeeze(-1)) * tot_num_results)
+    predictions = np.array(predictions)
+    predictions = predictions.squeeze(-1).ravel()
+
+    sns.lineplot(x, predictions, ci="sd")
+    x = np.linspace(-3 * np.pi, 3 * np.pi, 1001)
+    plt.plot(x, f(x), label="True function", color="r")
+    # plt.scatter(x_train, y_train, label="observed data")
+    plt.legend()
+    plt.xlabel("x")
+    plt.ylabel("y")
+    plt.show()
+
+
 if __name__ == "__main__":
     with tf.device("/CPU:0"):
-        layers = [1, 10, 1]
-
-        # Create training data
-        n_train = 1000
-        dims = 1
-        f = lambda x: tf.math.sin(x) * tf.math.cos(x)
-        x_train = tf.random.normal(shape=(n_train, dims), mean=0.0, stddev=2.0)
-        y_train = f(x_train) + tf.random.normal(shape=x_train.shape, mean=0.0, stddev=0.5)
-
-        # Should not be needed.
-        # kernel_prior = tfp.distributions.Normal(loc=0., scale=0.01)
-        # bias_prior = tfp.distributions.Normal(loc=0., scale=0.01)
-        num_chains = 100
-        num_results_per_chain = 10
-        num_results = num_results_per_chain * num_chains
-        num_burnin_steps = 10
-        num_leapfrog_steps = 60
-        step_size = 0.01
-        bnn = BayesianNeuralNetworkHMC(
-            layers=layers, activation=tf.nn.tanh, lamb=0.01, num_chains=num_chains
-        )
-        # yhat = bnn(x_train)
-        # print(yhat.shape)
-
-        start = time.perf_counter()
-        bnn.mle_fit(x_train, y_train, epochs=10000, lr=0.001, batch_size=None)
-        end = time.perf_counter()
-        timeused = end - start
-        print(f"{timeused=} seconds of mle fit")
-
-        start = time.perf_counter()
-        # chain = bnn.hmc_chain(
-        #     x=x_train,
-        #     y=y_train,
-        #     num_results_per_chain=num_results_per_chain,
-        #     num_burnin_steps=num_burnin_steps,
-        #     num_leapfrog_steps=num_leapfrog_steps,
-        #     step_size=step_size,
-        #     step_adaptation="dual",
-        # )
-
-        # chain = bnn.hmc_chain_verbose(
-        #     x=x_train,
-        #     y=y_train,
-        #     num_results_per_chain=num_results_per_chain,
-        #     num_burnin_steps=num_burnin_steps,
-        #     num_leapfrog_steps=num_leapfrog_steps,
-        #     step_size=step_size
-        # )
-
-        # trace_fn = lambda current_state, kernel_results: kernel_results
-        step_size = 0.013
-        chain = bnn.no_u_turn_chain(
-            x=x_train,
-            y=y_train,
-            num_results_per_chain=num_results_per_chain,
-            num_burnin_steps=num_burnin_steps,
-            step_size=step_size,
-            adaptation=None,
-            trace_fn=None,
-        )
-        # if trace_fn is not None:
-        #     chain, trace = chain
-        #     print(trace)
-        #     print(trace.keys())
-
-        end = time.perf_counter()
-        timeused = end - start
-        print(f"{timeused=} seconds of hmc sampling")
-
-        # test the model
-        n_test = 1000
-        x_test = tf.random.normal(shape=(n_test, 1), mean=0.0, stddev=3.0)
-        # predictions = bnn.predict_from_chain(x_test)
-        predictions = bnn(x_test, weights=chain)
-        print(f"{x_test.shape=}")
-        print(f"{predictions.shape=}")
-
-        x = np.array(list(x_test.numpy().squeeze(-1)) * num_results)
-        predictions = np.array(predictions)
-        predictions = predictions.squeeze(-1).ravel()
-        print(f"{x.shape=}")
-        print(f"{predictions.shape=}")
-        sns.lineplot(x, predictions, ci="sd")
-
-        x = np.linspace(-3 * np.pi, 3 * np.pi, 1001)
-        plt.plot(x, f(x), label="True function", color="r")
-        # plt.scatter(x_train, y_train, label="observed data")
-        plt.legend()
-        plt.xlabel("x")
-        plt.ylabel("y")
-        plt.show()
-
-        # Plot histogram of a kernel
-        num_params = 3
-        print(chain[0].shape)
-        for i in range(num_params):
-            param = chain[0][:, :, 0, i].numpy().ravel()
-            sns.kdeplot(param, fill=True)
-        plt.show()
-        # print(param)
+        main()
