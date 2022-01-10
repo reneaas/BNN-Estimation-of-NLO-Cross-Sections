@@ -87,21 +87,21 @@ def get_model(layers, n_train, activation):
 def get_flipout_model(layers, activation):
     model = tf.keras.Sequential()
     model.add(
-        tfp.layers.DenseReparameterization(
+        tfp.layers.DenseFlipout(
             units=layers[0],
             activation=activation,
         )
     )
     for units in layers[1:-1]:
         model.add(
-            tfp.layers.DenseReparameterization(
+            tfp.layers.DenseFlipout(
             units=units,
             activation=activation,
             )
         )
     # model.add(tf.keras.layers.Dense(units=layers[-1], activation=None))
     model.add(
-        tfp.layers.DenseReparameterization(units=layers[-1], activation=tf.identity)
+        tfp.layers.DenseFlipout(units=layers[-1], activation=tf.identity)
     )
     return model
 
@@ -150,18 +150,19 @@ def compute_predictions(model, x, num_results):
 
 def main():
     #create training data
-    n_train = 100
-    batch_size = 1
-    f = lambda x: x * tf.math.sin(x)
-    x_train = tf.random.normal(shape=(n_train, 1), mean=0., stddev=2.)
+    n_train = 1000
+    batch_size = 100
+    f = lambda x: x * tf.math.sin(x) * tf.math.cos(x)
+    x_train = tf.random.normal(shape=(n_train, 1), mean=0., stddev=3.)
     y_train = f(x_train) + tf.random.normal(shape=x_train.shape, mean=0.0, stddev=0.5)
 
-    layers = [10, 1]
+    layers = [50, 1]
     model = get_model(layers, n_train=n_train, activation=tf.nn.tanh)
     # model = get_flipout_model(layers=layers, activation=tf.nn.tanh)
     model.compile(
         optimizer="adam",
-        loss=lambda y_true, y_pred: tf.reduce_mean((y_true - y_pred) ** 2) + sum(model.losses) / n_train
+        loss="mse",
+        # loss=lambda y_true, y_pred: tf.reduce_mean((y_true - y_pred) ** 2) + sum(model.losses) / n_train
     )
 
     # model = tf.keras.Sequential([
@@ -176,7 +177,7 @@ def main():
 
     start = time.perf_counter()
     # loss = train(model=model, x=x_train, y=y_train, optimizer=tf.keras.optimizers.Adam(), batch_size=10)
-    model_history = model.fit(x=x_train, y=y_train, batch_size=batch_size, epochs=1000)
+    model_history = model.fit(x=x_train, y=y_train, batch_size=batch_size, epochs=10000)
     loss = model_history.history.get("loss")
     plt.plot(loss)
     plt.xlabel("epochs")
@@ -189,7 +190,7 @@ def main():
     print(f"{timeused=} seconds")
 
     num_results = 100
-    n_test = 10000
+    n_test = 1000
     x_test = tf.random.normal(shape=(n_test, 1), mean=0., stddev=2.)
 
     X, predictions = compute_predictions(model, x_test, num_results)

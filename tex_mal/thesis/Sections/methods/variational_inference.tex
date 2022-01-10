@@ -1,0 +1,18 @@
+Sampling directly from the neural network's posterior using Hamiltonian Monte Carlo yields an empirical distribution
+that accurately reflects the true posterior of the model. This makes the method the useful for applications that
+demands accuracy.
+The method comes with some undesirable limitations, however. 
+It is inherently a \textit{batch} algorithm that needs to revisit the whole dataset for each sample new sample it produces,
+limiting the size of the dataset one can apply the method to. Moreover, once the training process is completed, 
+the obtained empirical distribution of model parameters $\theta$ must be stored in its entirety which imposes
+a constraint on the number of samples one can use per model, as well as the size of the neural network itself. 
+Large neural networks require a large number of parameters, which provides yet another limit on the number of samples
+that can be stored for the bayesian neural network. 
+
+In this chapter, we will survey an approximate method to bayesian learning with neural networks that
+uses \textit{variational inference}. We'll first cover the general theory of variational inference,
+before we discuss how it applies to neural network models. 
+
+\section{Variational Inference}
+Variational inference replaces the sampling from the exact posterior with sampling from an approximation to the posterior distribution,
+called the \textit{variational distribution}, denoted $q_\phi(\theta)$, where $\theta$ is the model parameters (i.e the weights of the neural network) and $\phi$ represents the variational parameters.

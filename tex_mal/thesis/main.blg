@@ -3,6 +3,7 @@ Capacity: max_strings=200000, hash_size=200000, hash_prime=170003
 The top-level auxiliary file: main.aux
 The style file: JHEP.bst
 Database file #1: bibliography.bib
+Warning--I didn't find a database entry for ""
 You've used 9 entries,
             2188 wiz_defined-function locations,
             584 strings with 5922 characters,
@@ -44,3 +45,4 @@ warning$ -- 0
 while$ -- 19
 width$ -- 10
 write$ -- 94
+(There was 1 warning)

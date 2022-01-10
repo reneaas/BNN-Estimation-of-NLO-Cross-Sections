@@ -3,7 +3,7 @@ It is a Markov Chain Monte Carlo (MCMC) sampling technique that merges Gibbs sam
 with Hamiltonian dynamics. It avoids the random walk behaviour of the Metropolis algorithm
 and generates successive samples with smaller correlation. In this chapter, the first thing we will discuss is Markov chains.
 From that, follows an outline of Gibbs- and Metropolis sampling. After that, we will deal with Hamiltonian dynamics before we bring it all together
-to form the Hamiltonian Monte Carlo algorithm for sampling. This forms the basis for the practical Bayesian learning of the neural networks studied in this thesis.
+to form the HMC algorithm for sampling. This forms the basis for the practical Bayesian learning of the neural networks studied in this thesis.
 
 \section{Markov Chain Monte Carlo}\label{sec:mcmc}
 \begin{comment}
@@ -23,26 +23,28 @@ Two important principles, originally found by Metropolis et. al \cite{metropolis
 \end{enumerate}
 \end{comment}
 
-Monte Carlo Markov chain (MCMC) is a scheme to sample points $\theta$ proportional to a distribution $\pi(\theta)$. It generates a new point $\theta_i$ given a point $\theta_{i-1}$. 
-By Markov chain, we mean a sequence of points $\theta_1, \theta_2, \ldots$ that are possibly dependent, but are occuring in the sequence in proportion to $\pi(\theta)$. Note that $\pi(\theta)$ here is not an exact probability distribution because it need not be normalized to unity.
+A \textit{Monte Carlo Markov chain} (MCMC) method is a scheme to sample points $\theta$ proportional to a distribution $\pi(\theta)$. It generates a new point $\theta_i$ given a point $\theta_{i-1}$. 
+A \textit{Markov chain} is a sequence of points $\theta_1, \theta_2, \ldots,$ that are possibly dependent, but occur in the sequence in proportion to $\pi(\theta)$. Note that $\pi(\theta)$ here is not an exact probability distribution because it need not be normalized to unity.
 However, suppose $P(\theta)$ is the underlying probability distribution, then $\pi(\theta) \propto P(\theta)$. Typically, in Bayesian applications, we have a prior $P(\theta)$ and a likelihood $P(D|\theta)$. In this case $\pi(\theta) = P(D|\theta)P(\theta)$ and 
 $\pi(\theta) \propto P(\theta|D)$, that is, it's proportional to the posterior distribution.
 
 
-A few important properties of the Markov chain, originally introduced by Metropolis et. al and built upon by Hastings \cite{metropolis}:
+A few important properties of the Markov chain, originally introduced by Metropolis et. al and built upon by Hastings \cite{metropolis}
+is worth mentioning:
 \begin{enumerate}
   \item \textbf{Ergodicity}. Each point $\theta_i$ is chosen from a distribution that only depends on the previous point in the sequence, $\theta_{i-1}$. For this, we introduce a transition probability that is  $T(\theta_i|\theta_{i-1})$. This ensures that any point $\theta$ can eventually be reached given a long enough sequence of samples \cite{numerical_recipies}. 
   \item \textbf{Detailed balance}. The transition probability is chosen to obey $$\pi(\theta)T(\theta'|\theta) = \pi(\theta')T(\theta|\theta'),$$ which ensures that the Markov chain is ergodic. Mathematically, we can express this condition as
   $$\pi(\theta') = \int \pi(\theta)T(\theta'|\theta)\dd\theta.$$
   \item We allow the transition $\theta \to \theta$, hence the transition probability $T(\theta|\theta)$ may be non-zero.
-  \item The transition probablities integrate to unity, thus $$\int T(\theta'|\theta)\dd\theta = 1.$$
+  \item The transition probablities integrate to unity, thus $$\int T(\theta'|\theta)\dd\theta = 1,$$
+  reflecting the notion that some transition is guaranteed to occur.
   \item Finally, the transition probabilities are required to be time--independent.
 \end{enumerate}
 
 
 \section{Gibbs sampling}
 Gibbs sampling \cite{gibbs} is a sampling technique used to generate a Markov chain sequence from an underlying multivariate distribution $P(\gamma)$ for a multi-dimensional parameter $\gamma = (\gamma_1, \ldots \gamma_d) \in \mathbb{R}^d$, for $d > 1$.
-Suppose $\gamma^{(t)}$ is the parameters at iteration $t$. Then the parameters $\gamma^{(t+1)}$ at iteration $t+1$ are generated from $\gamma^{(t)}$ by the following procedure.
+Suppose $\gamma^{(t)}$ represents the parameters at iteration $t$. Then the parameters $\gamma^{(t+1)}$ at iteration $t+1$ are generated from $\gamma^{(t)}$ by the following procedure.
 \begin{figure}[H]
   \begin{algorithm}[H]
     \caption{Gibbs sampling}
@@ -64,8 +66,12 @@ which by definition makes it a Markov chain.
 
 
 \section{The Metropolis-Hastings algorithm}
-The Metropolis algorithm \cite{metropolis} is a sampling algorithm based on random walks in parameter space used in MCMC chains to generate a new point $\theta'$ given a point $\theta$. Albeit efficient for some
-problems, it's not a suitable sampling technique in the context of neural networks. However, a rudimentary understanding of the algorithm will be useful before we embark upon the HMC sampling algorithm. 
+The Metropolis-Hastings algorithm \cite{metropolis} is a sampling algorithm based on random walks in parameter space used in MCMC chains to generate a new point $\theta'$ given a point $\theta$. Albeit efficient for some
+problems, it's not a suitable sampling technique in the context of neural networks. 
+The parameter space of neural networks is high-dimensional. Random walk exploration of said space will
+yield highly correlated parameters per iteration. The random walk behaviour does not efficiently explore the parameter space.
+However, a rudimentary understanding of the algorithm will be useful before we embark upon the HMC sampling algorithm, 
+because the final update of the algorithm is by application of the Metropolis-Hastings algorithm.
 
 The transition probability in the Metropolis algorithm is chosen to be
 \begin{equation}
@@ -75,6 +81,11 @@ where $q(\theta'|\theta)$ is called the proposal distribution and $A(\theta, \th
 \begin{equation}
   A(\theta, \theta') = \min \left(1, \frac{\pi(\theta')q(\theta|\theta')}{\pi(\theta)q(\theta'|\theta)}\right).
 \end{equation}
+In the Metropolis-Hastings algorithm, a symmetry constraint is imposed on the proposal distribution such that 
+$q(\theta'|\theta) = q(\theta|\theta')$. Thus the acceptance probability reduces to
+\begin{equation}
+  A(\theta, \theta') = \min \left(1, \frac{\pi(\theta')}{\pi(\theta)}\right).
+\end{equation}
 The point $\theta'$ is accepted with probability $A(\theta, \theta')$. 
 \begin{figure}[H]
   \begin{algorithm}[H]
@@ -82,7 +93,7 @@ The point $\theta'$ is accepted with probability $A(\theta, \theta')$.
     \begin{algorithmic}
       \Procedure{METROPOLIS-HASTINGS}{$\theta$}\\
       \State Sample $\theta' \sim q(\theta'|\theta)$\\
-      \State $p \leftarrow \min \left(1, \frac{\pi(\theta')q(\theta|\theta')}{\pi(\theta)q(\theta'|\theta)}\right)$\\
+      \State $p \leftarrow \min \left(1, \frac{\pi(\theta')}{\pi(\theta)}\right)$\\
       \State Sample $u$ uniformly on $(0,1)$. \\
       \If {$p \geq u$}
         \State $\theta \leftarrow \theta'$ \Comment{Accept transition}
