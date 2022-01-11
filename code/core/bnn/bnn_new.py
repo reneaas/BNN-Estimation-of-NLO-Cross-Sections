@@ -125,13 +125,13 @@ class BayesianNeuralNetwork(object):
             if kernel_prior:
                 self.kernel_prior = kernel_prior
             else:
-                self.kernel_prior = tfd.Normal(loc=0.0, scale=0.1)
+                self.kernel_prior = tfd.Normal(loc=0.0, scale=0.01)
 
             # Set priors of bias
             if bias_prior:
                 self.bias_prior = bias_prior
             else:
-                self.bias_prior = tfd.Normal(loc=0.0, scale=0.1)
+                self.bias_prior = tfd.Normal(loc=0.0, scale=0.01)
 
             self.weights = self._create_layers(layers)
 

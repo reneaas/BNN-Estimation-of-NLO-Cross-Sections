@@ -158,7 +158,7 @@ class SLHAloader(object):
 
 
 def main():
-    ids = ["1000022", "-1000024"]
+    ids = ["1000022", "1000024"]
     # ids = ["2", "4"]
     target_dir = "../targets"
     feat_dir = "../features"
@@ -166,6 +166,9 @@ def main():
     # dl.to_numpy()
     print(dl.features)
     print(dl.targets)
+    targets = dl.targets.get("nlo")
+    print(targets.to_numpy())
+
     # print(targets)
 
 
