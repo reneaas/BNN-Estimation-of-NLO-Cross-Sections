@@ -7,7 +7,7 @@ import seaborn as sns
 import numpy as np
 import time
 import sys
-from typing import Callable, Optional, Union
+from typing import Callable, Optional, Union, List
 import itertools
 import pandas as pd
 import re
@@ -24,22 +24,56 @@ class BayesianNeuralNetwork(object):
     and its derivatives as a sampling method to sample from its posterier.
 
         Args:
-            layers (list, optional)                 :   List containing the nodes of each layer. Shape is
-                                                        [input_size, nodes_of_layer1, ..., nodes_of_layerN, num_outputs]
-            activation (list[function], optional)   :   List of activation functions, one per each layer.
-                                                        len(activation) = len(layers) - 1.
-                                                        If set to None, each layer is set to `tf.nn.sigmoid`,
-                                                        with the top layer set to `tf.identity`.
-            kernel_prior (tfd.Distribution)        :   If set to None, it defaults to tfp.distributions.Normal
-            bias_prior (tfd.Distribution)          :   If set to None, it defaults to tfp.distributions.Normal
-            prior_mean (float)                      :   Mean value of the tfp.distribution.Normal.
-                                                        Default: `prior_mean = 0.0`
-            prior_stddev (float)                    :   Standard deviation of tfp.distribution.Normal
-                                                        Default: `prior_stddev = 0.01`
-            lamb (float)                            :   Regularization parameter. Default `lamb = 0.0`.
-            num_chains (int)                        :   Number of chains of the parameters to be sampled using MCMC methods.
-                                                        If `num_chains` > 1, the MCMC sampling chain will run multiple chains
-                                                        in parallel. Default: `num_chains=1`.
+            layers (list, optional): 
+                List containing the nodes of each layer. 
+                Shape is [input_size, nodes_of_layer1, ..., nodes_of_layerN, num_outputs]
+            activation (list[str, function], optional): 
+                List of activation functions, one per each layer. len(activation) = len(layers) - 1.
+                Available activations: `sigmoid`, `relu`, `leaky_relu`, `tanh`, `identity`.
+                User can also provide their tf.nn callable equivalents, such as `tf.nn.sigmoid`.
+                It's recommended to provide the activations' name, not its tf.nn equivalent.
+            kernel_prior (tfd.Distribution):   
+                If set to None, it defaults to tfp.distributions.Normal
+            bias_prior (tfd.Distribution):
+                If set to None, it defaults to tfp.distributions.Normal
+            prior_mean (float):
+                Mean value of the tfp.distribution.Normal. Default: `prior_mean = 0.0`
+            prior_stddev (float):   
+                Standard deviation of tfp.distribution.Normal. Default: `prior_stddev = 0.01`
+            lamb (float):   
+                Regularization parameter. Default `lamb = 0.0`.
+            num_chains (int):
+                Number of chains of the parameters to be sampled using MCMC methods.
+                If `num_chains` > 1, the MCMC sampling chain will run multiple chains in parallel. 
+                Default: `num_chains=1`.
+
+        Attributes:
+            lamb (float):
+                Regularization parameter.
+            avail_activations (dict[callable]):
+                Dictionary with available activation functions.
+            activation (list[callable]):
+                List of python callable activation functions.
+            weights (list[tf.Tensor]):
+                List of the weights of the neural network.
+            _num_chains (int):
+                Number of Monte Carlo chains run in parallel.
+            kernel_prior (tfp.distributions.Distribution):
+                Kernel prior distribution.
+            bias_prior (tfp.distributions.Distribution):
+                Bias prior distribution.
+            num_layers (int):
+                Number of layers.
+            
+            
+
+        
+        Raises:
+            ValueError: 
+                - If len(activation) == len(layers) - 1 is False.
+                - If activation is a list, and an element is str, but is not an available activation function.
+            TypeError: if activation is a list, but the elements is not str nor a Python callable.
+
     """
 
     def __init__(
@@ -51,7 +85,7 @@ class BayesianNeuralNetwork(object):
         lamb=0.0,
         num_chains=1,
     ):
-        self.num_chains = num_chains
+        self._num_chains = num_chains
         self.lamb = lamb
 
         self.avail_activations = {
@@ -63,6 +97,7 @@ class BayesianNeuralNetwork(object):
         }
 
         if activation is not None and layers is not None:
+            self.num_layers = len(layers) - 1
 
             # Check if list with an activation per layer.
             if isinstance(activation, list):
@@ -72,7 +107,7 @@ class BayesianNeuralNetwork(object):
 
                 self.activation = []
                 for act in activation:
-                    assert type(act) == str or callable(act) is True, TypeError(
+                    assert isinstance(act, str) or callable(act), TypeError(
                         f"activation = {act} is not of type `str` or is not callable."
                     )
 
@@ -109,7 +144,7 @@ class BayesianNeuralNetwork(object):
                 ]
                 self.activation.append(tf.identity)  # Activation for output layer.
 
-            elif callable(activation) is True:
+            elif callable(activation):
                 assert activation in self.avail_activations.values(), ValueError(
                     f"""activation = {act} is not a valid activation. 
                     Available activations:
@@ -122,13 +157,13 @@ class BayesianNeuralNetwork(object):
                 self.activation = [activation for _ in range(len(layers) - 2)]
                 self.activation.append(tf.identity)  # Activation for output layer.
             # Set priors of kernel
-            if kernel_prior:
+            if kernel_prior is not None:
                 self.kernel_prior = kernel_prior
             else:
                 self.kernel_prior = tfd.Normal(loc=0.0, scale=0.1)
 
             # Set priors of bias
-            if bias_prior:
+            if bias_prior is not None:
                 self.bias_prior = bias_prior
             else:
                 self.bias_prior = tfd.Normal(loc=0.0, scale=0.1)
@@ -140,25 +175,30 @@ class BayesianNeuralNetwork(object):
         for n, m in zip(layers[:-1], layers[1:]):
             weights.extend(
                 [
-                    self.kernel_prior.sample(sample_shape=(self.num_chains, n, m)),
-                    self.bias_prior.sample(sample_shape=(self.num_chains, m)),
+                    self.kernel_prior.sample(sample_shape=(self._num_chains, n, m)),
+                    self.bias_prior.sample(sample_shape=(self._num_chains, m)),
                 ]
             )
         return weights
+
+    @property
+    def num_chains(self):
+        return self._num_chains
 
     @tf.function
     def __call__(self, x, weights=None):
         """Performs a simple forward pass with set of weights and a given input x
 
         Args:
-            x (tf.Tensor)                           :   Input features of shape (num_points, num_features)
-            weights (optional, list[tf.Tensor])     :   List of weights of the network of shape
-                                                        (batch_size, n, m).
-                                                        Default: `weights=None`. In this case, it defaults
-                                                        to the weights stored in the class.
+            x (tf.Tensor):
+                Input features of shape (num_points, num_features)
+            weights (optional, list[tf.Tensor]):   
+                List of weights of the network of shape (batch_size, n, m).
+                Default: `weights=None`. In this case, it defaults to the weights stored in the class.
 
         Returns:
-            The computed outputs of the forward pass. A tf.Tensor object of shape [num_weights, num_points, num_outputs]
+            The computed outputs of the forward pass. 
+            A tf.Tensor object of shape [num_weights, num_points, num_outputs]
 
         """
         if weights is None:
@@ -178,11 +218,14 @@ class BayesianNeuralNetwork(object):
         method.
 
         Args:
-            x (tf.Tensor)   :   Input features of shape [num_points, num_features]
-            y (tf.Tensor)   :   Targets of shape [num_points, num_outputs]
+            x (tf.Tensor):
+                Input features of shape [num_points, num_features]
+            y (tf.Tensor):
+                Targets of shape [num_points, num_outputs]
 
         Returns:
-            loss (tf.Tensor)    :   Loss of shape=().
+            loss (tf.Tensor):
+                Loss of shape=().
         """
         with tf.GradientTape() as tape:
             tape.watch(self.weights)
@@ -206,15 +249,22 @@ class BayesianNeuralNetwork(object):
         """Fits the network using the backpropagation algorithm, i.e maximum likelihood estimation (MLE).
 
         Args:
-            x (tf.Tensor)                                           :   Input features of shape [num_points, num_features]
-            y (tf.Tensor)                                           :   Targets of shape [num_points, num_outputs]
-            epochs (int)                                            :   Number of epochs to fit the network.
-            lr (float)                                              :   Learning rate.
-            batch_size (int, optional)                              :   Batch size used during training.
-            optimizer(tf.keras.optimizers.Optimizer, optional)      :   Optimizer used during training.
+            x (tf.Tensor):
+                Input features of shape [num_points, num_features]
+            y (tf.Tensor):
+                Targets of shape [num_points, num_outputs]
+            epochs (int):
+                Number of epochs to fit the network.
+            lr (float):
+                Learning rate.
+            batch_size (int, optional):
+                Batch size used during training.
+            optimizer(tf.keras.optimizers.Optimizer, optional):
+                Optimizer used during training.
 
         Returns:
-            loss (list[float])  : List containing the loss per epoch.
+            loss (list[float]): 
+                List containing the loss per epoch.
         """
         if len(x.shape) != 2:
             raise ValueError(
@@ -232,7 +282,7 @@ class BayesianNeuralNetwork(object):
         if optimizer is None:
             self.optimizer = tf.keras.optimizers.Adam(learning_rate=lr)
         else:
-            if isinstance(optimizer, tf.keras.optimizers.Optimizer) is False:
+            if not isinstance(optimizer, tf.keras.optimizers.Optimizer):
                 err_message = "\n".join(
                     [
                         f"optimizer = {optimizer} is not a valid optimizer.",
@@ -268,7 +318,8 @@ class BayesianNeuralNetwork(object):
         hyperparameter in L2-regularization and serves the same purpose for BNNs.
 
         Args:
-            weights (list[tf.Tensor])   :   List containing tensors with kernels and biases.
+            weights (list[tf.Tensor]):
+                List containing tensors with kernels and biases.
 
         Returns:
             tf.Tensor with the computed prior log probability. Returned shape: [num_chains]
@@ -286,9 +337,12 @@ class BayesianNeuralNetwork(object):
         """Computes log likelihood of predicted target y given features `x` and `weights`.
 
         Args:
-            x  (tf.Tensor)              :   Input features of shape (num_points, num_features)
-            y   (tf.Tensor)             :   Predicted targets of shape (num_points, num_outputs)
-            weights (list[tf.Tensor])   :   list of weights of the network.
+            x (tf.Tensor):
+                Input features of shape (num_points, num_features)
+            y (tf.Tensor):
+                Predicted targets of shape (num_points, num_outputs)
+            weights (list[tf.Tensor]):
+                list of weights of the network.
 
         Returns:
             The log likelihood of yhat as the mean value given target y.
@@ -302,10 +356,12 @@ class BayesianNeuralNetwork(object):
         use tf.mcmc.sample_chain.
 
         Args:
-            x (tf.Tensor)   :   Input features of shape (num_points, num_features).
-                                Usually only used with training data.
-            y (tf.Tensor)   :   Predicted targets of shape (num_points, num_outputs).
-                                Usually only used with training data.
+            x (tf.Tensor):
+                Input features of shape (num_points, num_features).
+                Usually only used with training data.
+            y (tf.Tensor):
+                Predicted targets of shape (num_points, num_outputs).
+                Usually only used with training data.
 
         Returns:
             target_log_prob_fn (target log probability function used in the MCMC chain).
@@ -322,11 +378,14 @@ class BayesianNeuralNetwork(object):
         """Computes the output of a dense layer.
 
         Args:
-            x   (tf.Tensor)     :   Input features of shape (num_points, num_features)
-            w   (tf.Tensor)     :   Kernel of layer. Shape: (batch_size, n, m)
-            b   (tf.Tensor)     :   Bias of layer. Shape: (batch_size, m, )
-            activation (tf.nn)  :   Activation function of type tf.nn.
-                                    E.g tf.nn.sigmoid or tf.nn.relu.
+            x (tf.Tensor):
+                Input features of shape (num_points, num_features)
+            w (tf.Tensor):
+                Kernel of layer. Shape: (batch_size, n, m)
+            b (tf.Tensor):
+                Bias of layer. Shape: (batch_size, m, )
+            activation (callable):
+                Activation function. Python callable.
 
         Returns:
             Computes activations of shape (batch_size, num_points, num_outputs)
@@ -337,14 +396,15 @@ class BayesianNeuralNetwork(object):
         """Computes predictions of a given x from from a chain of samples from the MCMC chain.
 
         Args:
-            x   (tf.Tensor)         :   Input features of shape (num_points, num_features)
-            chain (optional, list)  :   List of weights samples from the MCMC chain
-                                        of length num_kernels + num_biases.
-                                        Each kernel is of shape (batch_size, m, n)
-                                        Each bias is of shape (batch_size, m)
+            x (tf.Tensor):
+                Input features of shape (num_points, num_features)
+            chain (optional, list):   
+                List of weights samples from the MCMC chain of length num_kernels + num_biases.
+                Each kernel is of shape (batch_size, n, m). Each bias is of shape (batch_size, m)
 
         Returns
-            Predictions (tf.Tensor) :   Tensor with predictions. Shape: (batch_size, num_points, num_outputs).
+            Predictions (tf.Tensor):
+                Tensor with predictions. Shape: (batch_size, num_points, num_outputs).
         """
         if chain is not None:
             predictions = self(x, chain)
@@ -369,23 +429,21 @@ class BayesianNeuralNetwork(object):
         """Creates a tf.data.Dataset object from training data.
 
         Args:
-            x   (tf.Tensor)             :   Training features of shape (num_train, num_features)
-            y   (tf.Tensor)             :   Training targets of shape (num_train, num_outputs)
-            batch_size (optional, int)  :   Batch size of dataset. Default: batch_size=16.
+            x (tf.Tensor):
+                Training features of shape (num_train, num_features)
+            y (tf.Tensor):
+                Training targets of shape (num_train, num_outputs)
+            batch_size (optional, int):
+                Batch size of dataset. Default: batch_size=16.
 
         Returns:
-            ds (tf.data.Dataset)    :   Dataset split into batches of size `batch_size`.
+            ds (tf.data.Dataset):
+                Dataset split into batches of size `batch_size`.
         """
         ds = tf.data.Dataset.from_tensor_slices((x, y))
         if batch_size is not None:
-            try:
-                ds = ds.batch(batch_size=batch_size)
-            except TypeError:
-                print(f"""batch_size = {batch_size} is not a valid batch size.""")
+            ds = ds.batch(batch_size=batch_size)
         return ds
-
-    def set_kernel(self, kernel):
-        self.kernel = kernel
 
     def sample_chain_batched(
         self,
@@ -400,7 +458,7 @@ class BayesianNeuralNetwork(object):
         batch_size=None,
     ):
         # Validate kernel
-        if isinstance(kernel, tfp.mcmc.TransitionKernel) is False:
+        if not isinstance(kernel, tfp.mcmc.TransitionKernel):
             raise TypeError(
                 f"""kernel = {kernel} is not a valid kernel. Please provide an
                 instance of tfp.mcmc.TransitionKernel.
@@ -448,26 +506,35 @@ class BayesianNeuralNetwork(object):
         num_results,
         num_burnin_steps,
         num_steps_between_results=0,
-        trace_fn=None,
+        trace_fn=None   ,
         parallel_iterations=10,
         fname=None,
     ):
         """Produces a MCMC chain given a transition kernel.
 
         Args:
-            kernel (tfp.mcmc.TransitionKernel):     Transition kernel to produce MCMC samples.
-            num_results (int):                      number of results per chain.
-            num_burnin_steps (int):                 Number of burn-in steps per chain
-            num_steps_between_results (int):        Number of steps in between results. Thinning.
-            trace_fn (callable):                    Python callable. Trace function that traces the MCMC chain.
-            parallel_iterations (int):              Number of parallel iterations run on hardware supporting
-                                                    SIMD instructions.
-            fname (str):                            Filename to save the sample chain to.
+            kernel (tfp.mcmc.TransitionKernel):
+                Transition kernel to produce MCMC samples.
+            num_results (int):
+                number of results per chain.
+            num_burnin_steps (int):
+                Number of burn-in steps per chain
+            num_steps_between_results (int):
+                Number of steps in between results. Thinning.
+            trace_fn (callable):
+                Python callable. Trace function that traces the MCMC chain.
+            parallel_iterations (int):
+                Number of parallel iterations run on hardware supporting SIMD instructions.
+            fname (str):
+                Filename to save the sample chain to.
 
         Returns:
-            self.chain (list[tf.Tensor])    :   List of MCMC chain.
+            self.chain (list[tf.Tensor]):
+                List of MCMC chain.
+            trace (collections.namedtuple, optional):
+                Returned if `trace_fn` is not None.
         """
-        if isinstance(kernel, tfp.mcmc.TransitionKernel) is False:
+        if not isinstance(kernel, tfp.mcmc.TransitionKernel):
             raise TypeError(
                 f"""kernel = {kernel} is not a valid kernel. Please provide an
                 instance of tfp.mcmc.TransitionKernel.
@@ -482,11 +549,13 @@ class BayesianNeuralNetwork(object):
             parallel_iterations=parallel_iterations,
             current_state=self.weights,
         )
+        if trace_fn is not None:
+            chain, trace = chain
 
         # Restack the chain and assign them as the weights of the model.
         self.weights = self._restack_chain(chain)
 
-        if fname:
+        if fname is not None:
             if isinstance(fname, str):
                 self._save_model(fname)
             else:
@@ -494,15 +563,27 @@ class BayesianNeuralNetwork(object):
                     f"""fname = {fname} is not of the wrong type. Provide a filename of type `str`."""
                 )
 
-        return self.weights
+        if trace_fn is not None:
+            return self.weights, trace
+        else:
+            return self.weights
 
-    def _save_model(self, fname):
-        """Saves the weights of the model to a numpy zip file (.npz)
-        using numpy.savez.
+    def _save_model(self, fname, compressed=False, allow_pickle=False):
+        """Saves the weights and activations of the model to a numpy zip file (.npz)
+        using numpy.savez or numpy.savez_compressed.
+        By default it uses numpy.savez and avoids use of pickle to ensure
+        port compatibility.
 
         Args:
-            fname (str):    Filename with ending ".npz".
+            fname (str):
+                Filename with ending ".npz".
+            compressed (bool):
+                Allow for compressed save option.
+            allow_pickle (bool):
+                Allow Python pickles or not.
 
+        Raises:
+            ValueError if `fname` does not end with `.npz`.
         """
         if fname.endswith(".npz") is False:
             raise ValueError(
@@ -520,9 +601,18 @@ class BayesianNeuralNetwork(object):
                 for key, val in self.avail_activations.items():
                     if activation is val:
                         weights[f"activation:{i}"] = key
-        np.savez(file=fname, **weights)
+        if compressed:
+            np.savez_compressed(file=fname, **weights, allow_pickle=allow_pickle)
+        else:
+            np.savez(file=fname, **weights, allow_pickle=allow_pickle)
 
     def load_model(self, fname):
+        """Loads a model from a filename `fname`. 
+        Loads the weights from a MCMC chain and activations of the model.
+
+        Args:
+            fname (str): Filename with the saved model.
+        """
         data = np.load(fname)
         kernel = data.files[::3]
         bias = data.files[1::3]
@@ -542,6 +632,14 @@ class BayesianNeuralNetwork(object):
             )
 
     def _restack_chain(self, chain):
+        """Rearranges the shape of the chain.
+
+        Args:
+            chain (list[tf.Tensor]): List of sampled weights.
+
+        Returns:
+            new_chain (list[tf.Tensor]): New rearranged chain.
+        """
         new_chain = []
         for w, b in zip(chain[::2], chain[1::2]):
             new_chain.extend(
@@ -555,19 +653,6 @@ class BayesianNeuralNetwork(object):
             )
         return new_chain
 
-    def save_model(self, fname_prefix):
-        """Saves a model given a chain of network samples
-
-        Args:
-            fname_prefix (str) :   filename's prefix. By default it's saved as
-                                    .npz file.
-
-            chain (list[tf.Tensor]) :   List containing sampled network parameters.
-                                        Each element is a list containing tf.Tensors
-                                        which makes up a densely connected neural network.
-        """
-        return NotImplemented
-
 
 def main():
     layers = [1, 50, 1]
@@ -578,7 +663,7 @@ def main():
     y_train = f(x_train) + tf.random.normal(shape=x_train.shape, mean=0.0, stddev=0.5)
 
     num_chains = 10
-    num_results = 100
+    num_results = 10
     tot_num_results = num_results * num_chains
     num_burnin_steps = 1000
     num_leapfrog_steps = 60
@@ -610,21 +695,21 @@ def main():
     # plt.ylabel("loss")
     # plt.show()
 
-    # kernel = tfp.mcmc.HamiltonianMonteCarlo(
-    #     target_log_prob_fn=bnn.get_target_log_prob_fn(x_train, y_train),
-    #     num_leapfrog_steps=num_leapfrog_steps,
-    #     step_size=step_size,
-    # )
-
-    kernel = tfp.mcmc.NoUTurnSampler(
+    kernel = tfp.mcmc.HamiltonianMonteCarlo(
         target_log_prob_fn=bnn.get_target_log_prob_fn(x_train, y_train),
+        num_leapfrog_steps=num_leapfrog_steps,
         step_size=step_size,
     )
 
-    # Adaptive kernel
-    # kernel = tfp.mcmc.DualAveragingStepSizeAdaptation(
-    #     inner_kernel=kernel, num_adaptation_steps=int(0.8 * num_burnin_steps)
+    # kernel = tfp.mcmc.NoUTurnSampler(
+    #     target_log_prob_fn=bnn.get_target_log_prob_fn(x_train, y_train),
+    #     step_size=step_size,
     # )
+
+    # Adaptive kernel
+    kernel = tfp.mcmc.DualAveragingStepSizeAdaptation(
+        inner_kernel=kernel, num_adaptation_steps=int(0.8 * num_burnin_steps)
+    )
 
     start = time.perf_counter()
     chain = bnn.sample_chain(
