@@ -1,19 +1,11 @@
+from typing import Callable, Optional, Union, List
+import time
 import tensorflow as tf
 import tensorflow_probability as tfp
 import tqdm
 from tqdm import trange
 import matplotlib.pyplot as plt
-import seaborn as sns
 import numpy as np
-import time
-import sys
-from typing import Callable, Optional, Union, List
-import itertools
-import pandas as pd
-import re
-
-
-tfd = tfp.distributions
 
 np.random.seed(1)
 tf.random.set_seed(1)
@@ -32,9 +24,9 @@ class BayesianNeuralNetwork(object):
                 Available activations: `sigmoid`, `relu`, `leaky_relu`, `tanh`, `identity`.
                 User can also provide their tf.nn callable equivalents, such as `tf.nn.sigmoid`.
                 It's recommended to provide the activations' name, not its tf.nn equivalent.
-            kernel_prior (tfd.Distribution):   
+            kernel_prior (tfp.distributions.Distribution):   
                 If set to None, it defaults to tfp.distributions.Normal
-            bias_prior (tfd.Distribution):
+            bias_prior (tfp.distributions.Distribution):
                 If set to None, it defaults to tfp.distributions.Normal
             prior_mean (float):
                 Mean value of the tfp.distribution.Normal. Default: `prior_mean = 0.0`
@@ -65,14 +57,61 @@ class BayesianNeuralNetwork(object):
             num_layers (int):
                 Number of layers.
             
-            
-
-        
         Raises:
             ValueError: 
                 - If len(activation) == len(layers) - 1 is False.
                 - If activation is a list, and an element is str, but is not an available activation function.
             TypeError: if activation is a list, but the elements is not str nor a Python callable.
+
+
+    #### Examples
+
+    ```python
+    num_chains = 100
+    num_results = 100
+    num_burnin_steps = 1000
+
+
+    input_size = 5
+    output_size = 1
+    layers = [input_size, 10, 20, 10, output_size]
+    activation = ["relu", "tanh", "leaky_relu", "identity"]
+    bnn = BayesianNeuralNetwork(
+        layers=layers, activation=activation, num_chains=num_chains,
+    )
+    
+    #  Pretrain the network layers before running MCMC chain.
+    loss = bnn.mle_fit(
+        x=x_train,
+        y=y_train,
+        epochs=10000,
+        batch_size=None,
+    )
+
+    # Create tfp.mcmc.TransitionKernel
+    kernel = tfp.mcmc.HamiltonianMonteCarlo(
+        target_log_prob_fn=bnn.get_target_log_prob_fn(x_train, y_train),
+        num_leapfrog_steps=100,
+        step_size=0.01
+    )
+
+    # Create adaptive transition kernel with HMC as the inner kernel.
+    kernel = tfp.mcmc.DualAveragingStepSizeAdaptation(
+        inner_kernel=kernel,
+        num_adaptation_steps=int(0.8 * num_burnin_steps)
+    )
+
+    # Run MCMC chain.
+    chain = bnn.sample_chain(
+        kernel=kernel,
+        num_results=num_results,
+        num_burnin_steps=num_burnin_steps,
+        num_steps_between_results=0,
+        fname="my_model.npz",
+        trace_fn=None,
+    )
+
+    ```
 
     """
 
@@ -160,13 +199,13 @@ class BayesianNeuralNetwork(object):
             if kernel_prior is not None:
                 self.kernel_prior = kernel_prior
             else:
-                self.kernel_prior = tfd.Normal(loc=0.0, scale=0.1)
+                self.kernel_prior = tfp.distributions.Normal(loc=0.0, scale=0.1)
 
             # Set priors of bias
             if bias_prior is not None:
                 self.bias_prior = bias_prior
             else:
-                self.bias_prior = tfd.Normal(loc=0.0, scale=0.1)
+                self.bias_prior = tfp.distributions.Normal(loc=0.0, scale=0.1)
 
             self.weights = self._create_layers(layers)
 
