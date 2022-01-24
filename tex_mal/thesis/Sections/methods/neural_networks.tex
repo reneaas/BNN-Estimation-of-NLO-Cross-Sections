@@ -9,7 +9,8 @@ These serve as the training data on which the neural network is trained.
 A neural network is most generally defined as a non-linear function $f : \mathbb{R}^p \to \mathbb{R}^d$.
 This non-linear function is built-up as follows:
 \begin{itemize}
-    \item A set of $L$ layers. Consider the $\ell$'th layer. It consists of $n_\ell$ nodes all of which has a one-to-one correspondence to a real number. The conventional representation is through a real-valued vector $a^\ell \in \mathbb{R}^{n_\ell}$, where $a^\ell$ is colloquially called the \textit{activation} of layer $\ell$.
+    \item A set of $L$ layers. Consider the $\ell$'th layer. It consists of $n_\ell$ nodes all of which has a one-to-one correspondence to a real number. 
+    The conventional representation is through a real-valued vector $a^\ell \in \mathbb{R}^{n_\ell}$, where $a^\ell$ is colloquially called the \textit{activation} of layer $\ell$.
     \item For convenience, the layer with $\ell = 1$ is often called the \textit{input layer} and the layer with $\ell = L$ is
     called the \textit{output layer}, and the layers in between for $\ell = 2, ..., L-1$ are called the \textit{hidden layers}. Although this distinction is merely conceptual and does not change the mathematics one bit, it provides useful categories for discussion later on.
     \item Each layer $\ell$ is supplied with a (possibly) non-linear function $\sigma_\ell : \mathbb{R}^{n_{\ell - 1}} \to \mathbb{R}^{n_\ell}$. In other words, it defines a mapping $a^{\ell-1} \mapsto a^\ell$. The complete neural network function can thus be expressed as
@@ -63,7 +64,7 @@ where $\hat{y}$ denotes the model output and $y$ the ground-truth. Now, the mode
 
 We are now equipped to write down the backpropagation for a single datapoint. It's built up of a textit{forward pass} which takes an input $x$ and applies the recursive eq.~\eqref{eq:nn_forward_pass} which produces a model prediction $\hat{y} = a^L$. The second part of the algorithm 
 is the \textit{backward pass} which based on the prediction $\hat{y}$ and the target $y$, computes the gradients of the loss function with respect to the model parameters. The forward pass of the neural network
-is found in algorithm \ref{algo:forward_pass}. 
+is found in algorithm \ref{algo:forward_pass}.
 \begin{figure}[H]
     \begin{algorithm}[H]
         \caption{Backpropagation: Forward pass}\label{algo:forward_pass}
@@ -79,7 +80,7 @@ is found in algorithm \ref{algo:forward_pass}.
         \end{algorithmic}
     \end{algorithm}
 \end{figure}
-The backward pass of the algorithm is stated in algorithm \ref{algo:backward_pass}.
+\noindent The backward pass of the algorithm is stated in algorithm \ref{algo:backward_pass}.
 \begin{figure}[H]
     \begin{algorithm}[H]
         \caption{Backpropagation: Backward pass}\label{algo:backward_pass}
@@ -91,7 +92,7 @@ The backward pass of the algorithm is stated in algorithm \ref{algo:backward_pas
         \State $\pdv*{E}{W_{jk}^L} \leftarrow \Delta_j^L a_k^{L-1}$
         \EndFor
         \For{$\ell = L-1, \ldots, 1$}
-        \For{$j = 1, \ldots, n$}
+        \For{$j = 1, \ldots, n_\ell$}
         \State $\Delta_j^\ell \leftarrow \left(\sum_k \Delta_k^{\ell+1}W_{kj}^{\ell+1}\right) \sigma'(z_j^\ell)$
         \State $\pdv*{E}{b_j^\ell} \leftarrow \Delta_j^\ell$
         \State $\pdv*{E}{W_{jk}^\ell} \leftarrow \Delta_j^\ell a_k^{\ell-1}$
@@ -102,8 +103,10 @@ The backward pass of the algorithm is stated in algorithm \ref{algo:backward_pas
         \end{algorithmic}
     \end{algorithm}
 \end{figure}
+\noindent Note that for in all practical implementations in this thesis, we utilize \textit{automatic differentiation}
+provided by TensorFlow to compute the gradients.
 
-\subsection{Regularization}
+\subsection{Regularization in Neural Networks}
 Neural networks often end up with a large number of parameters, which makes them prone to \textit{overfit} training data.
 This means that the trained parameters of the model is adjusted to capture trends in the training data which may not represent
 the underlying process the model tries to learn. The consequence is that it \textit{generalizes} poorly to new unseen data, i.e its predictions are poor. A typical strategy to avoid this problem, is to introduce some form of \textit{regularization}. A common choice is $L^2$-\textit{regularization}, which for a neural network tacks on two additional sums to the loss function as follows:

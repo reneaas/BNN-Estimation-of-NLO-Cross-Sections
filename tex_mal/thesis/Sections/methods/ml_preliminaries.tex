@@ -1,28 +1,110 @@
 
-Machine learning is a field of study concerned with learning from known observations and of unseen ones. In this thesis, we'll focus on \textit{supervised} machine learning, which is a subfield of machine learning that fits models on data points $x$ with definite targets $y$. We'll confine ourselves even further and only study \textit{regression} problems, which is a class of problems where the function we're trying to learn produces a continuous output, i.e a function $f : \mathbb{R}^p \to \mathbb{R}$.
+Machine learning is a field of study concerned with learning from known observations and prediction of unseen ones. 
+In this thesis, we'll focus on \textit{supervised} machine learning, 
+which is a subfield of machine learning that fits models on data points $x$ with definite targets $y$. 
+We will confine ourselves even further and only study \textit{regression} problems, which is a class of problems where the function 
+we are trying to learn produces a continuous output, i.e a function $f : \mathbb{R}^p \to \mathbb{R}^d$.
 
 \section{Basic concepts in regression}\label{sec:basic_concepts}
 
-The basic conceptual framework of a supervised machine learning problem is as follows. Assume a dataset $\mathcal{D}$ built up of $n$ datapoints $(\vb*{x}_i, y_i)$, where $\vb*{x}_i \in \mathbb{R}^p$ is the set of \textit{features} and $y_i \in \mathbb{R}$ is the \textit{target}. I'll introduce a shorthand notation to represent the dataset as $\mathcal{D} = (X, \vb*{y})$ where $X$ is the set of features and $\vb*{y}$ is the set of targets. The next ingredient is to assume the targets are of the form 
+The basic conceptual framework of a supervised machine learning problem is as follows. 
+Assume a dataset $D$ is a sequence of $n$ datapoints $D = \{(x_i, y_i)\}_{i=1}^n$,
+where $x_i \in \mathbb{R}^p$ is the set of \textit{features} 
+and $y_i \in \mathbb{R}^d$ is the \textit{target}. 
+The next ingredient is to assume the targets are of the form 
 \begin{equation}\label{eq:model_assumption}
-	y_i = f(\vb{x}_i) + \epsilon_i,
+	y_i = f(x_i) + \epsilon_i,
 \end{equation}
-for some true function $f(\vb*{x}_i)$ (also known as the ground truth), where $\epsilon_i$ is introduced to account for random noise. To approximate the outputs $y_i$, the standard approach is to choose a model class $\hat{f}(\vb*{x}; \vb*{\theta})$ combined with a procedure to choose parameters $\vb*{\theta}$ such that the model is as close to $f(\vb*{x}_i)$ as possible. This typically involves choosing a \textit{metric} $\mathcal{C}$ to quantify the error, usually called a \textit{cost}-function or a \textit{loss}-function, and minimize it with respect to the parameters of the model.
+for some true function $f({x}_i)$ (also known as the ground truth), where $\epsilon_i$ is introduced to account for random noise. 
+To approximate the outputs $y_i$, the standard approach is to choose a model class $\hat{f}(x; \theta)$ 
+combined with a procedure to choose parameters $\theta$ such that the model is as close to $f(x_i)$ as possible. 
+This typically involves choosing a \textit{metric} $\mathcal{L}$ to quantify the error, usually called a \textit{loss}-function 
+(or a \textit{cost}-function, but we will adopt the former term in line with the terminology used in the TensorFlow framework), 
+and minimize it with respect to the parameters of the model. The output of the model is usually denoted as
+\begin{equation}
+	\hat{y}_i = \hat{f}(x_i; \theta),
+\end{equation}
+for brevity.
 
 
 \subsection{Bias-variance trade-off}\label{sec:bias_var}
-From eq.~\eqref{eq:model_assumption}, we can deduce a general feature of machine learning problems that proves challenging. We cannot directly probe the true function $f(\vb{x}_i)$, because only $y_i$ is observed. Because of this, choosing a model class is a delicate process. If the model class is too simple (i.e few parameters $\vb*{\theta}$), it is likely to capture very general features of the ground truth whilst more nuances properties are missed entirely. Then we say that the model has a high bias and a low variance. Increasing the model complexity (i.e increasing number of parameters) allows the model to reproduce a growing number of nook-and-crannies of the data. A model that is too complex is said to have a low bias and a high variance.
+From eq.~\eqref{eq:model_assumption}, we can deduce a general feature of machine learning problems that proves challenging. We cannot directly probe the true function $f(\vb{x}_i)$, because only $y_i$ is observed. 
+Because of this, choosing a model class is a delicate process. 
+If the model class is too simple (i.e few parameters $\theta$), 
+it is likely to capture very general features of the ground truth whilst more nuances properties are missed entirely. 
+Then we say that the model has a high bias and a low variance. Increasing the model complexity 
+(i.e increasing number of parameters) allows the model to reproduce a growing number of nook-and-crannies of the data. 
+A model that is too complex is said to have a low bias and a high variance.
+
+Let's put these notions into mathematics.
 
 \section{Loss functions}
+For regression problems, two loss functions are commonly chosen. The first is the \textit{residual squared error} (RSS) given by
+\begin{equation}
+	\text{RSS} = \sum_{i=1}^n \norm{\hat{y}_i - y_i}_2^2,
+\end{equation}
+where $\norm{\cdot}_2$ denotes the $L^2$-norm. The second is the the \textit{mean squared error} (MSE), given by
+\begin{equation}
+	\text{MSE} = \frac{1}{n}\sum_{i=1}^n\norm{\hat{y}_i - y_i}_2^2.
+\end{equation}
+For optimization purposes, they yield equivalent optimal parameters $\theta$. 
+
+\subsection{Regularization}
+With datasets of limited size, overfitting typically pose a problem yielding models that generalize poorly. 
+One strategy to overcome this, is to tack on a regularization term to the loss-function. By \textit{regularization},
+we mean an additional term that limits the size of the allowed parameter space. The two most common ones are 
+$L^2$-regularization, which adds a term to the loss function as
+\begin{equation}
+	\mathcal{L} + \lambda \norm{\theta}_2^2,
+\end{equation}
+where $\lambda$ is the so-called \textit{regularization strength}.
+The second is $L^1$-regularization, which yields a loss 
+\begin{equation}
+	\mathcal{L} + \lambda\norm{\theta}_1.
+\end{equation}
+The terms \textit{penalizes} large values of $\theta$, effectively shrinking the allowed parameter space.
+The larger the value of the regularization strength $\lambda$, the smaller the allowed parameter space becomes.
 
 \section{Optimization}
+Once a model class and loss function is chosen, optimization of the model parameters commence. In this section, we will
+study several optimization schemes, with the ultimate goal of defining the state-of-the-art optimization in modern
+machine learning, namely ADAM.
+
 \subsection{Gradient descent}
+Gradient descent is the most basic optimization scheme. The update rule for the parameters is given by 
+\begin{equation}
+	\theta_{t+1} = \theta_t - \eta_t \sum_{i=1}^n \nabla_\theta \mathcal{L}(\hat{f}(x_i; \theta_t), y_i),
+\end{equation}
+where $\theta_t$ is the model parameters at iteration $t$ and $\eta_t$ is the \textit{learning rate}, 
+which in general is dependent on iteration $t$, hence the subscript.
 \subsection{Stochastic gradient descent}
-\subsection{ADAM}
+The standard gradient descent algorithm has an inherent weakness in the sense that it computes the gradient using the whole dataset
+at each iteration. Stochastic gradient descent improves upon this algorithm by dividing the dataset into a set of \textit{batches} $B$,
+each of which is a subset of the complete dataset. The parameter update is then performed using a randomly chosen batch $B_j \in B$ as follows:
+\begin{equation}
+	\theta_{t+1} = \theta_t - \eta_t \sum_{(x_i, y_i) \in B_j} \nabla_\theta \mathcal{L}(\hat{f}(x_i; \theta_t), y_i).
+\end{equation}
+An iteration over all batches $B_j \in B$ is called an \textit{epoch}. 
+
+\subsection{Gradient Descent With Momentum}
+Stochastic gradient descent is usually accompanied by a so-called \textit{momentum} term to compensate for random
+fluctuations that may occur when computing gradients on subsets of the full dataset. The momentum term stores a running average of
+previous gradients which yields a general direction in which the gradient points in parameter space. 
+Let $v_t$ be defined by the recursive equation 
+\begin{equation}
+	v_t = \gamma v_{t-1} + \eta_t \sum_{(x_i, y_i) \in B_j} \nabla_\theta \mathcal{L}(\hat{f}(x_i; \theta_t), y_i).
+\end{equation}
+Then the update rule for the parameters is
+\begin{equation}
+	\theta_{t+1} = \theta_t - v_t.
+\end{equation}
+
+\subsection{RMSprop}
+In RMSprop, we not only keep a running average of the first-order moment (the momentum), 
+but we also store a running average of the second moment of the gradient. Let 
 
 \section{Data preprocessing}
 \subsection{Data splitting}
 \subsection{Data scaling}
 
-\section{Regularization}
 \section{Optimization formulated in terms of Bayesian statistics}

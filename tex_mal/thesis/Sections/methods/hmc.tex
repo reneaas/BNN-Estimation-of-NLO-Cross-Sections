@@ -1,112 +1,16 @@
 In this chapter, we will study the details of the Hamiltonian Monte Carlo (HMC) method.
-It is a Markov Chain Monte Carlo (MCMC) sampling technique that merges Gibbs sampling and a modified version of Metropolis sampling
-with Hamiltonian dynamics. It avoids the random walk behaviour of the Metropolis algorithm
-and generates successive samples with smaller correlation. In this chapter, the first thing we will discuss is Markov chains.
-From that, follows an outline of Gibbs- and Metropolis sampling. After that, we will deal with Hamiltonian dynamics before we bring it all together
-to form the HMC algorithm for sampling. This forms the basis for the practical Bayesian learning of the neural networks studied in this thesis.
+It is a Markov Chain Monte Carlo (MCMC) sampling technique that merges Gibbs sampling, Hamiltonian dynamics with a final Metropolis-Hastings update.
+It avoids random walk behaviour with a systematical exploration of the state space 
+and generates successive samples with smaller correlation. We will begin with a survey of Lagrangian and Hamiltonian dynamics followed by a description of
+the \textit{Leapfrog} integrator which is used to simulate the Hamiltonian systems. Once these are established, we will summarize the 
+HMC method in a generic manner - applicable to any continuous distribution. Moreoever, we will discuss important properties like conservation of the Hamiltonian
+and local phase space volume.
 
-\section{Markov Chain Monte Carlo}\label{sec:mcmc}
-\begin{comment}
-  The treatment of Markov chains largely follows the presentation in \cite{markov_chains}. A Markov process is a scheme that from a given state (or value) $\mu$ generates a new state $\nu$ with a \textit{transition} probability $T(\nu|\mu)$. A Markov process has the following properties
-\begin{itemize}
-  \item The transition probabilities $T(\nu|\mu)$ are time-independent.
-  \item $T(\nu|\mu)$ only depend on the states $\mu$ and $\nu$.
-  \item The transition $\mu \to \mu$ is allowed, thus $T(\mu|\mu) > 0$. Hence, the new generated state may just be the same as the previous state.
-  \item The transition probabilties must sum to unity, hence $\int_{\nu} T(\nu|\mu) = 1$. In other words, the procedure must generate some new state.
-\end{itemize}
-
-Two important principles, originally found by Metropolis et. al \cite{metropolis}, were introduced to make the MCMC chains computationally feasible. 
-\begin{enumerate}
-  \item \textbf{Ergodicity}: Any state $\nu$ can be reached from any other state $\mu$ given a long enough MCMC chain.
-  \item \textbf{Detailed balance}: If the transition probabilities $T(\nu|\mu)$ obey the detailed balance equation, $$P(\mu)T(\nu|\mu) = P(\nu)T(\mu|\nu),$$
-      then the Markov chain is guaranteed to be ergodic. The interpretation of this is that on average, the system makes the transition $\mu \to \nu$ just as often as the transition $\nu \to \mu$.
-\end{enumerate}
-\end{comment}
-
-A \textit{Monte Carlo Markov chain} (MCMC) method is a scheme to sample points $\theta$ proportional to a distribution $\pi(\theta)$. It generates a new point $\theta_i$ given a point $\theta_{i-1}$. 
-A \textit{Markov chain} is a sequence of points $\theta_1, \theta_2, \ldots,$ that are possibly dependent, but occur in the sequence in proportion to $\pi(\theta)$. Note that $\pi(\theta)$ here is not an exact probability distribution because it need not be normalized to unity.
-However, suppose $P(\theta)$ is the underlying probability distribution, then $\pi(\theta) \propto P(\theta)$. Typically, in Bayesian applications, we have a prior $P(\theta)$ and a likelihood $P(D|\theta)$. In this case $\pi(\theta) = P(D|\theta)P(\theta)$ and 
-$\pi(\theta) \propto P(\theta|D)$, that is, it's proportional to the posterior distribution.
-
-
-A few important properties of the Markov chain, originally introduced by Metropolis et. al and built upon by Hastings \cite{metropolis}
-is worth mentioning:
-\begin{enumerate}
-  \item \textbf{Ergodicity}. Each point $\theta_i$ is chosen from a distribution that only depends on the previous point in the sequence, $\theta_{i-1}$. For this, we introduce a transition probability that is  $T(\theta_i|\theta_{i-1})$. This ensures that any point $\theta$ can eventually be reached given a long enough sequence of samples \cite{numerical_recipies}. 
-  \item \textbf{Detailed balance}. The transition probability is chosen to obey $$\pi(\theta)T(\theta'|\theta) = \pi(\theta')T(\theta|\theta'),$$ which ensures that the Markov chain is ergodic. Mathematically, we can express this condition as
-  $$\pi(\theta') = \int \pi(\theta)T(\theta'|\theta)\dd\theta.$$
-  \item We allow the transition $\theta \to \theta$, hence the transition probability $T(\theta|\theta)$ may be non-zero.
-  \item The transition probablities integrate to unity, thus $$\int T(\theta'|\theta)\dd\theta = 1,$$
-  reflecting the notion that some transition is guaranteed to occur.
-  \item Finally, the transition probabilities are required to be time--independent.
-\end{enumerate}
-
-
-\section{Gibbs sampling}
-Gibbs sampling \cite{gibbs} is a sampling technique used to generate a Markov chain sequence from an underlying multivariate distribution $P(\gamma)$ for a multi-dimensional parameter $\gamma = (\gamma_1, \ldots \gamma_d) \in \mathbb{R}^d$, for $d > 1$.
-Suppose $\gamma^{(t)}$ represents the parameters at iteration $t$. Then the parameters $\gamma^{(t+1)}$ at iteration $t+1$ are generated from $\gamma^{(t)}$ by the following procedure.
-\begin{figure}[H]
-  \begin{algorithm}[H]
-    \caption{Gibbs sampling}
-    \begin{algorithmic}
-      \Procedure{GIBBS}{$\gamma^{(t)}$}\\
-        \State Sample $\gamma^{(t+1)}_1 \sim P(\gamma_1|\gamma_2^{(t)},...,\gamma_d^{(t)})$ \\
-        \State Sample $\gamma^{(t+1)}_2 \sim P(\gamma_2|\gamma_1^{(t+1)},...,\gamma_d^{(t)})$\\
-        \State $\vdots$ \qquad  \qquad $\vdots$ \qquad  \qquad $\vdots$ \qquad \qquad $\vdots$\\
-        \State Sample $\gamma^{(t+1)}_d \sim P(\gamma_d|\gamma_1^{(t+1)},...,\gamma_{d-1}^{(t+1)})$\\
-      \EndProcedure
-    \end{algorithmic}
-  \end{algorithm}
-\end{figure}
-\noindent Thus each new sample $\gamma^{(t+1)}_i$ is only dependent on the prior state of the other parameters through
-\begin{equation}
-  \gamma_i^{(t+1)} \sim P(\gamma_i|\gamma_{1}^{(t+1)}, \ldots \gamma_{i-1}^{(t+1)}, \gamma_{i+1}^{(t)}, \ldots, \gamma_{d}^{(t)}),
-\end{equation}
-which by definition makes it a Markov chain.
-
-
-\section{The Metropolis-Hastings algorithm}
-The Metropolis-Hastings algorithm \cite{metropolis} is a sampling algorithm based on random walks in parameter space used in MCMC chains to generate a new point $\theta'$ given a point $\theta$. Albeit efficient for some
-problems, it's not a suitable sampling technique in the context of neural networks. 
-The parameter space of neural networks is high-dimensional. Random walk exploration of said space will
-yield highly correlated parameters per iteration. The random walk behaviour does not efficiently explore the parameter space.
-However, a rudimentary understanding of the algorithm will be useful before we embark upon the HMC sampling algorithm, 
-because the final update of the algorithm is by application of the Metropolis-Hastings algorithm.
-
-The transition probability in the Metropolis algorithm is chosen to be
-\begin{equation}
-  T(\theta'|\theta) = q(\theta'|\theta)A(\theta,\theta'),
-\end{equation}
-where $q(\theta'|\theta)$ is called the proposal distribution and $A(\theta, \theta')$ is the acceptance probability given by
-\begin{equation}
-  A(\theta, \theta') = \min \left(1, \frac{\pi(\theta')q(\theta|\theta')}{\pi(\theta)q(\theta'|\theta)}\right).
-\end{equation}
-In the Metropolis-Hastings algorithm, a symmetry constraint is imposed on the proposal distribution such that 
-$q(\theta'|\theta) = q(\theta|\theta')$. Thus the acceptance probability reduces to
-\begin{equation}
-  A(\theta, \theta') = \min \left(1, \frac{\pi(\theta')}{\pi(\theta)}\right).
-\end{equation}
-The point $\theta'$ is accepted with probability $A(\theta, \theta')$. 
-\begin{figure}[H]
-  \begin{algorithm}[H]
-    \caption{Metropolis-Hastings}
-    \begin{algorithmic}
-      \Procedure{METROPOLIS-HASTINGS}{$\theta$}\\
-      \State Sample $\theta' \sim q(\theta'|\theta)$\\
-      \State $p \leftarrow \min \left(1, \frac{\pi(\theta')}{\pi(\theta)}\right)$\\
-      \State Sample $u$ uniformly on $(0,1)$. \\
-      \If {$p \geq u$}
-        \State $\theta \leftarrow \theta'$ \Comment{Accept transition}
-      \Else
-        \State $\theta \leftarrow \theta$  \Comment{Reject transition}
-      \EndIf\\
-      \EndProcedure
-    \end{algorithmic}
-  \end{algorithm}
-\end{figure}
 
 \section{Hamiltonian dynamics}\label{sec:hamiltonian_dynamics}
-Hamiltonian dynamics \cite{classical_mechanics} plays a central part in the HMC algorithm. For completeness, we will first survey Lagrangian mechanics from which we derive the Hamiltonian. The Hamiltonian then lays the foundation for the Hamiltonian dynamics.
+Hamiltonian dynamics \cite{classical_mechanics} plays a central part in the HMC algorithm. 
+For completeness, we will first survey Lagrangian mechanics from which we derive the Hamiltonian. 
+The Hamiltonian then lays the foundation for Hamiltonian dynamics.
 
 \subsection{Lagrangian Mechanics}
 Assume a set of \textit{generalized coordinates} $q = (q_1, ..., q_n)$. Generally, the Lagrangian can be written as
@@ -152,6 +56,12 @@ Finally, we can write down the Hamiltonian as
 \begin{equation}\label{eq:hamiltonian}
   H(q, p) = K(p) + V(q) = \sum_i \frac{p_i^2}{2m_i} + V(q).
 \end{equation}
+From Hamilton's equations in eq.~\ref{eq:eom}, we can easily show that the Hamiltonian is conserved in time $t$ by
+\begin{equation}
+  \dv{H}{t} = \sum_i\left(\dv{q_i}{t}\pdv{H}{q_i} + \dv{p_i}{t}\pdv{H}{p_i}  \right)
+  = \sum_i\left(\pdv{H}{p_i}\pdv{H}{q_i} - \pdv{H}{q_i}\pdv{H}{p_i}  \right) = 0.
+\end{equation}
+This motives the need for a symplectic integrator, which we will discuss next.
 
 \subsection{Leapfrog integration}
 To run one step of HMC, we need to compute the time evolution of a Hamiltonian system of the form discussed in the former section,
@@ -172,6 +82,8 @@ Assume we approximate the true coordinates and momenta by $(\hat{q}, \hat{p})$. 
 	\end{algorithm}
 \end{figure}
 
+\subsection{Conservation of local phase-space volume}
+
 \section{Hamiltonian Monte Carlo}
 Hamiltonian Monte Carlo is largely developed and expanded upon by Radford Neal \cite{hmc}. The probability distribution to sample from
 is expressed in terms the Canonical distribution
@@ -182,7 +94,10 @@ where $q$ represents the parameters of the model. $V(q)$ can then always be expr
 \begin{equation}
   V(q) = -\log Z - \log P(q)
 \end{equation}
-for some $Z$. To utilize the framework of Hamiltonian dynamics explained in section \ref{sec:hamiltonian_dynamics}, we introduce momentum variables
+for some normalization constant $Z$. 
+This constant plays no actual role in the sampling procedure as we only need to compute the difference $V(q') - V(q)$ at two points $q'$ and $q$.
+We also need the gradient of $V$ with respect to $q$ where the constant term vanishes.
+To utilize the framework of Hamiltonian dynamics explained in section \ref{sec:hamiltonian_dynamics}, we introduce momentum variables
 $p_i$ such that we can express the total Hamiltonian as
 \begin{equation}
   H(q, p) = K(p) + V(q),
@@ -191,8 +106,7 @@ with a corresponding canonical distribution over phase-space
 \begin{equation}
   P(q, p) \propto \exp\left(-H(q,p)\right).
 \end{equation}
-
-The algorithm is summarized in 
+The HMC scheme is summarized in algorithm \ref{algo:hmc}.
 \begin{figure}[H]
 	\begin{algorithm}[H]
 		\caption{Hamiltonian Monte Carlo}\label{algo:hmc}
@@ -216,5 +130,4 @@ The algorithm is summarized in
 		\end{algorithmic}
 	\end{algorithm}
 \end{figure}
-
 
