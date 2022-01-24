@@ -13,10 +13,10 @@ import time
 
 def log_likelihood(x, y):
     model = hk.Sequential([
-        hk.Linear(10), jax.nn.sigmoid,
-        hk.Linear(10), jax.nn.relu,
-        hk.Linear(10), jax.nn.sigmoid,
-        hk.Linear(10), jax.nn.relu,
+        hk.Linear(50), jax.nn.relu,
+        hk.Linear(50), jax.nn.relu,
+        hk.Linear(50), jax.nn.relu,
+        hk.Linear(50), jax.nn.relu,
         hk.Linear(1),
     ])
     y_pred = model(x)
@@ -24,10 +24,10 @@ def log_likelihood(x, y):
 
 def forward(x):
     model = hk.Sequential([
-        hk.Linear(10), jax.nn.sigmoid,
-        hk.Linear(10), jax.nn.relu,
-        hk.Linear(10), jax.nn.sigmoid,
-        hk.Linear(10), jax.nn.relu,
+        hk.Linear(50), jax.nn.relu,
+        hk.Linear(50), jax.nn.relu,
+        hk.Linear(50), jax.nn.relu,
+        hk.Linear(50), jax.nn.relu,
         hk.Linear(1),
     ])
     return model(x)
@@ -189,7 +189,7 @@ def main():
             grad_log_likelihood=grad_log_likelihood_fn,
             grad_log_prior=grad_log_prior_fn,
             leapfrog_steps=1024,
-            step_size=0.001,
+            step_size=0.0001,
             key=key,
         )
 
@@ -206,7 +206,7 @@ def main():
             grad_log_likelihood=grad_log_likelihood_fn,
             grad_log_prior=grad_log_prior_fn,
             leapfrog_steps=1024,
-            step_size=0.001,
+            step_size=0.0001,
             key=key,
         )
         num_accepted += 1.* is_accepted
