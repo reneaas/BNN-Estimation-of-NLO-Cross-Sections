@@ -7,12 +7,14 @@ from tqdm import trange
 import matplotlib.pyplot as plt
 import numpy as np
 import sys
+import pandas as pd
+from bnn_base import _BNNBase
 
 np.random.seed(10)
 tf.random.set_seed(10)
 
 
-class BayesianNeuralNetwork(object):
+class BayesianNeuralNetwork(_BNNBase):
     """Class for a Bayesian neural network (BNN) using Hamiltonian Monte Carlo (HMC)
     and its derivatives as a sampling method to sample from its posterier.
 
@@ -129,102 +131,16 @@ class BayesianNeuralNetwork(object):
                 - If activation is a list, and an element is str, but is not an available activation function.
             TypeError: if activation is a list, but the elements is not str nor a Python callable.
         """
-        self._num_chains = num_chains
+        super().__init__(
+            layers=layers,
+            activation=activation,
+            kernel_prior=kernel_prior,
+            bias_prior=bias_prior,
+            num_chains=num_chains,
+        )
         self.lamb = lamb
         self.likelihood_noise = likelihood_noise
 
-        self.avail_activations = {
-            "sigmoid": tf.nn.sigmoid,
-            "relu": tf.nn.relu,
-            "leaky_relu": tf.nn.leaky_relu,
-            "tanh": tf.nn.tanh,
-            "identity": tf.identity,
-        }
-
-        if activation is not None and layers is not None:
-            self.num_layers = len(layers) - 1
-
-            # Check if list with an activation per layer.
-            if isinstance(activation, list):
-                assert len(activation) == len(layers) - 1, ValueError(
-                    f"""len(activation) = {len(activation)} does not match the number of layers."""
-                )
-
-                self.activation = []
-                for act in activation:
-                    assert isinstance(act, str) or callable(act), TypeError(
-                        f"activation = {act} is not of type `str` or is not callable."
-                    )
-
-                    assert (
-                        act in self.avail_activations
-                        or act in self.avail_activations.values()
-                    ), ValueError(
-                        f"""activation = {act} is not a valid activation. 
-                        Available activations:
-                        {list(self.avail_activations.keys())}.
-                        Or provide the tf.nn equivalent to these. e.g 
-                        {list(self.avail_activations.values())}
-                        """
-                    )
-                    if isinstance(act, str):
-                        self.activation.append(self.avail_activations.get(act))
-                    else:
-                        self.activation.append(act)
-
-            # Check if user provides a single activation for the "hidden layers".
-            elif isinstance(activation, str):
-                assert activation in self.avail_activations, ValueError(
-                    f"""activation = {activation} is not a valid activation. 
-                    Available activations:
-                    {list(self.avail_activations.keys())}.
-                    Or provide the tf.nn equivalent to these. e.g 
-                    {list(self.avail_activations.values())}
-                    """
-                )
-
-                self.activation = [
-                    self.avail_activations.get(activation)
-                    for _ in range(len(layers) - 2)
-                ]
-                self.activation.append(tf.identity)  # Activation for output layer.
-
-            elif callable(activation):
-                assert activation in self.avail_activations.values(), ValueError(
-                    f"""activation = {activation} is not a valid activation. 
-                    Available activations:
-                    {list(self.avail_activations.keys())}.
-                    Or provide the tf.nn equivalent to these. e.g 
-                    {list(self.avail_activations.values())}
-                    """
-                )
-
-                self.activation = [activation for _ in range(len(layers) - 2)]
-                self.activation.append(tf.identity)  # Activation for output layer.
-            # Set priors of kernel
-            if kernel_prior is not None:
-                self.kernel_prior = kernel_prior
-            else:
-                self.kernel_prior = tfp.distributions.Normal(loc=0.0, scale=1.0)
-
-            # Set priors of bias
-            if bias_prior is not None:
-                self.bias_prior = bias_prior
-            else:
-                self.bias_prior = tfp.distributions.Normal(loc=0.0, scale=1.0)
-
-            self.weights = self._create_layers(layers)
-
-    def _create_layers(self, layers):
-        weights = []
-        for n, m in zip(layers[:-1], layers[1:]):
-            weights.extend(
-                [
-                    self.kernel_prior.sample(sample_shape=(self._num_chains, n, m)),
-                    self.bias_prior.sample(sample_shape=(self._num_chains, m)),
-                ]
-            )
-        return weights
 
     @tf.function
     def __call__(self, x, weights=None):
@@ -250,11 +166,18 @@ class BayesianNeuralNetwork(object):
             bias = weights[1::2]
 
         for w, b, activation in zip(kernel, bias, self.activation):
-            x = self.dense_layer(x, w, b, activation)
+            x = self._dense_layer(x, w, b, activation)
         return x
 
     @tf.function
-    def train_step(self, x, y):
+    def loss_fn(self, y_pred, y_true, weights):
+        return (
+            0.5 * tf.reduce_sum((y_pred - y_true) ** 2, axis=(-1, -2))
+            - self._log_prior_prob_fn(weights)
+        )
+
+    @tf.function
+    def _train_step(self, x, y):
         """Computes a training step in conjunction with the MLE fit
         method.
 
@@ -271,29 +194,30 @@ class BayesianNeuralNetwork(object):
         with tf.GradientTape() as tape:
             tape.watch(self.weights)
             y_pred = self(x, self.weights)
-            loss = tf.reduce_sum(
-                (y - y_pred) ** 2, axis=(1, 2)
-            ) - self.log_prior_prob_fn(self.weights)
+            loss = self.loss_fn(y_pred=y_pred, y_true=y, weights=self.weights)
         grad = tape.gradient(loss, self.weights)
         self.optimizer.apply_gradients(zip(grad, self.weights))
         return loss
 
     def mle_fit(
         self,
-        x,
-        y,
+        x_train,
+        y_train,
         epochs,
         lr,
         batch_size=None,
         optimizer=None,
+        x_val=None,
+        y_val=None,
+        dont_break=False,
     ):
         """Fits the network using the backpropagation algorithm, i.e maximum likelihood estimation (MLE).
 
         Args:
-            x (tf.Tensor):
-                Input features of shape [num_points, num_features]
-            y (tf.Tensor):
-                Targets of shape [num_points, num_outputs]
+            x_train (tf.Tensor):
+                Training features of shape [num_points, num_features]
+            y_train (tf.Tensor):
+                Training targets of shape [num_points, num_outputs]
             epochs (int):
                 Number of epochs to fit the network.
             lr (float):
@@ -307,18 +231,24 @@ class BayesianNeuralNetwork(object):
             loss (list[float]):
                 List containing the loss per epoch.
         """
-        if len(x.shape) != 2:
+        if len(x_train.shape) != 2:
             raise ValueError(
                 f"""
                 len(x.shape) = {len(x.shape)} != 2. The shape of the input features must be (num_points, num_features)
             """
             )
-        if len(y.shape) != 2:
+        if len(y_train.shape) != 2:
             raise ValueError(
                 f"""
                 len(y.shape) = {len(y.shape)} != 2. The shape of the input targets must be (num_points, num_targets)
             """
             )
+
+        #Validation loss is computed to facilitate early stopping.
+        validate = False
+        if x_val is not None and y_val is not None:
+            validate = True
+            val_losses = []
 
         if optimizer is None:
             self.optimizer = tf.keras.optimizers.Adam(learning_rate=lr)
@@ -334,25 +264,41 @@ class BayesianNeuralNetwork(object):
                 raise ValueError(err_message)
             else:
                 self.optimizer = optimizer
-
-        losses = []
+        
+        if validate:
+            val_loss = 2 ** 30
+        train_losses = []
         self.weights = [tf.Variable(w) for w in self.weights]
-        if batch_size is not None and x.shape[0] > batch_size:
-            ds = self._get_dataset(x=x, y=y, batch_size=batch_size)
+        if batch_size is not None and x_train.shape[0] > batch_size:
+            ds = self._get_dataset(x=x_train, y=y_train, batch_size=batch_size)
             for _ in trange(epochs, desc="Epochs"):
                 tot_loss = 0
                 for x_, y_ in ds:
-                    loss = self.train_step(x_, y_)
+                    loss = self._train_step(x_, y_)
                     tot_loss += loss
-                losses.append(tot_loss)
+                train_losses.append(tot_loss)
         else:
             for _ in trange(epochs, desc="Epochs"):
-                loss = self.train_step(x, y)
-                losses.append(loss)
+                loss = self._train_step(x_train, y_train)
+                train_losses.append(loss)
+
+                if validate:
+                    y_pred = self(x_val, self.weights)
+                    tmp = self.loss_fn(y_pred=y_pred, y_true=y_val, weights=self.weights)
+                    val_losses.append(tmp)
+                    if tmp > val_loss:
+                        if dont_break is False:
+                            break
+                    else:
+                        val_loss = tmp
+        losses = {"train_loss": train_losses}
+        if validate:
+            losses["val_loss"] = val_losses
+
         return losses
 
     @tf.function
-    def log_prior_prob_fn(self, weights):
+    def _log_prior_prob_fn(self, weights):
         """Log prior probability function of the weights of the network.
         Currently set to be exp(-lamb * w ** 2) according to Radford Neals treatment
         of BNNs. `lamb` is the analogue to a regularization
@@ -373,14 +319,8 @@ class BayesianNeuralNetwork(object):
             res += tf.reduce_sum(b ** 2, axis=-1)
         return -0.5 * self.lamb * res
 
-        # kernel_sum = tf.reduce_sum(
-        #     [tf.reduce_sum(w ** 2, axis=(-1, -2)) for w in kernel], axis=0
-        # )
-        # bias_sum = tf.reduce_sum([tf.reduce_sum(b ** 2, axis=-1) for b in bias], axis=0)
-        # return -0.5 * self.lamb * (kernel_sum + bias_sum)
-
     @tf.function
-    def log_likelihood_fn(self, x, y, weights):
+    def _log_likelihood_fn(self, x, y, weights):
         """Computes log likelihood of predicted target y given features `x` and `weights`.
 
         Args:
@@ -401,8 +341,8 @@ class BayesianNeuralNetwork(object):
         )
 
     def get_target_log_prob_fn(self, x, y):
-        """Returns the combines log probability function needed to
-        use tf.mcmc.sample_chain.
+        """Returns the target log probability function
+        used with tf.mcmc.sample_chain.
 
         Args:
             x (tf.Tensor):
@@ -413,17 +353,17 @@ class BayesianNeuralNetwork(object):
                 Usually only used with training data.
 
         Returns:
-            target_log_prob_fn (target log probability function used in the MCMC chain).
+            target_log_prob_fn (Callable):
+                target log probability function used in the MCMC chain.
         """
 
         def target_log_prob_fn(*weights):
-            return self.log_prior_prob_fn(weights) + self.log_likelihood_fn(
+            return self._log_prior_prob_fn(weights) + self._log_likelihood_fn(
                 x, y, weights
             )
-
         return target_log_prob_fn
 
-    def dense_layer(self, x, w, b, activation):
+    def _dense_layer(self, x, w, b, activation):
         """Computes the output of a dense layer.
 
         Args:
@@ -440,32 +380,6 @@ class BayesianNeuralNetwork(object):
             Computes activations of shape (batch_size, num_points, num_outputs)
         """
         return activation(tf.matmul(x, w) + b[..., None, :])
-
-    def predict_from_chain(self, x, chain=None):
-        """Computes predictions of a given x from from a chain of samples from the MCMC chain.
-
-        Args:
-            x (tf.Tensor):
-                Input features of shape (num_points, num_features)
-            chain (optional, list):
-                List of weights samples from the MCMC chain of length num_kernels + num_biases.
-                Each kernel is of shape (batch_size, n, m). Each bias is of shape (batch_size, m)
-
-        Returns
-            Predictions (tf.Tensor):
-                Tensor with predictions. Shape: (batch_size, num_points, num_outputs).
-        """
-        if chain is not None:
-            predictions = self(x, chain)
-        else:
-            try:
-                predictions = self(x, self.chain)
-            except ValueError:
-                print(
-                    """No chain is available. Please provide a chain or assign
-                    it to the network as an attribute named `chain`."""
-                )
-        return predictions
 
     @tf.function
     def _sample_chain(self, *args, **kwargs):
@@ -494,60 +408,6 @@ class BayesianNeuralNetwork(object):
             ds = ds.batch(batch_size=batch_size)
         return ds
 
-    def sample_chain_batched(
-        self,
-        x,
-        y,
-        kernel,
-        num_results,
-        num_burnin_steps,
-        num_steps_between_results=0,
-        trace_fn=None,
-        parallel_iterations=10,
-        batch_size=None,
-    ):
-        # Validate kernel
-        if not isinstance(kernel, tfp.mcmc.TransitionKernel):
-            raise TypeError(
-                f"""kernel = {kernel} is not a valid kernel. Please provide an
-                instance of tfp.mcmc.TransitionKernel.
-                """
-            )
-
-        dataset = self._get_dataset(x=x, y=y, batch_size=batch_size)
-        self.chain = []
-        first_iteration = True
-        with tqdm.tqdm(total=len(dataset), desc="Batch") as progress_bar:
-            for x_batch, y_batch in dataset:
-
-                # Create new kernel with respect to the batched data set (x_batch, y_batch)
-                kernel_params = kernel._parameters
-                kernel_params["target_log_prob_fn"] = self.get_target_log_prob_fn(
-                    x_batch, y_batch
-                )
-                kernel = type(kernel)(
-                    **kernel_params
-                )  # Call constructor of kernel with new target log probability.
-
-                # Sample chain
-                chain = self.sample_chain(
-                    kernel=kernel,
-                    num_results=num_results,
-                    num_burnin_steps=num_burnin_steps,
-                    num_steps_between_results=num_steps_between_results,
-                    trace_fn=trace_fn,
-                    parallel_iterations=parallel_iterations,
-                )
-
-                if first_iteration is False:
-                    self.chain = [
-                        tf.concat([old_states, new_states], axis=0)
-                        for old_states, new_states in zip(self.chain, chain)
-                    ]
-                first_iteration = False
-                progress_bar.update(1)
-
-        return self.chain
 
     def sample_chain(
         self,
@@ -605,80 +465,13 @@ class BayesianNeuralNetwork(object):
         self.weights = self._restack_chain(chain)
 
         if fname is not None:
-            if isinstance(fname, str):
-                self._save_model(fname)
-            else:
-                raise TypeError(
-                    f"""fname = {fname} is not of the wrong type. Provide a filename of type `str`."""
-                )
+            self.save_model(fname)
 
         if trace_fn is not None:
             return self.weights, trace
         else:
             return self.weights
 
-    def _save_model(self, fname, compressed=False, allow_pickle=False):
-        """Saves the weights and activations of the model to a numpy zip file (.npz)
-        using numpy.savez or numpy.savez_compressed.
-        By default it uses numpy.savez and avoids use of pickle to ensure
-        port compatibility.
-
-        Args:
-            fname (str):
-                Filename with ending ".npz".
-            compressed (bool):
-                Allow for compressed save option.
-            allow_pickle (bool):
-                Allow Python pickles or not.
-
-        Raises:
-            ValueError if `fname` does not end with `.npz`.
-        """
-        if fname.endswith(".npz") is False:
-            raise ValueError(
-                f"""The filename does not end with .npz. Please choose a filename with .npz ending."""
-            )
-        kernel = self.weights[::2]
-        bias = self.weights[1::2]
-        weights = {}
-        for i, (w, b, activation) in enumerate(zip(kernel, bias, self.activation)):
-            weights[f"kernel:{i}"] = w.numpy()
-            weights[f"bias:{i}"] = b.numpy()
-            if isinstance(activation, str):
-                weights[f"activation:{i}"] = activation
-            elif callable(activation):
-                for key, val in self.avail_activations.items():
-                    if activation is val:
-                        weights[f"activation:{i}"] = key
-        if compressed:
-            np.savez_compressed(file=fname, **weights, allow_pickle=allow_pickle)
-        else:
-            np.savez(file=fname, **weights, allow_pickle=allow_pickle)
-
-    def load_model(self, fname):
-        """Loads a model from a filename `fname`.
-        Loads the weights from a MCMC chain and activations of the model.
-
-        Args:
-            fname (str): Filename with the saved model.
-        """
-        data = np.load(fname)
-        kernel = data.files[::3]
-        bias = data.files[1::3]
-        activation = data.files[2::3]
-
-        self.weights = []
-        self.activation = []
-        for kernel_name, bias_name, activation_name in zip(kernel, bias, activation):
-            self.weights.extend(
-                [
-                    tf.convert_to_tensor(data[kernel_name], name=kernel_name),
-                    tf.convert_to_tensor(data[bias_name], name=bias_name),
-                ]
-            )
-            self.activation.append(
-                self.avail_activations.get(str(data[activation_name]))
-            )
 
     def _restack_chain(self, chain):
         """Rearranges the shape of the chain.
@@ -730,7 +523,7 @@ def trace_fn_adaptive_hmc(_, pkr):
 
 
 def main():
-    layers = [1, 50, 50, 50, 50, 1]
+    layers = [1, 10, 10, 1]
     n_train = 10000
     n_dims = 1
     f = lambda x: x * tf.math.sin(x) * tf.math.cos(x)
@@ -740,32 +533,51 @@ def main():
     num_chains = 1
     num_results = 100
     tot_num_results = num_results * num_chains
-    num_burnin_steps = 0
+    num_burnin_steps = 100
     num_leapfrog_steps = 1024
-    step_size = 0.001
-
-    activation = ["relu", "relu", "relu", "relu", "identity"]
+    step_size = 0.0001
+    activation = "swish"
+    #activation = ["relu", "relu", "relu", "relu", "identity"]
+    # activation = ["relu", "relu", "identity"]
 
     bnn = BayesianNeuralNetwork(
         layers=layers,
         activation=activation,
-        lamb=1e-4,
+        lamb=1e-3,
         likelihood_noise=0.1,
         num_chains=num_chains,
     )
 
+    # bnn = BayesianNeuralNetwork()
+    # bnn.load_model(fname="../models/test.npz")
+    # # bnn.summary()
+    # print(bnn)
+
+    # sys.exit()
+
+    x_val = tf.random.normal(shape=(1000, 1), mean=0.0, stddev=2.0)
+    y_val = f(x_val)
+
     start = time.perf_counter()
     loss = bnn.mle_fit(
-        x=x_train,
-        y=y_train,
-        epochs=1000,
+        x_train=x_train,
+        y_train=y_train,
+        epochs=100_000,
         lr=0.001,
-        batch_size=16,
+        batch_size=None,
+        x_val=x_val,
+        y_val=y_val,
+        dont_break=True,
     )
     end = time.perf_counter()
     timeused = end - start
     print(f"{timeused=} seconds on MLE fit.")
 
+    if loss.get("val_loss") is not None:
+        plt.plot(loss.get("val_loss"))
+        plt.xlabel("epochs")
+        plt.ylabel("validation loss")
+        plt.show()
     # plt.plot(loss)
     # plt.xlabel("epochs")
     # plt.ylabel("loss")
@@ -798,7 +610,7 @@ def main():
         num_results=num_results,
         num_burnin_steps=num_burnin_steps,
         num_steps_between_results=0,
-        fname=None,
+        fname="../models/test.npz",
         trace_fn=trace_fn_adaptive_hmc
         if isinstance(inner_kernel, tfp.mcmc.HamiltonianMonteCarlo)
         else trace_fn_adaptive_no_u_turn,
@@ -807,6 +619,7 @@ def main():
     print(sum(trace["is_accepted"].numpy()) / num_results)
     if isinstance(inner_kernel, tfp.mcmc.NoUTurnSampler):
         print(tf.reduce_mean(trace["leapfrogs_taken"]).numpy())
+
 
     # bnn.load_weights(fname="models/test.npz")
 

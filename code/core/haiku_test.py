@@ -8,74 +8,103 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 import sys
 import time
-
+from functools import partial
 
 
 def log_likelihood(x, y):
-    model = hk.Sequential([
-        hk.Linear(50), jax.nn.relu,
-        hk.Linear(50), jax.nn.relu,
-        hk.Linear(50), jax.nn.relu,
-        hk.Linear(50), jax.nn.relu,
-        hk.Linear(1),
-    ])
+    model = hk.Sequential(
+        [
+            hk.Linear(10),
+            jax.nn.relu,
+            hk.Linear(10),
+            jax.nn.relu,
+            hk.Linear(10),
+            jax.nn.relu,
+            hk.Linear(10),
+            jax.nn.relu,
+            hk.Linear(1),
+        ]
+    )
     y_pred = model(x)
     return 0.5 * jnp.sum((y - y_pred) ** 2)
 
+
 def forward(x):
-    model = hk.Sequential([
-        hk.Linear(50), jax.nn.relu,
-        hk.Linear(50), jax.nn.relu,
-        hk.Linear(50), jax.nn.relu,
-        hk.Linear(50), jax.nn.relu,
-        hk.Linear(1),
-    ])
+    model = hk.Sequential(
+        [
+            hk.Linear(10),
+            jax.nn.relu,
+            hk.Linear(10),
+            jax.nn.relu,
+            hk.Linear(10),
+            jax.nn.relu,
+            hk.Linear(10),
+            jax.nn.relu,
+            hk.Linear(1),
+        ]
+    )
     return model(x)
 
 
 def update_rule(param, grad, lr=1e-6):
     return param - grad * lr
 
-def mle_fit(grad_log_prior, grad_log_likelihood, params, x, y, epochs, step_size=1e-3):
-    # print("Got here")
-    # opt_init, opt_update, get_params = optimizers.adam(step_size=step_size)
-    # print("Passed here too")
-    # params = jax.tree_multimap(opt_init, params)
 
-    for step in trange(epochs, desc="Epochs"):
+def mle_fit(grad_log_prior, grad_log_likelihood, params, x, y, epochs, step_size=1e-3):
+    opt_init, opt_update, get_params = optimizers.adam(step_size=step_size)
+    opt_state = opt_init(params)
+    opt_update = jax.jit(opt_update)
+    get_params = jax.jit(get_params)
+    for step in trange(epochs, desc="Epochs (MLE fit)"):
+        current_state = get_params(opt_state)
         grads = jax.tree_multimap(
             lambda g1, g2: g1 + g2,
-            grad_log_prior(params),
-            grad_log_likelihood(params, x, y),
+            grad_log_prior(current_state),
+            grad_log_likelihood(current_state, x, y),
         )
-        params = jax.tree_multimap(
-            update_rule,
-            params,
-            grads,
-        )
-    return params
+        opt_state = opt_update(step, grads, opt_state)
+    return get_params(opt_state)
+
 
 @jax.jit
 def kinetic_energy(momentum):
-    return 0.5 * sum([
-        jnp.sum(p ** 2) for p in jax.tree_leaves(momentum)
-    ])
+    return 0.5 * sum([jnp.sum(p ** 2) for p in jax.tree_leaves(momentum)])
+
 
 @jax.jit
 def log_prior(params, lamb=1e-3):
-    return 0.5 * lamb * sum([
-            jnp.sum(w ** 2) for w in jax.tree_leaves(params)
-        ])
+    return 0.5 * lamb * sum([jnp.sum(w ** 2) for w in jax.tree_leaves(params)])
 
+@partial(jax.jit, static_argnames=("log_likelihood_fn"))
 def potential_energy(params, log_likelihood_fn, x, y, lamb=1e-3):
-    return (
-        0.5 * lamb * sum([
-            jnp.sum(w ** 2) for w in jax.tree_leaves(params)
-        ])
-        + log_likelihood_fn.apply(params, x, y)
-    )
+    return 0.5 * lamb * sum(
+        [jnp.sum(w ** 2) for w in jax.tree_leaves(params)]
+    ) + log_likelihood_fn.apply(params, x, y)
 
-def hmc_step(x, y, params, log_likelihood, log_prior, grad_log_likelihood, grad_log_prior, leapfrog_steps, step_size, key):
+# @partial(
+#     jax.jit, static_argnames=(
+#         "log_likelihood",
+#         "log_prior",
+#         "grad_log_likelihood",
+#         "grad_log_prior",
+#         "leapfrog_steps",
+#         "step_size",
+#     )
+# )
+
+
+def hmc_step(
+    x,
+    y,
+    params,
+    log_likelihood,
+    log_prior,
+    grad_log_likelihood,
+    grad_log_prior,
+    leapfrog_steps,
+    step_size,
+    key,
+):
     treedef = jax.tree_structure(params)
     num_vars = len(jax.tree_leaves(params))
     all_keys = jax.random.split(key=key, num=(num_vars + 1))
@@ -83,12 +112,14 @@ def hmc_step(x, y, params, log_likelihood, log_prior, grad_log_likelihood, grad_
 
     init_params = params
 
-    #Create initial momentum
+    # Create initial momentum
     momentum = jax.tree_multimap(
-        lambda p, k: jax.random.normal(key=k, shape=p.shape), params, jax.tree_unflatten(treedef, all_keys[1:])
-    )
+            lambda p, k: jax.random.normal(key=k, shape=p.shape),
+            params,
+            jax.tree_unflatten(treedef, all_keys[1:]),
+        )
 
-    #Get initial kinetic and potential energy
+    # Get initial kinetic and potential energy
     K_init = kinetic_energy(momentum)
     V_init = jax.tree_multimap(
         lambda val1, val2: val1 + val2,
@@ -97,34 +128,42 @@ def hmc_step(x, y, params, log_likelihood, log_prior, grad_log_likelihood, grad_
     )
     E_init = K_init + V_init
 
-    #First update of momenta
+    # First update of momenta
     grads = jax.tree_multimap(
-        lambda g1, g2: g1 + g2, 
-        grad_log_prior(params), 
+        lambda g1, g2: g1 + g2,
+        grad_log_prior(params),
         grad_log_likelihood(params, x, y),
     )
-    momentum = jax.tree_multimap(lambda p, dp: p - 0.5 * lamb * step_size * dp, momentum, grads)
+    momentum = jax.tree_multimap(
+        lambda p, dp: p - 0.5 * lamb * step_size * dp, momentum, grads
+    )
 
-    #First update of positions
+    # First update of positions
     for _ in range(leapfrog_steps - 1):
-        params = jax.tree_multimap(lambda q, p: q + lamb * step_size * p, params, momentum)
+        params = jax.tree_multimap(
+            lambda q, p: q + lamb * step_size * p, params, momentum
+        )
         grads = jax.tree_multimap(
-            lambda g1, g2: g1 + g2, 
-            grad_log_prior(params), 
+            lambda g1, g2: g1 + g2,
+            grad_log_prior(params),
             grad_log_likelihood(params, x, y),
         )
-        momentum = jax.tree_multimap(lambda p, dp: p - lamb * step_size * dp, momentum, grads)
-    
-    #Final update of positions and momentum
+        momentum = jax.tree_multimap(
+            lambda p, dp: p - lamb * step_size * dp, momentum, grads
+        )
+
+    # Final update of positions and momentum
     grads = jax.tree_multimap(
-        lambda g1, g2: g1 + g2, 
-        grad_log_prior(params), 
+        lambda g1, g2: g1 + g2,
+        grad_log_prior(params),
         grad_log_likelihood(params, x, y),
     )
-    momentum = jax.tree_multimap(lambda p, dp: p - 0.5 * lamb * step_size * dp, momentum, grads)
+    momentum = jax.tree_multimap(
+        lambda p, dp: p - 0.5 * lamb * step_size * dp, momentum, grads
+    )
 
-    #Finally reverse momentum
-    momentum = jax.tree_multimap(lambda p: -p, momentum)
+    # Finally reverse momentum
+    # momentum = jax.tree_multimap(lambda p: -p, momentum)
 
     K_final = kinetic_energy(momentum)
     V_final = jax.tree_multimap(
@@ -135,7 +174,7 @@ def hmc_step(x, y, params, log_likelihood, log_prior, grad_log_likelihood, grad_
 
     E_final = K_final + V_final
     dE = E_final - E_init
-    
+
     key, subkey = jax.random.split(key=all_keys[0])
     if dE < 0:
         is_accepted = True
@@ -149,37 +188,38 @@ def hmc_step(x, y, params, log_likelihood, log_prior, grad_log_likelihood, grad_
 
 
 
-
-
 def main():
     log_likelihood_fn = hk.transform(log_likelihood)
     log_likelihood_fn = hk.without_apply_rng(log_likelihood_fn)
     rng = jax.random.PRNGKey(42)
 
     n_train = 10000
-    x = np.random.normal(size=(n_train, 1), loc=0., scale=2.)
+    x = np.random.normal(size=(n_train, 1), loc=0.0, scale=2.0)
     f = lambda x: x * np.cos(x) * np.sin(x)
     y = f(x)
     params = log_likelihood_fn.init(rng, x, y)
 
-
     grad_log_likelihood_fn = jax.jit(jax.grad(log_likelihood_fn.apply))
     grad_log_prior_fn = jax.jit(jax.grad(log_prior))
-    # params = mle_fit(
-    #     grad_log_prior=grad_log_prior_fn,
-    #     grad_log_likelihood=grad_log_likelihood_fn,
-    #     params=params,
-    #     x=x,
-    #     y=y,
-    #     epochs=1000,
-    #     step_size=0.001,
-    # )
+    start = time.perf_counter()
+    params = mle_fit(
+        grad_log_prior=grad_log_prior_fn,
+        grad_log_likelihood=grad_log_likelihood_fn,
+        params=params,
+        x=x,
+        y=y,
+        epochs=1000,
+        step_size=0.001,
+    )
+    end = time.perf_counter()
+    timeused = end - start
+    print(f"{timeused=} seconds on MLE fit.")
 
     start = time.perf_counter()
     seed = 1000
     key = jax.random.PRNGKey(seed)
-    burnin_steps = 100
-    for _ in trange(burnin_steps):
+    burnin_steps = 10
+    for _ in trange(burnin_steps, desc="Burn-in progress"):
         params, key, is_accepted = hmc_step(
             x=x,
             y=y,
@@ -193,10 +233,10 @@ def main():
             key=key,
         )
 
-    num_results = 100
+    num_results = 10
     chain = []
     num_accepted = 0
-    for _ in trange(num_results):
+    for _ in trange(num_results, desc="Sampling"):
         params, key, is_accepted = hmc_step(
             x=x,
             y=y,
@@ -209,12 +249,12 @@ def main():
             step_size=0.0001,
             key=key,
         )
-        num_accepted += 1.* is_accepted
+        num_accepted += 1.0 * is_accepted
         chain.append(params)
-    print("acceptance ration = ", num_accepted / num_results)
+    print("acceptance ratio = ", num_accepted / num_results)
     end = time.perf_counter()
     timeused = end - start
-    print("timeused on sampling = ", timeused , " seconds")
+    print(f"{timeused=} seconds on sampling.")
 
     forward_fn = hk.transform(forward)
     forward_fn = hk.without_apply_rng(forward_fn)
@@ -241,8 +281,16 @@ def main():
     plt.plot(x_test, f(x_test), label="True function", color="g")
     plt.show()
 
-    
+    y_test = f(x_test).squeeze(-1)
+    print(y_test.shape)
+    print(mean_prediction.shape)
 
+    rel_error = (y_test - mean_prediction.squeeze(-1)) / y_test
+    print(rel_error.shape)
+    rel_error = np.array(rel_error)
+    print(rel_error.shape)
+    sns.histplot(rel_error)
+    # plt.show()
 
     # momenta = []
     # for layer in params:
@@ -263,9 +311,6 @@ def main():
 
     # plt.plot(x_test, y_pred.squeeze(-1))
     # plt.show()
-
-
-
 
 
 if __name__ == "__main__":

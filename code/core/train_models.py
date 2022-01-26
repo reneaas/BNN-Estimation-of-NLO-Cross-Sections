@@ -147,6 +147,7 @@ def main(
         bnn.load_model(
             fname=fname,
         )
+        print(bnn)
         y_pred = bnn(x_test)
 
         y_pred = y_pred.numpy().squeeze(-1)

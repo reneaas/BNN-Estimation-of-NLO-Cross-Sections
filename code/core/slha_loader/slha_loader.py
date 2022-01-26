@@ -148,13 +148,6 @@ class SLHAloader(object):
         targets = {key : val.numpy() for key, val in self.targets.items()}
         return features, targets
 
-    def __getitem__(self, idx: int):
-        """Returns a datapoint (feature, target)
-
-        Args:
-            idx (int)   :   index of datapoint
-        """
-        return NotImplemented
 
 
 def main():

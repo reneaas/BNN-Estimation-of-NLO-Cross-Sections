@@ -94,11 +94,14 @@ def get_data(
     """Extracts data from a set of .slha files.
 
     Args:
-        root_dir (str)      :   root directory of .slha files.
-        blocks (list)       :   blocks in .slha files to extract
-        ids (list)          :   particle ids to extract data for
-        col_idx (list)      :   column index of targets to extract
-                                in PROSPINO_OUTPUT block.
+        root_dir (str):
+            root directory of .slha files.
+        blocks (list):
+            blocks in .slha files to extract
+        ids (list):
+            particle ids to extract data for
+        col_idx (list):
+            column index of targets to extract in PROSPINO_OUTPUT block.
 
     Returns:
         features (dict)     :   dictionary with extracted features
@@ -132,12 +135,14 @@ def get_data(
     return features, targets
 
 
-def merge_features(features: Dict, blocks: List[str]) -> Dict:
+def merge_features(features, blocks: List[str]) -> Dict:
     """Merge features with respect to the blocks in the .slha files.
 
     Args:
-        features (dict)     :   dictionary containing features to merge.
-        blocks (list)       :   List of blocks to merge.
+        features (dict):   
+            dictionary containing features to merge.
+        blocks (list[str]):   
+            List of blocks to merge.
 
     Returns:
         Merged dictionary
@@ -157,7 +162,7 @@ def merge_features(features: Dict, blocks: List[str]) -> Dict:
     return features
 
 
-def save_targets(targets: Dict) -> None:
+def save_targets(targets):
     """Saves targets to a set of .npz file using the keys as filenames.
 
     Args:
