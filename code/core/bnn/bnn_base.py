@@ -8,7 +8,7 @@ class _BNNBase(object):
     def __init__(
         self,
         layers=None,
-        activation=None,
+        activations=None,
         kernel_prior=None,
         bias_prior=None,
         num_chains=1,
@@ -16,88 +16,100 @@ class _BNNBase(object):
 
         self._num_chains = num_chains
 
-        self.avail_activations = {
-                "sigmoid": tf.nn.sigmoid,
-                "relu": tf.nn.relu,
-                "leaky_relu": tf.nn.leaky_relu,
-                "tanh": tf.nn.tanh,
-                "swish": tf.nn.swish, #Alternatively called `SiLU`
-                "identity": tf.identity,
+        self._avail_activations = {
+                tf.nn.sigmoid.__name__: tf.nn.sigmoid,
+                tf.nn.relu.__name__: tf.nn.relu,
+                tf.nn.leaky_relu.__name__: tf.nn.leaky_relu,
+                tf.nn.tanh.__name__: tf.nn.tanh,
+                tf.nn.swish.__name__: tf.nn.swish,
+                tf.identity.__name__: tf.identity,
+                tf.nn.elu.__name__: tf.nn.elu,
+                tf.nn.gelu.__name__: tf.nn.gelu,
             }
         
-        if activation is not None and layers is not None:
-            self.num_layers = len(layers) - 1
+        if activations is not None and layers is not None:
+            self._num_layers = len(layers) - 1
 
             # Check if list with an activation per layer.
-            if isinstance(activation, list):
-                assert len(activation) == len(layers) - 1, ValueError(
-                    f"""len(activation) = {len(activation)} does not match the number of layers."""
+            if isinstance(activations, list):
+                assert len(activations) == len(layers) - 1, ValueError(
+                    f"""len(activations) = {len(activations)} does not match the number of layers."""
                 )
 
-                self.activation = []
-                for act in activation:
+                self._activations = []
+                for act in activations:
                     assert isinstance(act, str) or callable(act), TypeError(
-                        f"activation = {act} is not of type `str` or is not callable."
+                        f"activation function = {act} is not of type `str` or is not callable."
                     )
 
                     assert (
-                        act in self.avail_activations
-                        or act in self.avail_activations.values()
+                        act in self._avail_activations
+                        or act in self._avail_activations.values()
                     ), ValueError(
-                        f"""activation = {act} is not a valid activation. 
+                        f"""activation function = {act} is not a valid activation. 
                         Available activations:
-                        {list(self.avail_activations.keys())}.
-                        Or provide the tf.nn equivalent to these. e.g 
-                        {list(self.avail_activations.values())}
+                        {list(self._avail_activations.keys())}.
                         """
                     )
                     if isinstance(act, str):
-                        self.activation.append(self.avail_activations.get(act))
+                        self._activations.append(self._avail_activations.get(act))
                     else:
-                        self.activation.append(act)
+                        self._activations.append(act)
 
             # Check if user provides a single activation for the "hidden layers".
-            elif isinstance(activation, str):
-                assert activation in self.avail_activations, ValueError(
-                    f"""activation = {activation} is not a valid activation. 
+            elif isinstance(activations, str):
+                assert activations in self._avail_activations, ValueError(
+                    f"""activation function = {activations} is not a valid activation. 
                     Available activations:
-                    {list(self.avail_activations.keys())}.
-                    Or provide the tf.nn equivalent to these. e.g 
-                    {list(self.avail_activations.values())}
+                    {list(self._avail_activations.keys())}.
                     """
                 )
 
-                self.activation = [
-                    self.avail_activations.get(activation)
+                self._activations = [
+                    self._avail_activations.get(activations)
                     for _ in range(len(layers) - 2)
                 ]
-                self.activation.append(tf.identity)  # Activation for output layer.
+                self._activations.append(tf.identity)  # Activation for output layer.
 
-            elif callable(activation):
-                assert activation in self.avail_activations.values(), ValueError(
-                    f"""activation = {activation} is not a valid activation. 
+            elif callable(activations):
+                assert activations in self._avail_activations.values(), ValueError(
+                    f"""activation = {activations} is not a valid activation. 
                     Available activations:
-                    {list(self.avail_activations.keys())}.
-                    Or provide the tf.nn equivalent to these. e.g 
-                    {list(self.avail_activations.values())}
+                    {list(self._avail_activations.keys())}.
                     """
                 )
 
-                self.activation = [activation for _ in range(len(layers) - 2)]
-                self.activation.append(tf.identity)  # Activation for output layer.
+                self._activations = [activations for _ in range(len(layers) - 2)]
+                self._activations.append(tf.identity)  # Activation for output layer.
             # Set priors of kernel
             if kernel_prior is not None:
-                self.kernel_prior = kernel_prior
+                self._kernel_prior = kernel_prior
             else:
-                self.kernel_prior = tfp.distributions.Normal(loc=0.0, scale=1.0)
+                self._kernel_prior = tfp.distributions.Normal(loc=0.0, scale=1.0)
 
             # Set priors of bias
             if bias_prior is not None:
-                self.bias_prior = bias_prior
+                self._bias_prior = bias_prior
             else:
-                self.bias_prior = tfp.distributions.Normal(loc=0.0, scale=1.0)
+                self._bias_prior = tfp.distributions.Normal(loc=0.0, scale=1.0)
 
-            self.weights = self._create_layers(layers)
+            self._weights = self._create_layers(layers)
+
+    @property
+    def num_chains(self):
+        return self._num_chains
+    
+    @property
+    def weights(self):
+        return self._weights
+
+    @property
+    def num_layers(self):
+        return self._num_layers
+    
+    @property
+    def activations(self):
+        return self._activations
     
     def _create_layers(self, layers):
         """Helper function to create the weights per layer of the model.
@@ -111,16 +123,16 @@ class _BNNBase(object):
         for n, m in zip(layers[:-1], layers[1:]):
             weights.extend(
                 [
-                    self.kernel_prior.sample(sample_shape=(self._num_chains, n, m)),
-                    self.bias_prior.sample(sample_shape=(self._num_chains, m)),
+                    self._kernel_prior.sample(sample_shape=(self._num_chains, n, m)),
+                    self._bias_prior.sample(sample_shape=(self._num_chains, m)),
                 ]
             )
         return weights
     
     def __str__(self):
         """Returns string with a summary of the model."""
-        kernel = self.weights[::2]
-        bias = self.weights[1::2]
+        kernel = self._weights[::2]
+        bias = self._weights[1::2]
         d = {
             "layer": [],
             "params_per_layer": [],
@@ -129,7 +141,7 @@ class _BNNBase(object):
             "activation": [],
         }
         tot_num_params = 0
-        for i, (w, b, activation) in enumerate(zip(kernel, bias, self.activation)):
+        for i, (w, b, activation) in enumerate(zip(kernel, bias, self._activations)):
             num_params = (tf.reduce_prod(w.shape[1:]) + tf.reduce_prod(b.shape[1:])).numpy()
             tot_num_params += num_params
             d["layer"].append(i)
@@ -176,27 +188,24 @@ class _BNNBase(object):
                 f"""The filename does not end with .npz. Please choose a filename with .npz ending."""
             )
         if chain is None:
-            kernel = self.weights[::2]
-            bias = self.weights[1::2]
+            kernel = self._weights[::2]
+            bias = self._weights[1::2]
         else:
             kernel = chain[::2]
             bias = chain[1::2]
         
-        weights = {}
-        for i, (w, b, activation) in enumerate(zip(kernel, bias, self.activation)):
-            weights[f"kernel:{i}"] = w.numpy()
-            weights[f"bias:{i}"] = b.numpy()
+        model = {}
+        for i, (w, b, activation) in enumerate(zip(kernel, bias, self._activations)):
+            model[f"kernel:{i}"] = w.numpy()
+            model[f"bias:{i}"] = b.numpy()
             if isinstance(activation, str):
-                weights[f"activation:{i}"] = activation
+                model[f"activation:{i}"] = activation
             elif callable(activation):
-                weights[f"activations:{i}"] = activation.__name__
-                # for key, val in self.avail_activations.items():
-                #     if activation is val:
-                #         weights[f"activation:{i}"] = key
+                model[f"activations:{i}"] = activation.__name__
         if compressed:
-            np.savez_compressed(file=fname, **weights, allow_pickle=allow_pickle)
+            np.savez_compressed(file=fname, **model, allow_pickle=allow_pickle)
         else:
-            np.savez(file=fname, **weights, allow_pickle=allow_pickle)
+            np.savez(file=fname, **model, allow_pickle=allow_pickle)
     
     def load_model(self, fname):
         """Loads a model from a filename `fname`.
@@ -205,30 +214,97 @@ class _BNNBase(object):
         Args:
             fname (str): Filename with the saved model.
         """
-        data = np.load(fname)
-        kernel = data.files[::3]
-        bias = data.files[1::3]
-        activation = data.files[2::3]
+        model = np.load(fname)
+        kernel = model.files[::3]
+        bias = model.files[1::3]
+        activations = model.files[2::3]
 
-        self.weights = []
-        self.activation = []
-        for kernel_name, bias_name, activation_name in zip(kernel, bias, activation):
-            self.weights.extend(
+        self._weights = []
+        self._activations = []
+        for kernel_name, bias_name, activation_name in zip(kernel, bias, activations):
+            self._weights.extend(
                 [
-                    tf.convert_to_tensor(data[kernel_name], name=kernel_name),
-                    tf.convert_to_tensor(data[bias_name], name=bias_name),
+                    tf.convert_to_tensor(model[kernel_name], name=kernel_name),
+                    tf.convert_to_tensor(model[bias_name], name=bias_name),
                 ]
             )
-            self.activation.append(
-                self.avail_activations.get(str(data[activation_name]))
+            self._activations.append(
+                self._avail_activations.get(str(model[activation_name]))
             )
+
+    @tf.function
+    def _sample_chain(self, *args, **kwargs):
+        """A simple wrapper around tfp.mcmc.sample_chain that speeds up code
+        by compiling to a computational graph using tf.function.
+        """
+        return tfp.mcmc.sample_chain(*args, **kwargs)
+
+    def _get_dataset(self, x, y, batch_size=None):
+        """Creates a tf.data.Dataset object from training data.
+
+        Args:
+            x (tf.Tensor):
+                Training features of shape (num_train, num_features)
+            y (tf.Tensor):
+                Training targets of shape (num_train, num_outputs)
+            batch_size (optional, int):
+                Batch size of dataset. Default: batch_size=16.
+
+        Returns:
+            ds (tf.data.Dataset):
+                Dataset split into batches of size `batch_size`.
+        """
+        ds = tf.data.Dataset.from_tensor_slices((x, y))
+        if batch_size is not None:
+            ds = ds.batch(batch_size=batch_size)
+        return ds
+    
+    def _dense_layer(self, x, w, b, activation):
+        """Computes the output of a dense layer.
+
+        Args:
+            x (tf.Tensor):
+                Input features of shape (num_points, num_features)
+            w (tf.Tensor):
+                Kernel of layer. Shape: (batch_size, n, m)
+            b (tf.Tensor):
+                Bias of layer. Shape: (batch_size, m, )
+            activation (callable):
+                Activation function. Python callable.
+
+        Returns:
+            Computes activations of shape (batch_size, num_points, num_outputs)
+        """
+        return activation(tf.matmul(x, w) + b[..., None, :])
+    
+    def _restack_chain(self, chain):
+        """Rearranges the shape of the chain.
+
+        Args:
+            chain (list[tf.Tensor]): List of sampled weights.
+
+        Returns:
+            new_chain (list[tf.Tensor]): New rearranged chain.
+        """
+        new_chain = []
+        for w, b in zip(chain[::2], chain[1::2]):
+            new_chain.extend(
+                [
+                    tf.reshape(
+                        tensor=w,
+                        shape=(w.shape[0] * w.shape[1], w.shape[2], w.shape[3]),
+                    ),
+                    tf.reshape(tensor=b, shape=(b.shape[0] * b.shape[1], b.shape[2])),
+                ]
+            )
+        return new_chain
 
 
 
 
 def main():
     layers = [1, 50, 1]
-    activation = ["swish", "identity"]
+    activation = ["lol", "identity"]
     bnn_base = _BNNBase(layers=layers, activation=activation)
     print(bnn_base)
 

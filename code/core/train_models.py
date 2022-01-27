@@ -60,12 +60,12 @@ def main(
     y_train = y_train[:, None]
     input_size = x_train.shape[-1]
     layers = [input_size, 50, 50, 50, 50, 1]
-    activation = "tanh"
+    activations = "tanh"
     # activation = ["relu", "relu", "identity"]
 
     if instruction == "train":
         bnn = BayesianNeuralNetwork(
-            layers=layers, activation=activation, num_chains=num_chains, lamb=1e-3
+            layers=layers, activations=activations, num_chains=num_chains, lamb=1e-3
         )
 
         start = time.perf_counter()

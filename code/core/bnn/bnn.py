@@ -90,7 +90,7 @@ class BayesianNeuralNetwork(_BNNBase):
     def __init__(
         self,
         layers=None,
-        activation=None,
+        activations=None,
         kernel_prior=None,
         bias_prior=None,
         lamb=1e-3,
@@ -133,7 +133,7 @@ class BayesianNeuralNetwork(_BNNBase):
         """
         super().__init__(
             layers=layers,
-            activation=activation,
+            activations=activations,
             kernel_prior=kernel_prior,
             bias_prior=bias_prior,
             num_chains=num_chains,
@@ -159,13 +159,13 @@ class BayesianNeuralNetwork(_BNNBase):
 
         """
         if weights is None:
-            kernel = self.weights[::2]
-            bias = self.weights[1::2]
+            kernel = self._weights[::2]
+            bias = self._weights[1::2]
         else:
             kernel = weights[::2]
             bias = weights[1::2]
 
-        for w, b, activation in zip(kernel, bias, self.activation):
+        for w, b, activation in zip(kernel, bias, self._activations):
             x = self._dense_layer(x, w, b, activation)
         return x
 
@@ -192,11 +192,11 @@ class BayesianNeuralNetwork(_BNNBase):
                 Loss of shape=().
         """
         with tf.GradientTape() as tape:
-            tape.watch(self.weights)
-            y_pred = self(x, self.weights)
-            loss = self.loss_fn(y_pred=y_pred, y_true=y, weights=self.weights)
-        grad = tape.gradient(loss, self.weights)
-        self.optimizer.apply_gradients(zip(grad, self.weights))
+            tape.watch(self._weights)
+            y_pred = self(x, self._weights)
+            loss = self.loss_fn(y_pred=y_pred, y_true=y, weights=self._weights)
+        grad = tape.gradient(loss, self._weights)
+        self.optimizer.apply_gradients(zip(grad, self._weights))
         return loss
 
     def mle_fit(
@@ -234,13 +234,13 @@ class BayesianNeuralNetwork(_BNNBase):
         if len(x_train.shape) != 2:
             raise ValueError(
                 f"""
-                len(x.shape) = {len(x.shape)} != 2. The shape of the input features must be (num_points, num_features)
+                len(x.shape) = {len(x_train.shape)} != 2. The shape of the input features must be (num_points, num_features)
             """
             )
         if len(y_train.shape) != 2:
             raise ValueError(
                 f"""
-                len(y.shape) = {len(y.shape)} != 2. The shape of the input targets must be (num_points, num_targets)
+                len(y.shape) = {len(y_train.shape)} != 2. The shape of the input targets must be (num_points, num_targets)
             """
             )
 
@@ -268,7 +268,7 @@ class BayesianNeuralNetwork(_BNNBase):
         if validate:
             val_loss = 2 ** 30
         train_losses = []
-        self.weights = [tf.Variable(w) for w in self.weights]
+        self._weights = [tf.Variable(w) for w in self._weights]
         if batch_size is not None and x_train.shape[0] > batch_size:
             ds = self._get_dataset(x=x_train, y=y_train, batch_size=batch_size)
             for _ in trange(epochs, desc="Epochs"):
@@ -283,8 +283,8 @@ class BayesianNeuralNetwork(_BNNBase):
                 train_losses.append(loss)
 
                 if validate:
-                    y_pred = self(x_val, self.weights)
-                    tmp = self.loss_fn(y_pred=y_pred, y_true=y_val, weights=self.weights)
+                    y_pred = self(x_val, self._weights)
+                    tmp = self.loss_fn(y_pred=y_pred, y_true=y_val, weights=self._weights)
                     val_losses.append(tmp)
                     if tmp > val_loss:
                         if dont_break is False:
@@ -363,52 +363,6 @@ class BayesianNeuralNetwork(_BNNBase):
             )
         return target_log_prob_fn
 
-    def _dense_layer(self, x, w, b, activation):
-        """Computes the output of a dense layer.
-
-        Args:
-            x (tf.Tensor):
-                Input features of shape (num_points, num_features)
-            w (tf.Tensor):
-                Kernel of layer. Shape: (batch_size, n, m)
-            b (tf.Tensor):
-                Bias of layer. Shape: (batch_size, m, )
-            activation (callable):
-                Activation function. Python callable.
-
-        Returns:
-            Computes activations of shape (batch_size, num_points, num_outputs)
-        """
-        return activation(tf.matmul(x, w) + b[..., None, :])
-
-    @tf.function
-    def _sample_chain(self, *args, **kwargs):
-        """A simple wrapper around tfp.mcmc.sample_chain that speeds up code
-        by compiling to a computational graph using tf.function.
-        """
-        return tfp.mcmc.sample_chain(*args, **kwargs)
-
-    def _get_dataset(self, x, y, batch_size=None):
-        """Creates a tf.data.Dataset object from training data.
-
-        Args:
-            x (tf.Tensor):
-                Training features of shape (num_train, num_features)
-            y (tf.Tensor):
-                Training targets of shape (num_train, num_outputs)
-            batch_size (optional, int):
-                Batch size of dataset. Default: batch_size=16.
-
-        Returns:
-            ds (tf.data.Dataset):
-                Dataset split into batches of size `batch_size`.
-        """
-        ds = tf.data.Dataset.from_tensor_slices((x, y))
-        if batch_size is not None:
-            ds = ds.batch(batch_size=batch_size)
-        return ds
-
-
     def sample_chain(
         self,
         kernel,
@@ -456,44 +410,22 @@ class BayesianNeuralNetwork(_BNNBase):
             num_steps_between_results=num_steps_between_results,
             trace_fn=trace_fn,
             parallel_iterations=parallel_iterations,
-            current_state=self.weights,
+            current_state=self._weights,
         )
         if trace_fn is not None:
             chain, trace = chain
 
         # Restack the chain and assign them as the weights of the model.
-        self.weights = self._restack_chain(chain)
+        self._weights = self._restack_chain(chain)
 
         if fname is not None:
             self.save_model(fname)
 
         if trace_fn is not None:
-            return self.weights, trace
+            return self._weights, trace
         else:
-            return self.weights
+            return self._weights
 
-
-    def _restack_chain(self, chain):
-        """Rearranges the shape of the chain.
-
-        Args:
-            chain (list[tf.Tensor]): List of sampled weights.
-
-        Returns:
-            new_chain (list[tf.Tensor]): New rearranged chain.
-        """
-        new_chain = []
-        for w, b in zip(chain[::2], chain[1::2]):
-            new_chain.extend(
-                [
-                    tf.reshape(
-                        tensor=w,
-                        shape=(w.shape[0] * w.shape[1], w.shape[2], w.shape[3]),
-                    ),
-                    tf.reshape(tensor=b, shape=(b.shape[0] * b.shape[1], b.shape[2])),
-                ]
-            )
-        return new_chain
 
 
 def trace_fn_adaptive_no_u_turn(_, pkr):
@@ -524,7 +456,7 @@ def trace_fn_adaptive_hmc(_, pkr):
 
 def main():
     layers = [1, 10, 10, 1]
-    n_train = 10000
+    n_train = 1000
     n_dims = 1
     f = lambda x: x * tf.math.sin(x) * tf.math.cos(x)
     x_train = tf.random.normal(shape=(n_train, n_dims), mean=0.0, stddev=3.0)
@@ -534,15 +466,15 @@ def main():
     num_results = 100
     tot_num_results = num_results * num_chains
     num_burnin_steps = 100
-    num_leapfrog_steps = 1024
+    num_leapfrog_steps = 100
     step_size = 0.0001
-    activation = "swish"
+    activations = "swish"
     #activation = ["relu", "relu", "relu", "relu", "identity"]
     # activation = ["relu", "relu", "identity"]
 
     bnn = BayesianNeuralNetwork(
         layers=layers,
-        activation=activation,
+        activations=activations,
         lamb=1e-3,
         likelihood_noise=0.1,
         num_chains=num_chains,
@@ -562,7 +494,7 @@ def main():
     loss = bnn.mle_fit(
         x_train=x_train,
         y_train=y_train,
-        epochs=100_000,
+        epochs=100,
         lr=0.001,
         batch_size=None,
         x_val=x_val,
@@ -585,17 +517,17 @@ def main():
 
     # step_size = tf.fill((num_chains, 1), 0.01)
     step_size = [tf.fill(w.shape, 0.001) for w in bnn.weights]
-    # inner_kernel = tfp.mcmc.HamiltonianMonteCarlo(
-    #     target_log_prob_fn=bnn.get_target_log_prob_fn(x_train, y_train),
-    #     num_leapfrog_steps=num_leapfrog_steps,
-    #     step_size=step_size,
-    # )
-
-    inner_kernel = tfp.mcmc.NoUTurnSampler(
+    inner_kernel = tfp.mcmc.HamiltonianMonteCarlo(
         target_log_prob_fn=bnn.get_target_log_prob_fn(x_train, y_train),
+        num_leapfrog_steps=num_leapfrog_steps,
         step_size=step_size,
-        max_tree_depth=10,
     )
+
+    # inner_kernel = tfp.mcmc.NoUTurnSampler(
+    #     target_log_prob_fn=bnn.get_target_log_prob_fn(x_train, y_train),
+    #     step_size=step_size,
+    #     max_tree_depth=10,
+    # )
 
     # Adaptive kernel
     kernel = tfp.mcmc.DualAveragingStepSizeAdaptation(
