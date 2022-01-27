@@ -5,6 +5,10 @@ import numpy as np
 
 
 class _BNNBase(object):
+    """Internal Base class for bayesian neural networks
+    trained with bayesian mcmc inference algorithms wrapped around
+    TensorFlow Probability's functionality.
+    """
     def __init__(
         self,
         layers=None,
@@ -103,6 +107,10 @@ class _BNNBase(object):
     def weights(self):
         return self._weights
 
+    @weights.setter
+    def weights(self, new_weights):
+        self._weights = new_weights
+
     @property
     def num_layers(self):
         return self._num_layers
@@ -110,6 +118,10 @@ class _BNNBase(object):
     @property
     def activations(self):
         return self._activations
+    
+    @property
+    def avail_activations(self):
+        return list(self._avail_activations.keys())
     
     def _create_layers(self, layers):
         """Helper function to create the weights per layer of the model.
@@ -304,9 +316,8 @@ class _BNNBase(object):
 
 def main():
     layers = [1, 50, 1]
-    activation = ["lol", "identity"]
-    bnn_base = _BNNBase(layers=layers, activation=activation)
-    print(bnn_base)
+    activations = ["swish", "identity"]
+    bnn_base = _BNNBase(layers=layers, activations=activations)
 
 if __name__ == "__main__":
     main()

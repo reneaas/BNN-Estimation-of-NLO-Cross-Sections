@@ -8,7 +8,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import sys
 import pandas as pd
-from bnn_base import _BNNBase
+from .bnn_base import _BNNBase
 
 np.random.seed(10)
 tf.random.set_seed(10)
@@ -362,6 +362,41 @@ class BayesianNeuralNetwork(_BNNBase):
                 x, y, weights
             )
         return target_log_prob_fn
+    
+    @tf.function
+    def sample_chain_parallel(
+        self,
+        kernel,
+        num_results,
+        num_burnin_steps,
+        num_steps_between_results=0,
+        trace_fn=None,
+        parallel_iterations=10,
+        fname=None,
+    ):
+        """Runs the sample chain over multiple GPUs"""
+        if not isinstance(kernel, tfp.mcmc.TransitionKernel):
+            raise TypeError(
+                f"""kernel = {kernel} is not a valid kernel. Please provide an
+                instance of tfp.mcmc.TransitionKernel.
+                """
+            )
+        
+        strategy = tf.distribute.MirroredStrategy(devices=tf.config.list_logical_devices("GPU"))
+        device_chains = strategy.run(
+            tfp.mcmc.sample_chain,
+            kwargs={
+                "num_results": num_results,
+                "current_state": self._weights,
+                "kernel": kernel,
+                "num_burnin_steps": num_burnin_steps,
+                "trace_fn": None,
+                "parallel_iterations": parallel_iterations,
+                "num_steps_between_results": num_steps_between_results,
+            }
+        )
+        return device_chains
+
 
     def sample_chain(
         self,
@@ -456,7 +491,7 @@ def trace_fn_adaptive_hmc(_, pkr):
 
 def main():
     layers = [1, 10, 10, 1]
-    n_train = 1000
+    n_train = 10000
     n_dims = 1
     f = lambda x: x * tf.math.sin(x) * tf.math.cos(x)
     x_train = tf.random.normal(shape=(n_train, n_dims), mean=0.0, stddev=3.0)
@@ -494,7 +529,7 @@ def main():
     loss = bnn.mle_fit(
         x_train=x_train,
         y_train=y_train,
-        epochs=100,
+        epochs=1000,
         lr=0.001,
         batch_size=None,
         x_val=x_val,

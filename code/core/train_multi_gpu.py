@@ -5,8 +5,6 @@ import pandas as pd
 import tqdm
 import time
 import sys
-import matplotlib.pyplot as plt
-import seaborn as sns
 import argparse
 
 
@@ -60,7 +58,7 @@ def main(
     y_train = tf.convert_to_tensor(y_train, dtype=tf.float32)
     y_train = y_train[:, None]
     input_size = x_train.shape[-1]
-    layers = [input_size, 50, 50, 50, 50, 1]
+    layers = [input_size, 3, 1]
     activations = "tanh"
     # activation = ["relu", "relu", "identity"]
 
@@ -71,8 +69,8 @@ def main(
 
         start = time.perf_counter()
         loss = bnn.mle_fit(
-            x=x_train,
-            y=y_train,
+            x_train=x_train,
+            y_train=y_train,
             epochs=num_epochs,
             lr=0.001,
             batch_size=batch_size,
@@ -115,14 +113,18 @@ def main(
 
         start = time.perf_counter()
         if trace_fn is None:
-            chain = bnn.sample_chain(
+            device_chain = bnn.sample_chain_parallel(
                 kernel=kernel,
                 num_results=num_results,
                 num_burnin_steps=num_burnin_steps,
                 num_steps_between_results=num_steps_between_results,
-                fname=fname,
+                fname=None,
                 trace_fn=trace_fn,
             )
+            device_chain = [tf.concat(replica.values, axis = 0) for replica in device_chain]
+            device_chain = bnn._restack_chain(device_chain)
+            bnn.weights = device_chain
+            bnn.save_model(fname=fname)
         else:
             chain, trace = bnn.sample_chain(
                 kernel=kernel,
@@ -139,92 +141,6 @@ def main(
         end = time.perf_counter()
         timeused = end - start
         print(f"timeused = {timeused} on sampling")
-
-    elif instruction == "test":
-        x_test, y_test = data["test"]
-        x_test = tf.convert_to_tensor(x_test, dtype=tf.float32)
-
-        bnn = BayesianNeuralNetwork()
-        bnn.load_model(
-            fname=fname,
-        )
-        print(bnn)
-        y_pred = bnn(x_test)
-
-        y_pred = y_pred.numpy().squeeze(-1)
-        y_mean = np.mean(y_pred, axis=0)
-
-        rel_error = (y_test - y_mean) / y_test
-        print(f"{tf.reduce_mean(rel_error)=}")
-        sns.histplot(rel_error, stat="density")
-        plt.xlabel("Relative error")
-        plt.title("Relative error log space")
-        plt.figure()
-        # plt.show()
-
-        standardized_residual = (y_test - y_mean) / np.std(y_pred, axis=0)
-        print(standardized_residual)
-        sns.histplot(standardized_residual, stat="density")
-        plt.xlabel("Standardized residual")
-        # plt.hist(standardized_residual, bins=10)
-        plt.title("Standardized residual log space")
-        plt.figure()
-        # plt.show()
-
-        print(y_mean)
-        print(f"{y_pred.shape=}")
-
-        print(f"{y_test.shape=}")
-
-        stddev = np.std(y_pred, axis=0)
-        indices = np.argsort(y_test)
-        plt.figure()
-        plt.plot(y_test[indices], y_mean[indices], label="mean", color="red")
-        plt.fill_between(
-            x=y_test[indices],
-            y1=y_mean[indices] + stddev[indices],
-            y2=y_mean[indices] - stddev[indices],
-        )
-        plt.show()
-
-        # y_test = list(y_test) * y_pred.shape[0]
-        # y_test = np.array(y_test)
-        # y_pred = y_pred.ravel()
-        # df = pd.DataFrame({"y_test": y_test, "y_pred": y_pred})
-        # sns.lmplot(x="y_test", y="y_pred", data=df)
-        # plt.show()
-
-        # for i in range(y_pred.shape[0]):
-        #     plt.scatter(y_test, y_pred[i])
-        # plt.show()
-    
-        sys.exit()
-
-        y_pred = 10 ** y_pred
-        y_mean = np.mean(y_pred, axis=0)
-
-        rel_error = (10 ** y_test - y_mean) / (10 ** y_test)
-        print(rel_error.shape)
-        sns.histplot(rel_error, stat="density")
-        plt.xlabel("Relative error")
-        plt.figure()
-        # plt.show()
-
-        standardized_residual = (10 ** y_test - y_mean) / np.std(y_pred, axis=0)
-        sns.histplot(standardized_residual, stat="density")
-        plt.xlabel("Standardized residual")
-        plt.show()
-
-        y_test = 10 ** y_test
-        # indices = np.argsort(y_test)
-
-        # plt.plot(y_test[indices], y_mean[indices], label="mean")
-        # plt.scatter(10 ** y_test[indices], y_mean + np.std(y_pred, axis=0), marker="x", label="mean + std")
-        # plt.scatter(10 ** y_test, y_mean - np.std(y_pred, axis=0), marker="*", label="mean - std")
-        plt.legend()
-        plt.show()
-        print(f"{y_test.shape=}")
-        print(f"{y_pred.shape=}")
 
 
 
