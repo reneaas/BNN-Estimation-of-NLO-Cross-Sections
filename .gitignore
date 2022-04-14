@@ -130,10 +130,11 @@ dmypy.json
 **.DS_Store
 
 
-# Special file type for HEP 
+# Special file type for HEP
 **.slha
 
 
 **.tar.gz
 **.txt
 **.npz
+**.zip

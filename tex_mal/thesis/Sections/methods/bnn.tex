@@ -1,5 +1,5 @@
 
-\section{Bayesian inference}
+\section{Bayesian Inference}
 The foundation for Bayesian inference is Bayes' theorem, which can be formulated as
 \begin{equation}
 	P(\theta | D) = \frac{P(D|\theta)P(\theta)}{P(D)}.
@@ -12,14 +12,14 @@ Some useful terminology is in order. $P(\theta)$ is called the \textit{prior} di
 because its rarely of interest, or tractable, to compute $P(D)$, known as the \textit{evidence}.
 
 The objective of Bayesian inference is to compute the \textit{predictive} distribution for an unseen datapoint $y^*$, which can be expressed as
-the integral over all parameters of the posterior distribution weighted by the likelihood. Given a dataset of observations $D = \{y^{(1)}, \ldots y^{(n)}\}$, this implies
+the integral over all parameters of the posterior distribution weighted by the likelihood. Given a dataset of observations $D = \{y^{(1)}, \ldots, y^{(n)}\}$, this implies
 \begin{equation}
   P(y^*|D) = \int P(y^*, \theta|D)\dd\theta =\int P(y^*|\theta, D)P(\theta|D)\dd \theta = \int P(y^*|\theta)P(\theta|D)\dd\theta,
 \end{equation}
 which loosely describes the probability of observing $y^*$ given the observations in $D$.
 
 
-\section{Bayesian framework for neural networks}
+\section{Bayesian Framework for Neural Networks}
 
 We can specialize the equations used in Bayesian inference for neural networks in the context of regression.
 The predictive distribution $P(y|x, \theta)$ seeks to model a function $f : \mathbb{R}^p \to \mathbb{R}^d$ that for a given $x \in \mathbb{R}^p$ produces an output $y \in \mathbb{R}^d$. In the infinite data limit, the distribution should be a Dirac delta function. For finite datasets, however, we instead seek a distribution of outputs given the input features.
@@ -61,7 +61,8 @@ which is an approximation to the \textit{maximum likelihood estimate} (MLE). Fur
 \end{equation}
 The diagonal terms of eq.~\eqref{eq:covariance} yields the sample \textit{variance} of the components of $\{\hat{y}^{(i)}\}_{i=1}^n$.
 
-\section{Sources of uncertainty}
+\begin{comment}
+\section{Sources of Uncertainty}
 The main motivation utilizing Bayesian inference to neural networks is to be able to quantify uncertainty. 
 Uncertainty can be further divided into two categories:
 \begin{itemize}
@@ -79,31 +80,46 @@ The latter case occur when the network uses non-linear activation that obey $\si
 This relation implies that we can rescale the parameters 
 of two adjacent layers by a factor of $\alpha$ and $1/\alpha$ respectively and produce the same output. Thus a parametrization
 that explains a set of observations does not exist for sufficiently complex models.
+\end{comment}
 
 \section{Bayesian learning using HMC}
 To learn from the data $D$ using HMC, we need to define a potential energy function $V(q)$ 
-and a kinetic energy function $K(p)$. To this end, we need to specify
-\begin{enumerate}
-  \item A prior for the network parameters, i.e the kernels $W_{ij}^\ell$ and the biases $b_j^{\ell}$. A common choice is
-  \begin{equation}\label{eq:model_priors}
-    P(W^\ell) \propto \exp\left(-\frac{\lambda_W}{2}\norm{W^\ell}_2^2\right), \qquad P(b^\ell) \propto \exp\left(-\frac{\lambda_b}{2}\norm{b^\ell}_2^2\right).
-  \end{equation}
-  \item A distribution of the generalized momenta of the model. The kinetic energy in eq.~\eqref{eq:kinetic_energy} automatically imposes that
-  \begin{equation}\label{eq:momenta_distribution}
-    P(p) \propto \prod_i \exp\left(-\frac{p_i^2}{2m_i}\right),
-  \end{equation}
-  since $K(p) = -\log P(p)$.
-  \item A likelihood function given an input $(x, y)$,
-\end{enumerate}
-from which we can define the potential energy as follows:
+and a kinetic energy function $K(p)$. In the case of a neural network, the potential energy can be specified in the generic form
 \begin{equation}\label{eq:generic_potential_energy}
-  V(W, b) = - \log Z - \sum_{\ell}\log P(W^\ell) - \sum_{\ell}\log P(b^\ell) - \sum_i \log P(y^{(i)}| x^{(i)}, W, b), 
+  V(W, b) = - \log Z - \sum_{\ell}\log P(W^\ell) - \sum_{\ell}\log P(b^\ell) - \sum_i \log P(y^{(i)}| x^{(i)}, W, b).
 \end{equation}
-where $W$ denotes all the kernels and $b$ denotes all the biases of the model. Here $Z$ denotes the normalization constant of the distributino $P \propto \exp(-V(W, b))$, but is of no importance for the sampling procedure. Inserting the terms from eq.~\eqref{eq:model_priors} and eq.~\eqref{eq:nn_likelihood}, we get the following expression for the potential energy.
+where $W$ and $b$ collectively denotes all the kernels and biases of the model, respectively.
+We thus need to specify a prior for kernels $W^\ell$ and the biases $b^\ell$, as well as a likelihood given an input $(x, y)$.
+The priors are typically chosen to be Gaussian,
+\begin{equation}\label{eq:model_priors}
+  P(W^\ell) \propto \exp\left(-\frac{\lambda_W}{2}\norm{W^\ell}_2^2\right), \qquad P(b^\ell) \propto \exp\left(-\frac{\lambda_b}{2}\norm{b^\ell}_2^2\right).
+\end{equation}
+The likelihood for regressions tasks was defined in eq.~\eqref{eq:nn_likelihood}. Combining this and eq.~\eqref{eq:model_priors},
+we can write down an explicit expression for the potential energy as
 \begin{equation}\label{eq:special_potential_energy}
-  V(W, b) = -\log Z + \frac{\lambda_W}{2} \sum_{\ell} \norm{W^\ell}_2^2 + \frac{\lambda_b}{2}\sum_{\ell} \norm{b^\ell}_2^2 + \frac{\lambda}{2}\sum_{i} \norm{y^{(i)} - f(x^{(i)}; W, b)}_2^2.  
+  V(W, b) = -\log Z + \frac{\lambda_W}{2} \sum_{\ell} \norm{W^\ell}_2^2 + \frac{\lambda_b}{2}\sum_{\ell} \norm{b^\ell}_2^2 + \frac{\lambda}{2}\sum_{i} \norm{y^{(i)} - f(x^{(i)}; W, b)}_2^2,  
 \end{equation}
-The terms in eq.~\eqref{eq:special_potential_energy} play the same role as in typical machine learning applications.
-Note that $Z$ here is some appropriate constant that doesn't really matter for the sampling process, 
+given a set of datapoints $D = \{x^{(i)}, y^{(i)}\}_{i=1}^n$.
+Here $Z$ denotes the normalization constant of the distribution $P \propto \exp(-V(W, b))$, 
+but is of no importance for the sampling procedure because it either vanishes when the gradient of $V$ is computed,
+or when we compute the energy difference between the initial state $(W, b)$ and the proposed state $(W^*, b^*)$.
+Finally, we need to specify a distribution for the kinetic energy. Since we interpret the Hamiltonian as the negative log likelihood
+of the target distribution, we have implicitly defined the distribution as Gaussian
+\begin{equation}
+  P(p) \propto \prod_\ell \exp\left(-\frac{(p^\ell)^T (M^\ell)^{-1} p^{\ell}}{2}\right),
+\end{equation}
+where $M^\ell$ is the diagonal mass matrix of layer $\ell$ with its mass elements corresponding to each individual momentum and $p^\ell$
+denotes the generalized momenta of layers $\ell$.
+
 
 With the ingredients introduced hitherto, we can proceed to sample from a network with an arbitrary network architecture.
+The procedure is a follows. 
+
+\begin{enumerate}
+  \item Initialize the weights of the network sampled from the priors.
+  \item Train the network using the backpropagation algorithm to reach an initial network state in the high probability region of the posterior.
+  This is done to reduce the number of burn-in steps needed for the the Markov chain to reach the stationary distribution.
+  \item Perform a small number of burn-in steps. This step may be redundant as the network is minimized using eq.~\eqref{eq:special_potential_energy},
+  which will place us in a high probability region once the loss is minimized. 
+  \item Sample a set of neural network parameters from the posterior distribution.
+\end{enumerate}

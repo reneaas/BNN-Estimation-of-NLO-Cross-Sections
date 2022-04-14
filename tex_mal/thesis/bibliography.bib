@@ -9,6 +9,71 @@
   doi={10.1109/TPAMI.1984.4767596},
 }
 
+@article{metropolis_two,
+    author = {Hastings, W. K.},
+    title = "{Monte Carlo sampling methods using Markov chains and their applications}",
+    journal = {Biometrika},
+    volume = {57},
+    number = {1},
+    pages = {97-109},
+    year = {1970},
+    month = {04},
+    abstract = "{A generalization of the sampling method introduced by Metropolis et al. (1953) is presented along with an exposition of the relevant theory, techniques of application and methods and difficulties of assessing the error in Monte Carlo estimates. Examples of the methods, including the generation of random orthogonal matrices and potential applications of the methods to numerical problems arising in statistics, are discussed.}",
+    issn = {0006-3444},
+    doi = {10.1093/biomet/57.1.97},
+    url = {https://doi.org/10.1093/biomet/57.1.97},
+    eprint = {https://academic.oup.com/biomet/article-pdf/57/1/97/23940249/57-1-97.pdf},
+}
+
+@misc{conceptual_intro_hmc,
+  doi = {10.48550/ARXIV.1701.02434},
+  
+  url = {https://arxiv.org/abs/1701.02434},
+  
+  author = {Betancourt, Michael},
+  
+  keywords = {Methodology (stat.ME), FOS: Computer and information sciences, FOS: Computer and information sciences},
+  
+  title = {A Conceptual Introduction to Hamiltonian Monte Carlo},
+  
+  publisher = {arXiv},
+  
+  year = {2017},
+  
+  copyright = {arXiv.org perpetual, non-exclusive license}
+}
+
+@article{geometric_ergodicity,
+	doi = {10.1214/154957804100000024},
+  
+	url = {https://doi.org/10.1214%2F154957804100000024},
+  
+	year = 2004,
+	month = {jan},
+  
+	publisher = {Institute of Mathematical Statistics},
+  
+	volume = {1},
+  
+	number = {none},
+  
+	author = {Gareth O. Roberts and Jeffrey S. Rosenthal},
+  
+	title = {General state space Markov chains and {MCMC} algorithms},
+  
+	journal = {Probability Surveys}
+}
+
+
+@misc{nuts,
+      title={The No-U-Turn Sampler: Adaptively Setting Path Lengths in Hamiltonian Monte Carlo}, 
+      author={Matthew D. Hoffman and Andrew Gelman},
+      year={2011},
+      eprint={1111.4246},
+      archivePrefix={arXiv},
+      primaryClass={stat.CO}
+}
+
 @inbook{numerical_recipies,
 author={William H. Press et. al},
 title={Numerical recipes in C : the art of scientific computing},
@@ -152,4 +217,41 @@ author={
     Yuan~Yu and
     Xiaoqiang~Zheng},
   year={2015},
+}
+
+@article{swish,
+  author    = {Prajit Ramachandran and
+               Barret Zoph and
+               Quoc V. Le},
+  title     = {Searching for Activation Functions},
+  journal   = {CoRR},
+  volume    = {abs/1710.05941},
+  year      = {2017},
+  url       = {http://arxiv.org/abs/1710.05941},
+  eprinttype = {arXiv},
+  eprint    = {1710.05941},
+  timestamp = {Mon, 13 Aug 2018 16:48:44 +0200},
+  biburl    = {https://dblp.org/rec/journals/corr/abs-1710-05941.bib},
+  bibsource = {dblp computer science bibliography, https://dblp.org}
+}
+
+@inproceedings{relu,
+  added-at = {2014-04-01T20:16:10.000+0200},
+  author = {Glorot, Xavier and Bordes, Antoine and Bengio, Yoshua},
+  biburl = {https://www.bibsonomy.org/bibtex/256f5ffd25378f109c8cc14394bcfdabb/prlz77},
+  booktitle = {AISTATS},
+  crossref = {conf/aistats/2011},
+  editor = {Gordon, Geoffrey J. and Dunson, David B. and Dudík, Miroslav},
+  ee = {http://www.jmlr.org/proceedings/papers/v15/glorot11a/glorot11a.pdf},
+  interhash = {fbf04ef5079b11118f3f3184b1068d88},
+  intrahash = {56f5ffd25378f109c8cc14394bcfdabb},
+  keywords = {Bengio Deep Networks Neural Rectifier Relu Sparse},
+  pages = {315-323},
+  publisher = {JMLR.org},
+  series = {JMLR Proceedings},
+  timestamp = {2014-04-01T20:16:10.000+0200},
+  title = {Deep Sparse Rectifier Neural Networks.},
+  url = {http://dblp.uni-trier.de/db/journals/jmlr/jmlrp15.html#GlorotBB11},
+  volume = 15,
+  year = 2011
 }

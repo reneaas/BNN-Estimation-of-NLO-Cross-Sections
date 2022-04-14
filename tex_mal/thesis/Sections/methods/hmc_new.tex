@@ -1,0 +1,19 @@
+In this chapter, we will study the details of the Hamiltonian Monte Carlo (HMC) method.
+It is a Markov Chain Monte Carlo (MCMC) sampling technique that merges Gibbs sampling, 
+Hamiltonian dynamics with a final Metropolis-Hastings update.
+It avoids random walk behaviour with a systematical exploration of the state space 
+and generates successive samples with smaller correlation using gradient-informed exploration. 
+We will begin with a survey of Lagrangian and Hamiltonian dynamics followed by a description of
+the \textit{Leapfrog} integrator which is used to simulate the Hamiltonian systems. Once these are established, we will summarize the 
+HMC method in a generic manner - applicable to any continuous distribution. Moreover, we will discuss important properties like conservation of the Hamiltonian
+and local phase space volume.
+
+
+\section{Gradient-Informed Exploration}
+HMC uses gradient-informed exploration to efficiently traverse through the typical set.
+This is achieved by formation of a vector field which is tangent to the typical set at all points
+in the sample space. Recall that the typical does coincide with the modes of the target
+distribution $\pi(q)$. Therefore, the gradient of the target distribution itself is of limited
+value because it would move the Markov chain outside of the typical set. HMC overcomes this
+problem with an introduction of \textit{auxilliary momentum} variables inspired by analytical mechanics.
+

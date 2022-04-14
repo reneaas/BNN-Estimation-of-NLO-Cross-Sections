@@ -1,69 +1,56 @@
 #ifndef BNN_HPP
 #define BNN_HPP
 
-#include <layer.hpp>
+#include "layer.hpp"
 #include <vector>
-#include <armadillo>
+#include <random>
 
 class BNN {
 private:
-    /* data */
-    //std::vector<Layer> layers_;
-    //std::vector<BNN::*> activations_;
-
+    // RNG used in HMC.
+    std::mt19937_64 gen_;
+    std::normal_distribution<double> dist_;
+    std::uniform_real_distribution<double> uniform_real_dist_;
+    // std::uniform_int_distribution<int> uniform_int_dist_;
 
 public:
-
-    BNN(std::vector<Layer> layers);
-
-    int num_layers_;
-    double learning_rate_;
-    void add(int n_rows, int n_cols, std::string activation);
-    arma::mat forward(arma::mat x);
-    void backward(arma::mat x, arma::mat y);
-    void apply_gradients();
-    void mle_fit(
-        arma::mat x,
-        arma::mat y,
-        int num_epochs,
-        double learning_rate
-    );
-
-    std::vector<arma::mat> hmc_step(
-        arma::mat x,
-        arma::mat y,
-        int num_leapfrog_steps,
-        int step_size
-    );
-
-    arma::mat compute_r2(arma::mat x, arma::mat y);
-
-    virtual ~BNN (){};
-
-    /* Activation functions */
-    arma::mat sigmoid(arma::mat z);
-    arma::mat sigmoid_derivative(arma::mat z);
-
-    arma::mat relu(arma::mat z);
-    arma::mat relu_derivative(arma::mat z);
-
-    arma::mat identity(arma::mat z);
-    arma::mat identity_derivative(arma::mat z);
-
-
-    // arma::mat (BNN::*hidden_act)(arma::vec z);
-    // arma::mat (BNN::*top_layer_act)(arma::vec a);
-    // arma::mat (BNN::*hidden_act_derivative)(arma::vec z);
-
-
-    // void (FFNN::*update_parameters)();
-
-
-
+    BNN(){}; //Nullary constructor
+    BNN(std::vector<int> layers, std::string activation);
+    virtual ~BNN(){};
 
     std::vector<Layer> layers_;
-    std::vector<arma::mat (BNN::*)(arma::mat)> acts_;
-    std::vector<arma::mat (BNN::*)(arma::mat)> acts_derivative_;
+    std::vector<std::vector<double>> get_weights();
+    void set_weights(std::vector<std::vector<double>> weights);
+    std::vector<std::vector<double>> get_gradients();
+
+    std::vector<double> forward(std::vector<double> x);
+    void backward(std::vector<double> x, std::vector<double> y); 
+    void mle_fit(
+        std::vector<std::vector<double>> X, 
+        std::vector<std::vector<double>> Y,
+        int num_epochs,
+        double lr
+    );
+    void reset_gradients();
+    void update_params(double lr);
+
+    double get_kinetic_energy(
+        std::vector<std::vector<double>> momentum
+    );
+
+    double get_potential_energy(
+        std::vector<std::vector<double>> X, 
+        std::vector<std::vector<double>> Y
+    );
+
+    std::vector<std::vector<double>> hmc_step(
+        std::vector<std::vector<double>> X,
+        std::vector<std::vector<double>> Y,
+        int num_leapfrog_steps,
+        double step_size
+    );
+
+    double l2_loss(std::vector<double> y_pred, std::vector<double> y_true);  
 };
 
 #endif

@@ -1,0 +1,240 @@
+HMC is considered a state-of-the-art sampling method, 
+but suffers the need for manual tuning of the number of leapfrog steps $L$
+and the step size $\epsilon$. In this chapter, we will study a sampling method called \textit{The No-U-Turn sampler} (NUTS) \cite{nuts} built upon
+HMC that dynamically adapts the integration length $\epsilon L$. Moreover, we will look at how we can adaptively set the step size
+to help NUTS reach a stopping criterion faster.
+
+
+\section{Preliminary definitions}
+The NUTS algorithm introduces a collection of new ideas that need proper development before we delve into the algorithm itself.
+Given generalized coordinates $q = (q_1, ..., q_d)$ and generalized momenta $p = (p_1, ..., p_d)$, we introduce a \textit{slice} variable $u$
+with corresponding conditional distributions
+\begin{equation}
+    p(u|q, p) = \text{Uniform}\left(u; \left[0, \exp\left\{-H(q, p)\right\}\right]\right),
+\end{equation}
+and
+\begin{equation}
+    p(q, p|u) = \text{Uniform}\left( q, p; \left\{q', p' \bigg| \exp\left\{-H(q, p)\right\} \geq u \right\} \right).
+\end{equation}
+This effectively allows for definition of the joint distribution
+\begin{equation}
+    p(q, p, u) \propto \mathbb{I}\left[u \in \left[0, \exp\left\{-H(q, p)\right\}\right]\right],
+\end{equation}
+where $\mathbb{I}[\cdot]$ evaluates to $1$ if its argument is true and $0$ otherwise. Integrating over $u$ yields the marginal distribution
+over phase-space
+
+\begin{equation}
+    p(q, p) \propto \int p(q, p, u) \dd u = \int_0^{\exp\left\{-H(q, p)\right\}}\dd u = \exp\left\{-H(q, p)\right\}.
+\end{equation}
+which is the target distribution used in HMC.
+We further introduce the set $\mathcal{B}$ which consists of all states $(q, p)$ traced out by the leapfrog integrator. We will get back to the generation of its
+elements shortly.
+We introduce another set $\mathcal{C}$ of candidate states which is a subset $\mathcal{C} \subseteq \mathcal{B}$. The set $\mathcal{C}$
+will be chosen deterministically from $\mathcal{B}$ such that none of its elements violates detailed balance if used to produce a transition. 
+Generation of the sets $\mathcal{B}$ and $\mathcal{C}$ given the parameters $q$, $p$, $u$ and $\epsilon$ defines a conditional distribution 
+$p(\mathcal{B}, \mathcal{C}|q, p, u, \epsilon)$ on which the following properties are imposed:
+\begin{enumerate}
+    \item All elements of $\mathcal{C}$ are volume perserving. This effectively translates to $p((q, p)|(q, p) \in \mathcal{C}) \propto p(q, p)$.
+    \item The current state must be included in $\mathcal{C}$, i.e $p\left((q, p) \in \mathcal{C}|q, p, u, \epsilon\right) = 1$.
+    \item Any state $(q', p') \in \mathcal{C}$, must be in the slice defined by $u$. 
+    Mathmetically, this is expressed as $$p\left(u\leq \exp{-H(q, p)}\bigg|(q', p') \in \mathcal{C}\right) = 1.$$
+    \item If $(q, p) \in \mathcal{C}$ and $(q', p') \in \mathcal{C}$, then for any $\mathcal{B}$ we impose 
+    $p(\mathcal{B}, \mathcal{C}|q, p, u, \epsilon) = p(\mathcal{B}, \mathcal{C}|q', p', u, \epsilon)$.
+    Thus any point in $\mathcal{C}$ is equally likely. This can be encapsulated by introduction of the \textit{transition kernel}
+    \begin{equation}
+        \frac{1}{\abs{\mathcal{C}}}\sum_{(q, p) \in \mathcal{C}} T(q', p'|q,p,\mathcal{C}) = \frac{\mathbb{I}\left[(q',p') \in \mathcal{C}\right]}{\abs{\mathcal{C}}},
+    \end{equation}
+    which expresses that a proposed point $(q', p')$ is sampled uniformly from $\mathcal{C}$. 
+\end{enumerate}
+
+\subsection{Generation of Candidate Points and Stopping Criterion}
+Conceptually, generation of $\mathcal{B}$ proceeds as follows. First a single Leapfrog step is integrated forwards or
+backwards in time, where the direction in time is chosen randomly. Then we repeat with two Leapfrog steps. And then we reiterate with four Leapfrog steps. And so on.
+The algorithm repeats this procedure until some hitherto undefined stopping criterion is reached.
+This effectively builds a balanced binary tree in which each node is an element in $\mathcal{B}$. 
+The initial tree is a single node which naturally represents the initial state in phase space. Formally, we double the tree by
+choosing a random direction $v_j \in \text{Uniform}(\{-1, 1\})$ with $v_j = 1$ representing a trajectory forwards in time 
+and $v_j = -1$ representing a trajectory backwards in time where $j$ is the current depth of the tree. 
+The initial tree node corresponds to a depth of $j = 0$. Consider a tree of depth $j$. NUTS will then consider 
+the $2^j - 1$ balanced subtrees of the height $j$-tree with $j > 0$. Let $q^-$ and $p^-$ represent 
+the leftmost leaves of one of its subtrees and $q^+$ and $p^+$ represent the rightmost leaves of the same subtree.
+If either
+\begin{equation}\label{eq:nuts_stop1}
+    (q^+ - q^-) \cdot p^+ < 0 \qq{or} (q^+ - q^-) \cdot p^- < 0,
+\end{equation}
+the tree doubling is terminated. These conditions express that notion that the trajectory starts turning back toward regions
+that are already visited in phase space. A so-called ``U-turn''. Thus the algorithm requires $2^{j+1} - 2$ inner products
+for a tree of height $j$ (two inner products per subtree it must consider). This is an added computational cost over standard HMC per leapfrog step. 
+The added cost is, however, negligible for sufficiently large datasets and/or complex models because the computational cost will be dominated by
+the computation of gradients with respect to the model parameters.
+
+The second stopping criterion considered by NUTS
+terminates the tree doubling if any of the nodes in the tree of height $j$ yields an energy difference larger than
+for some maximum energy difference $E_\text{max}$. More formally, the constraint follows roughly from the introduction of the slice variable $u$
+which required that
+\begin{equation}
+    u \leq \exp\left\{-H(q, p)\right\},
+\end{equation}
+which results in
+\begin{equation}
+    H(q, p) + \log u \leq 0.
+\end{equation}
+NUTS loosens this constraint and simply requires that this sum is less than some max energy value. Thus the tree doubling
+is terminated if 
+\begin{equation}\label{eq:nuts_stop2}
+    H(q, p) + \log u > E_\text{max},
+\end{equation}
+is satisfied.
+
+\subsubsection{Choosing candidate points}
+We now turn to the problem of choosing which points of $\mathcal{B}$ that should be part of $\mathcal{C}$.
+Recall the the first property we imposed on the distribution $p(\mathcal{B}, \mathcal{C}|q, p, u, \epsilon)$ was that
+any point in $\mathcal{C}$ must be volume preserving. Luckily, the Leapfrog integrator is volume preserving, so this condition is
+automatically satisfied. The second condition was simply that the current state must be included in $\mathcal{C}$, so we simply
+allow the possibly to transition back to the same state to satisfy this condition. The third condition stated
+that any point $(q, p) \in \mathcal{C}$ must be part of the slice defined by $u$. Thus, if we exclude any point $(q,p)$
+that does not satisfy $u \leq \exp\{-H(q, p)\}$, we fulfill the condition.
+The fourth condition was $p(\mathcal{B}, \mathcal{C}|q, p, u, \epsilon) = p(\mathcal{B}, \mathcal{C}|q', p', u, \epsilon)$
+for any point $(q, p) \in \mathcal{C}$. 
+For any $(q', p') \in \mathcal{B}$, there exists at most one unique sequence $v_0, ..., v_j$ that generates all other
+states in $\mathcal{B}$ through the doubling process described above. To satisfy the condition, we must exclude any point
+that from which it is impossible to generate $\mathcal{B}$. 
+Such a point will either satisfy eq.~\eqref{eq:nuts_stop1} or eq.~\eqref{eq:nuts_stop2}
+before it manages to complete the tree structure, which halts the generation of the necessary points in $\mathcal{B}$. 
+Assume that the doubling procedure stopping because either condition was satisfied during the last iteration. 
+The final points added to $\mathcal{B}$ must be excluded from $\mathcal{C}$ because they will stop the doubling process and
+thus cannot produce $\mathcal{B}$ if used as a starting point. 
+
+
+
+
+
+\section{The Naive NUTS Algorithm}
+The naive NUTS implementation uses recursion to implicitly store proposal points $\mathcal{C}$ whilst building the balanced binary tree.
+For convenience, the algorithm is split into two pieces; a function called ``BUILDTREE'' which can be found in algorithm~\ref{algo:build_tree},
+and a procedure called ``NaiveNUTS'' in algorithm \ref{algo:nuts_naive} which performs one step of NUTS similar to the one-step procedure of HMC we discussed in algorithm \ref{algo:hmc}, producing
+a new point $q^*$. Let us discuss the computational cost of this algorithm. The algorithm demands $2^j - 1$ evaluations of $H(q, p)$ and its gradient. Moreover, an additional set of
+operations to determine if a stopping criterion is reached, which is of the order $\mathcal{O}(2^j)$. As argued earlier, though, the computational cost is comparable to standard HMC
+per leapfrog step
+when the model is sufficiently complex or the dataset large. However, in its current form it requires storage of $2^j$ positions and momenta, which for complex models
+or deep binary trees may results in an intractibly large storage requirement. In the next section we shall study a more efficient solution to reduce the memory footprint 
+of the algorithm.
+
+
+\begin{figure}[H]
+	\begin{algorithm}[H]
+	\caption{BuildTree function}\label{algo:build_tree}
+	\begin{algorithmic}
+        \Function{BUILDTREE}{$q, p, u, v, j, \epsilon$}
+            \If{$j=0$} \Comment{Initial state of the balanced binary tree. Base case.}
+                \State $(q', p') \leftarrow \text{LEAPFROG}(q, p, v\epsilon)$.
+                \State $\mathcal{C}' \leftarrow \{(q', p')\} \qq{if} u \leq \exp{-H(q', p')} \qq{else} \mathcal{C} \leftarrow \emptyset$.
+                \State $s' \leftarrow \mathbb{I}[H(q, p) + \log u \leq E_\text{max}]$ \Comment{Stopping criterion of eq.\eqref{eq:nuts_stop2}.}
+                \State \Return $q', p', q', p', \mathcal{C}', s'$. 
+            \Else \Comment{Recursion case where $j > 0$. Builds left and right subtrees.}
+                \State $q^-, p^-, q^+, p^+, \mathcal{C}', s' \leftarrow \text{BUILDTREE}(q, p, u, v, j - 1, \epsilon)$
+                \If{$v = 1$}
+                    \State $q^-, p^-, -, -, \mathcal{C}'', s'' \leftarrow \text{BUILDTREE}(q^-, p^-, u, v, j - 1, \epsilon)$.
+                \Else
+                    \State $-, -, q^+, p^+, \mathcal{C}'', s'' \leftarrow \text{BUILDTREE}(q^+, p^+, u, v, j - 1, \epsilon)$.
+                \EndIf
+                \State $s' \leftarrow s' s'' \mathbb{I}[(q^+ - q^-) \cdot p^- \geq 0] \mathbb{I}[(q^+ - q^-) \cdot p^+ \geq 0]$. \Comment{Stopping criterion from eq.~\eqref{eq:nuts_stop1}}
+                \State $\mathcal{C} \leftarrow \mathcal{C}' \cup \mathcal{C}''$ \Comment{Expand candidate sets} 
+                \State \Return $q^-, p^-, q^+, p^+, \mathcal{C}', s'$.
+            \EndIf
+        \EndFunction
+	\end{algorithmic}
+	\end{algorithm}
+\end{figure}
+
+
+
+\begin{figure}[H]
+	\begin{algorithm}[H]
+	\caption{Naive NUTS sampler}\label{algo:nuts_naive}
+	\begin{algorithmic}
+        \Procedure{NaiveNUTS}{$q, \epsilon$}
+            \State Sample $u \sim \text{Uniform}\left(\left[0, \exp\left\{ -H(q, p) \right\}\right]\right)$. \Comment{Slice variable}.
+            \State Initialize $s = 1$, $q^\pm = q$, $p^\pm = p$, $j = 0$, $\mathcal{C} = \{(q, p)\}$.
+            \State Sample $p \sim \mathcal{N}(0, I)$. \Comment{Momenta}
+            \While{$s = 1$}
+                \State Sample $v_j \sim \text{Uniform}(\{-1, 1\})$ \Comment{Choose direction in phase space}
+                \If{$v_j = -1$}
+                    \State $q^-, p^-, -, -, \mathcal{C}', s' \leftarrow \text{BuildTree} (q^-, p^-, u, v_j, j, \epsilon)$.
+                \Else
+                    \State $-, -, q^+, p^+, \mathcal{C}', s' \leftarrow \text{BuildTree} (q^+, p^+, u, v_j, j, \epsilon)$.
+                \EndIf
+                
+                \If{$s' = 1$}
+                    \State $\mathcal{C} \leftarrow \mathcal{C} \cup \mathcal{C}'$  \Comment{Expand set of candidate points if stopping criterion is not met.}
+                \EndIf
+
+                \State $s \leftarrow s' \mathbb{I}[(q^+ - q^-)\cdot p^- \geq 0]\mathbb{I}[(q^+ - q^-)\cdot p^+ \geq 0]$. \Comment{Stopping criterion of eq.~\eqref{eq:nuts_stop1}}
+                \State $j \leftarrow j + 1$ \Comment{Increment tree depth.}
+
+            \EndWhile
+            \State Sample $q^*$ uniformly from $\mathcal{C}$
+            \State \Return $q^*$.
+        \EndProcedure
+	\end{algorithmic}
+	\end{algorithm}
+\end{figure}
+
+\section{Efficient NUTS}
+The implementation resulting from algorithm \ref{algo:build_tree} and \ref{algo:nuts_naive} yields approximately the same computational cost
+as standard HMC for complex models or large datasets. There are several weaknesses which can be improved upon:
+\begin{enumerate}
+    \item The algorithm stores $2^j$ positions and momentum for a tree of depth $j$. For sufficiently complex models or deep enough tree depth,
+    this may require a too large memory footprint.
+    \item The transition kernel used in algorithm \ref{algo:nuts_naive} produces ``short'' transitions in parameter space. 
+    There exist alternative transition kernels which produces larger transitions in parameter space while obeying detailed balance with respect 
+    to a uniform distribution over $\mathcal{C}$.
+    \item If a stopping criterion is satisfied during the final doubling iteration, the proposed set $\mathcal{C}'$ is still completely built
+    before termination. A more efficient solution is to terminate the creation of the final proposed set by simply terminating immediately
+    when a stopping criterion is reached.
+\end{enumerate}
+First, consider the first and second weaknesses. We can introduce a kernel
+\begin{comment}
+    \begin{equation}
+    T((q', p')|(q, p) \in \mathcal{C}) = \begin{cases}
+        \displaystyle{\frac{\mathbb{I}[(q', p') \in \mathcal{C_\text{new}}]}{\abs{C_\text{new}}}} \qq{if} \abs{\mathcal{C}_\text{new}} > \abs{\mathcal{C}_\text{old}}, \\ \\
+        \frac{\mathcal{C_\text{new}}}{\mathcal{C}_\text{old}}\frac{\mathbb{I}[(q', p') \in \mathcal{C}_\text{new}]}{\abs{\mathcal{C}_\text{new}}}
+    \end{cases}
+\end{equation}
+\end{comment}
+\begin{equation}
+    T(q', p'|q, p, \mathcal{C}) = \begin{cases}
+        \displaystyle{\frac{\mathbb{I}[(q', p') \in \mathcal{C_\text{new}}]}{\abs{C_\text{new}}}} \qq{if} \abs{\mathcal{C}_\text{new}} > \abs{\mathcal{C}_\text{old}}, \\ \\
+        \displaystyle{\frac{\abs{\mathcal{C_\text{new}}}}{\abs{\mathcal{C}_\text{old}}}\frac{\mathbb{I}[(q', p') \in \mathcal{C}_\text{new}]}{\abs{\mathcal{C}_\text{new}}}} 
+        + \left(1 - \frac{\abs{\mathcal{C}_\text{new}}}{\abs{\mathcal{C}_\text{old}}}\right)\mathbb{I}[(q', p') = (q, p)] \qq{if} \abs{\mathcal{C}_\text{new}} \leq \abs{\mathcal{C}_\text{old}},
+    \end{cases}
+\end{equation}
+where $\mathcal{C}_\text{new}$ and $\mathcal{C}_\text{old}$ are disjoint subsets of $\mathcal{C}$ such that $\mathcal{C} = \mathcal{C}_\text{old} \cup \mathcal{C}_\text{new}$.
+Here $(q,p) \in \mathcal{C}_\text{old}$ represents elements already present in $\mathcal{C}$ before the final doubling iteration 
+and $\mathcal{C}_\text{new}$ represents the set of elements added to $\mathcal{C}$ during the final doubling iteration. 
+\begin{comment}
+    The transition accounts for the case when $\mathcal{C}_\text{old}$ is empty, which produces the same transition kernel we have discussed in the naive implementation.
+    It also accounts for the case where the new set is empty.
+\end{comment}
+The transition kernel can be interpreted to describe a probability of a transition from a state in $\mathcal{C}_\text{old}$ to a randomly chosen state in $\mathcal{C}_\text{new}$.
+The move is accepted with probability $\abs{\mathcal{C}_\text{new}} / \abs{\mathcal{C}_\text{old}}$. The storage requirement can be reduced to the order $\mathcal{O}(j)$
+by observing that 
+\begin{equation}
+    p(q, p|\mathcal{C}') = \frac{1}{\abs{\mathcal{C}'}} = \frac{\abs{\mathcal{C}_\text{subtree}}}{\abs{\mathcal{C}'}} \frac{1}{\abs{\mathcal{C}_\text{subtree}}} 
+    = p((q, p) \in \mathcal{C}_\text{subtree}|\mathcal{C}')P(q,p |(q,p) \in \mathcal{C}_\text{subtree}, \mathcal{C}').
+\end{equation}
+\begin{comment}
+    The factorization of the uniform probability over $\mathcal{C}'$ implies that it can be written as a product of the probability of choosing a leaf from the subtree and the probability
+    of chosing $(q, p)$ uniformly from $\mathcal{C}_\text{subtree}$. Except for the initial tree at depth $j=0$, each subtree contains two subtrees of their own.
+    For each such subtree, a pair of points $(q, p)$ and $(q', p')$ is sampled. One of these points are then chosen uniformly to represent that subtree.
+    Additionally, an integer weight $n'$ is stored representing how many elements of $\mathcal{C}'$ that pertain to said subtree. 
+\end{comment}
+
+
+
+\section{Dual-Averaging Step Size Adaptation}
+This section will introduce a step size adaptation scheme.
+
+\section{NUTS with Dual-Averaging Step Size Adaptation}
+This section will combine the two algorithms to the one used in most runs in this thesis.
+

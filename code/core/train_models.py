@@ -12,13 +12,13 @@ import argparse
 
 from bnn.bnn import BayesianNeuralNetwork
 from bnn.bnn_base import _BNNBase
-from slha_loader.slha_loader import SLHAloader
+from slha_loader.slha_loader import SLHALoader
 from utils.preprocessing import split_data
 from utils.trace_functions import (
     trace_fn_hmc,
-    trace_fn_no_u_turn,
+    trace_fn_nuts,
     trace_fn_adaptive_hmc,
-    trace_fn_adaptive_no_u_turn,
+    trace_fn_adaptive_nuts,
 )
 
 
@@ -34,12 +34,14 @@ def main(
     kernel,
     trace,
     num_steps_between_results,
+    layers,
+    activations,
 ):
-        
+
     # particle_ids = ["1000022", "1000022"]
     target_dir = "./targets"
     feat_dir = "./features"
-    dl = SLHAloader(
+    dl = SLHALoader(
         particle_ids=particle_ids,
         feat_dir=feat_dir,
         target_dir=target_dir,
@@ -47,32 +49,33 @@ def main(
     )
     features = dl.features.to_numpy()
     targets = dl.targets.get("nlo").to_numpy()
-    targets = np.log10(targets)  # Transform targets to log10 space.
-    nan_idx = np.isnan(targets)
-    idx = nan_idx == False
+    idx = (targets > 0)
+    targets = np.log10(targets[idx])
+    targets = targets[:, None]
     features = features[idx]
-    targets = targets[idx]
 
     data = split_data(features=features, targets=targets)
     x_train, y_train = data["train"]
 
     x_train = tf.convert_to_tensor(x_train, dtype=tf.float32)
     y_train = tf.convert_to_tensor(y_train, dtype=tf.float32)
-    y_train = y_train[:, None]
     input_size = x_train.shape[-1]
-    layers = [input_size, 50, 50, 50, 50, 1]
-    activations = "tanh"
-    # activation = ["relu", "relu", "identity"]
+    # layers = [input_size, 10, 10, 10, 10, 1]
+    # activations = "swish"
 
     if instruction == "train":
         bnn = BayesianNeuralNetwork(
-            layers=layers, activations=activations, num_chains=num_chains, lamb=1e-3
+            layers=layers,
+            activations=activations,
+            num_chains=num_chains,
+            lamb=1e-3,
+            likelihood_noise=1.,
         )
 
         start = time.perf_counter()
         loss = bnn.mle_fit(
-            x=x_train,
-            y=y_train,
+            x_train=x_train,
+            y_train=y_train,
             epochs=num_epochs,
             lr=0.001,
             batch_size=batch_size,
@@ -91,23 +94,24 @@ def main(
         else:
             if kernel == "hmc":
                 trace_fn = lambda _, pkr: trace_fn_adaptive_hmc(_, pkr)
-            elif kernel == "no_u_turn":
-                trace_fn = lambda _, pkr: trace_fn_adaptive_no_u_turn(_, pkr)
+            elif kernel == "nuts":
+                trace_fn = lambda _, pkr: trace_fn_adaptive_nuts(_, pkr)
 
         if kernel == "hmc":
-            kernel = tfp.mcmc.HamiltonianMonteCarlo(
+            inner_kernel = tfp.mcmc.HamiltonianMonteCarlo(
                 num_leapfrog_steps=300,
                 step_size=[tf.fill(w.shape, 0.001) for w in bnn.weights],
                 target_log_prob_fn=bnn.get_target_log_prob_fn(x=x_train, y=y_train),
             )
-        elif kernel == "no_u_turn":
-            kernel = tfp.mcmc.NoUTurnSampler(
+        elif kernel == "nuts":
+            inner_kernel = tfp.mcmc.NoUTurnSampler(
                 target_log_prob_fn=bnn.get_target_log_prob_fn(x=x_train, y=y_train),
-                step_size=[tf.fill(w.shape, 0.001) for w in bnn.weights],
+                step_size=[0.0001 for w in bnn.weights],
+                max_tree_depth=12,
             )
 
         kernel = tfp.mcmc.DualAveragingStepSizeAdaptation(
-            inner_kernel=kernel, 
+            inner_kernel=inner_kernel,
             num_adaptation_steps=int(0.8 * num_burnin_steps),
             target_accept_prob=0.75,
         )
@@ -128,13 +132,14 @@ def main(
                 kernel=kernel,
                 num_results=num_results,
                 num_burnin_steps=num_burnin_steps,
-                num_steps_between_results=0,
+                num_steps_between_results=num_steps_between_results,
                 fname=fname,
                 trace_fn=trace_fn,
             )
-            print(trace)
             accept_ratio = sum(trace.get("is_accepted").numpy()) / num_results
-            print(f"{accept_ratio=}")
+            print(f"accept ratio = {accept_ratio}")
+            if isinstance(inner_kernel, tfp.mcmc.NoUTurnSampler):
+                print("Mean number of leapfrog steps taken: ", tf.reduce_mean(trace["leapfrogs_taken"]).numpy())
 
         end = time.perf_counter()
         timeused = end - start
@@ -143,49 +148,57 @@ def main(
     elif instruction == "test":
         x_test, y_test = data["test"]
         x_test = tf.convert_to_tensor(x_test, dtype=tf.float32)
+        y_test = y_test.squeeze(-1)
 
         bnn = BayesianNeuralNetwork()
         bnn.load_model(
             fname=fname,
         )
         print(bnn)
+
+        start = time.perf_counter()
         y_pred = bnn(x_test)
+        end = time.perf_counter()
+        timeused = end - start
+        print("timeused = ", timeused)
+
+        # test_point = x_test[0, ...][None, :]
+        # true_point = y_test[0, ...]
+        # print(f"{test_point.shape=}")
+        # predicted_point = bnn(test_point).numpy().squeeze(-1)
+        # sns.histplot(predicted_point.ravel())
+        # plt.axvline(true_point, label="True value", color="red")
+        # plt.legend()
+        # plt.show()
+
+
 
         y_pred = y_pred.numpy().squeeze(-1)
         y_mean = np.mean(y_pred, axis=0)
 
         rel_error = (y_test - y_mean) / y_test
         print(f"{tf.reduce_mean(rel_error)=}")
-        sns.histplot(rel_error, stat="density")
+        sns.histplot(rel_error.ravel(), stat="density")
         plt.xlabel("Relative error")
         plt.title("Relative error log space")
         plt.figure()
         # plt.show()
 
+        # x = np.linspace(-2, 2, 1000)
         standardized_residual = (y_test - y_mean) / np.std(y_pred, axis=0)
-        print(standardized_residual)
-        sns.histplot(standardized_residual, stat="density")
+        print(standardized_residual.shape)
+        # plt.plot(x, np.exp(-0.5 * x ** 2))
+        sns.histplot(standardized_residual.ravel(), stat="density")
+        # plt.hist(standardized_residual)
         plt.xlabel("Standardized residual")
         # plt.hist(standardized_residual, bins=10)
         plt.title("Standardized residual log space")
         plt.figure()
-        # plt.show()
 
         print(y_mean)
         print(f"{y_pred.shape=}")
 
         print(f"{y_test.shape=}")
-
-        stddev = np.std(y_pred, axis=0)
-        indices = np.argsort(y_test)
-        plt.figure()
-        plt.plot(y_test[indices], y_mean[indices], label="mean", color="red")
-        plt.fill_between(
-            x=y_test[indices],
-            y1=y_mean[indices] + stddev[indices],
-            y2=y_mean[indices] - stddev[indices],
-        )
-        plt.show()
 
         # y_test = list(y_test) * y_pred.shape[0]
         # y_test = np.array(y_test)
@@ -197,34 +210,28 @@ def main(
         # for i in range(y_pred.shape[0]):
         #     plt.scatter(y_test, y_pred[i])
         # plt.show()
-    
-        sys.exit()
 
         y_pred = 10 ** y_pred
         y_mean = np.mean(y_pred, axis=0)
 
+
         rel_error = (10 ** y_test - y_mean) / (10 ** y_test)
-        print(rel_error.shape)
-        sns.histplot(rel_error, stat="density")
+        print(f"{rel_error.shape=}")
+        sns.histplot(rel_error.ravel())
+        # plt.hist(rel_error.ravel())
         plt.xlabel("Relative error")
         plt.figure()
         # plt.show()
 
+
+
         standardized_residual = (10 ** y_test - y_mean) / np.std(y_pred, axis=0)
-        sns.histplot(standardized_residual, stat="density")
+        # plt.hist(standardized_residual.ravel())
+        sns.histplot(standardized_residual.ravel())
         plt.xlabel("Standardized residual")
         plt.show()
 
-        y_test = 10 ** y_test
-        # indices = np.argsort(y_test)
 
-        # plt.plot(y_test[indices], y_mean[indices], label="mean")
-        # plt.scatter(10 ** y_test[indices], y_mean + np.std(y_pred, axis=0), marker="x", label="mean + std")
-        # plt.scatter(10 ** y_test, y_mean - np.std(y_pred, axis=0), marker="*", label="mean - std")
-        plt.legend()
-        plt.show()
-        print(f"{y_test.shape=}")
-        print(f"{y_pred.shape=}")
 
 
 
@@ -246,7 +253,7 @@ if __name__ == "__main__":
     parser.add_argument("--cpu", help="Run on CPU", action="store_true")
     parser.add_argument("--gpu", help="Run on GPU", action="store_true")
     parser.add_argument(
-        "--kernel", help="Kernel to run MCMC chain. Options: {`hmc`, `no_u_turn`}."
+        "--kernel", help="Kernel to run MCMC chain. Options: {`hmc`, `nuts`}."
     )
     parser.add_argument(
         "--trace",
@@ -254,6 +261,8 @@ if __name__ == "__main__":
         action="store_true",
     )
     parser.add_argument("--skip", help="Number of steps between results. Thinning", type=int)
+    parser.add_argument("--arch", help="The architecture of the model: [input_size, layer:0, layer:1, ..., layer:L, output_size]")
+    parser.add_argument("--act", help="Activation function in hidden layers", type=str)
     args = parser.parse_args()
 
     if args.cpu:
@@ -272,6 +281,14 @@ if __name__ == "__main__":
         print(
             f"process = {args.process} is not specified with the correct format. Specify as a list or tuple."
         )
+    
+    if args.arch is None:
+        raise ValueError("Architecture not specified.")
+    try:
+        print(args.arch)
+        layers = list(eval(args.arch))
+    except TypeError:
+        print(f"layers = {args.arch} are not the correct type. Should be a list.")
 
     if args.train is True:
         instruction = "train"
@@ -287,6 +304,7 @@ if __name__ == "__main__":
     print("Kernel:", args.kernel)
 
 
+
     with tf.device(device):
         main(
             particle_ids=process,
@@ -299,7 +317,9 @@ if __name__ == "__main__":
             instruction=instruction,
             kernel=args.kernel,
             trace=args.trace,
-            num_steps_between_results=args.skip if args.skip is not None else 0
+            num_steps_between_results=args.skip if args.skip is not None else 0,
+            layers=layers,
+            activations="swish" if args.act is None else args.act
         )
 
     # with tf.device("/CPU:0"):

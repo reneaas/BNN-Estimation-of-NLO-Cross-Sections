@@ -5,7 +5,7 @@ to help make the transition from the mathematics to their machine learning frame
 We will stay general and assume a set of inputs $x \in \mathbb{R}^p$ and corresponding targets $y \in \mathbb{R}^d$. 
 These serve as the training data on which the neural network is trained.
 
-\subsection{Basic mathematical structure}
+\subsection{Basic Mathematical Structure}
 A neural network is most generally defined as a non-linear function $f : \mathbb{R}^p \to \mathbb{R}^d$.
 This non-linear function is built-up as follows:
 \begin{itemize}
@@ -30,10 +30,10 @@ A special case of eq.~\eqref{eq:nn_forward_pass} applies to $\ell = 1$ where $a^
 
 \subsection{Backpropagation}
 The standard approach to train a neural network is by minimization of some loss function by employing the \textit{backpropagation} algorithm\cite{backprop}. The algorithm boils down to four equations defining a recursive algorithm that approximates the gradient with respect to the parameters of the model.
-Consider $E$ as the loss function, quanitifying the error between the target and the model output.
+Consider $\mathcal{L}$ as the loss function, quanitifying the error between the target and the model output.
 The first of the four equations quantifes the error in the output layer.
 \begin{equation}\label{eq:backprop1}
-    \Delta_j^L = \pdv{E}{z_j^L}.
+    \Delta_j^L = \pdv{\mathcal{L}}{z_j^L}.
 \end{equation}
 The second equation allows us to compute the error at layer $\ell$ given we know the error at layer $\ell+1$,
 \begin{equation}\label{eq:backprop2}
@@ -41,30 +41,30 @@ The second equation allows us to compute the error at layer $\ell$ given we know
 \end{equation}
 The final two equations relate these errors to the gradient of the loss function with respect to the model parameters. For the kernels, we have
 \begin{equation}
-    \pdv{E}{W_{jk}^\ell} = \pdv{E}{z_j^\ell}\pdv{z_j^\ell}{W_{jk}^\ell} = \Delta_j^\ell a_k^{\ell-1}.
+    \pdv{\mathcal{L}}{W_{jk}^\ell} = \pdv{\mathcal{L}}{z_j^\ell}\pdv{z_j^\ell}{W_{jk}^\ell} = \Delta_j^\ell a_k^{\ell-1}.
 \end{equation}
 For the biases, the gradients are
 \begin{equation}
-    \pdv{E}{b_j^\ell} = \pdv{E}{z_j^\ell}\pdv{z_j^\ell}{b_j^\ell} = \Delta_j^\ell.
+    \pdv{\mathcal{L}}{b_j^\ell} = \pdv{\mathcal{L}}{z_j^\ell}\pdv{z_j^\ell}{b_j^\ell} = \Delta_j^\ell.
 \end{equation}
 
 With these four equations, we can fit the neural network using minimization techniques such as stochastic gradient descent or more complex methods such as ADAM (pages 13-19 in \cite{ml_for_physicists}). 
 Although not the focus of this thesis, we might use these methods in conjunction with HMC to speed up convergence to the stationary distribution. Furthermore, the computation of gradients in combination with
 HMC can be performed with the backpropagation algorithm.
 
-\subsection{Loss function for regression}
+\subsection{Loss Function for Regression}
 In this thesis, we are concerned with regression tasks. The activation function of the final layer $\sigma_L$ is then just the identity function. The typical loss function chosen to solve regression tasks is the $L_2$-norm, which for a single output can be written as 
 \begin{equation}
-    E(y, \hat{y}) = \frac{1}{2}\norm{y-\hat{y}}_2^2,
+    \mathcal{L}(y, \hat{y}) = \frac{1}{2}\norm{y-\hat{y}}_2^2,
 \end{equation}
 where $\hat{y}$ denotes the model output and $y$ the ground-truth. Now, the model output in this case is $\hat{y}_j = a_j^L = z_j^L$. Therefore, 
 \begin{equation}
-    \Delta_j^L = \pdv{E}{z_j^L} = a_j^L - y_j.
+    \Delta_j^L = \pdv{\mathcal{L}}{z_j^L} = a_j^L - y_j.
 \end{equation} 
 
-We are now equipped to write down the backpropagation for a single datapoint. It's built up of a textit{forward pass} which takes an input $x$ and applies the recursive eq.~\eqref{eq:nn_forward_pass} which produces a model prediction $\hat{y} = a^L$. The second part of the algorithm 
-is the \textit{backward pass} which based on the prediction $\hat{y}$ and the target $y$, computes the gradients of the loss function with respect to the model parameters. The forward pass of the neural network
-is found in algorithm \ref{algo:forward_pass}.
+We are now equipped to write down the backpropagation for a single datapoint. It's built up of a \textit{forward pass} which takes an input $x$ and applies the recursive eq.~\eqref{eq:nn_forward_pass} which produces a model prediction $\hat{y} = a^L$. The second part of the algorithm 
+is the \textit{backward pass} which based on the prediction $\hat{y}$ and the target $y$, computes the gradients of the loss function $\mathcal{L}$ with respect to the model parameters. The forward pass of the neural network
+is summarized algorithm \ref{algo:forward_pass}.
 \begin{figure}[H]
     \begin{algorithm}[H]
         \caption{Backpropagation: Forward pass}\label{algo:forward_pass}
@@ -96,7 +96,7 @@ is found in algorithm \ref{algo:forward_pass}.
         \State $\Delta_j^\ell \leftarrow \left(\sum_k \Delta_k^{\ell+1}W_{kj}^{\ell+1}\right) \sigma'(z_j^\ell)$
         \State $\pdv*{E}{b_j^\ell} \leftarrow \Delta_j^\ell$
         \State $\pdv*{E}{W_{jk}^\ell} \leftarrow \Delta_j^\ell a_k^{\ell-1}$
-        \State update $b_j^\ell$ and $W_{jk}^\ell$.
+        \State update $b_j^\ell$ and $W_{jk}^\ell$
         \EndFor
         \EndFor
         \EndProcedure
@@ -111,13 +111,42 @@ Neural networks often end up with a large number of parameters, which makes them
 This means that the trained parameters of the model is adjusted to capture trends in the training data which may not represent
 the underlying process the model tries to learn. The consequence is that it \textit{generalizes} poorly to new unseen data, i.e its predictions are poor. A typical strategy to avoid this problem, is to introduce some form of \textit{regularization}. A common choice is $L^2$-\textit{regularization}, which for a neural network tacks on two additional sums to the loss function as follows:
 \begin{equation}
-    E = \frac{1}{2}\sum_i \norm{\hat{y}^{(i)} - y^{(i)}}_2^2 + \frac{\lambda_W}{2}\sum_\ell \norm{W^\ell}_2^2 + \frac{\lambda_b}{2}\sum_\ell \norm{b^\ell}_2^2,
+    \mathcal{L} = \frac{1}{2}\sum_i \norm{\hat{y}^{(i)} - y^{(i)}}_2^2 + \frac{\lambda_W}{2}\sum_\ell \norm{W^\ell}_2^2 + \frac{\lambda_b}{2}\sum_\ell \norm{b^\ell}_2^2,
 \end{equation}
 where $\lambda_W$ and $\lambda_b$ are regularization strengths for the kernels and biases respectively. The $L^2$-norm $\norm{\cdot}_2$ is the standard Euclidean norm in the case of a vector. For a matrix, we mean the following. Consider a matrix $A \in \mathbb{R}^{m \times n}$. The matrix norm $\norm{\cdot}_2$ is then given by \textit{Fröbenius norm}
 \begin{equation}
     \norm{A}_2 = \sqrt{\sum_{i=1}^m \sum_{j=1}^n \abs{A_{ij}}^2}.
 \end{equation}
-
 $L^2$-regularization is sometimes called $L^2$-penalty because it penalizes assignment of large values to the model parameters. Its effect is thus shrinkage of the parameter space where accessible minima may reside. 
 
-\subsection{Activation functions}
+\section{Activation Functions}
+There are many common activation functions with various strengths used in modern neural networks. We will discuss a few common ones
+with an emphasis on the ones used in this thesis.
+
+\subsection{Sigmoid}
+The sigmoid activation function is given by 
+\begin{equation}\label{eq:sigmoid}
+    \sigma(x) = \frac{1}{1 + \exp(-x)}.
+\end{equation}
+It was a very common choice in neural networks early, likely due to its simple derivative. It has a significant drawback, however.
+Looking at eq.~\eqref{eq:sigmoid}, we can easily deduce that $\sigma(\pm \infty) = 0$, and since its derivative is of the form $\sigma'(x) = \sigma(1-\sigma)$,
+the gradient computed during backpropagation vanishes if the input to the activation function as $\abs{x} \to \infty$. This significantly
+hampers the progress during optimization. A popular alternative to the sigmoid function is $\tanh(x)$. This function too, however,
+suffers from the same vanishing gradient problem.
+
+\subsection{ReLU}
+To overcome the vanishing gradient problem, an activation function called the Rectifying Linear Unit (ReLU) became widely adopted, which is given by
+\begin{equation}
+    \sigma(x) = x^+ = \max(0, x).
+\end{equation}
+% The activation was found to perform well in deep learning back in 2011 \cite{relu} and has become widely adopted.
+
+
+\subsection{Swish}
+Recently, an activation function to replace ReLU was proposed in \cite{swish} known as \textit{swish} or SiLU which was shown to outperform ReLU in deep neural networks on
+a number of challengig datasets. The activation function is given by
+\begin{equation}
+    \sigma(x) = x\cdot \text{sigmoid}(x).
+\end{equation}
+
+

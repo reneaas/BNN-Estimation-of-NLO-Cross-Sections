@@ -122,6 +122,14 @@ class _BNNBase(object):
     @property
     def avail_activations(self):
         return list(self._avail_activations.keys())
+
+    @property
+    def num_params(self):
+        tot_num_params = 0
+        for w, b in zip(self.weights[::2], self.weights[1::2]):
+            num_params = (tf.reduce_prod(w.shape[1:]) + tf.reduce_prod(b.shape[1:])).numpy()
+            tot_num_params += num_params
+        return tot_num_params
     
     def _create_layers(self, layers):
         """Helper function to create the weights per layer of the model.

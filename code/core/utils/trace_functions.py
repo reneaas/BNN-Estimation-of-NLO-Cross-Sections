@@ -7,7 +7,7 @@ def trace_fn_hmc(_, pkr):
     return {"is_accepted": pkr.is_accepted}
 
 
-def trace_fn_no_u_turn(_, pkr):
+def trace_fn_nuts(_, pkr):
     return {
         "target_log_prob": pkr.target_log_prob,
         "leapfrogs_taken": pkr.leapfrogs_taken,
@@ -26,7 +26,7 @@ def trace_fn_adaptive_hmc(_, pkr):
     }
 
 
-def trace_fn_adaptive_no_u_turn(_, pkr):
+def trace_fn_adaptive_nuts(_, pkr):
     return {
         "target_log_prob": pkr.inner_results.target_log_prob,
         "leapfrogs_taken": pkr.inner_results.leapfrogs_taken,

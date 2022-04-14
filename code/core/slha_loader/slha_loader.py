@@ -1,27 +1,30 @@
 import numpy as np
 import os
 import pandas as pd
+from typing import List, Tuple
 
 
-class SLHAloader(object):
+class SLHALoader(object):
     """SLHAloader provides a flexible and easy-to-use dataloader
     for data from slha files.
 
     Args:
-        particle_ids (list)     :       List of particle ids for a process
-                                        (particle pair)
+        particle_ids (list):
+            List of particle ids for a process (particle pair)
+        feat_dir (str):
+            root directory with features
+        target_dir (str):
+            root directory with targets
 
-        feat_dir (str)          :       root directory with features
-
-        target_dir (str)        :       root directory with targets
+    Raises:
     """
 
     def __init__(
         self,
-        particle_ids: list[str],
+        particle_ids: List[str],
         feat_dir: str,
         target_dir: str,
-        target_keys: list[str] = ["nlo"],
+        target_keys: List[str] = ["nlo"],
     ):
 
         self.supported_ids = [
@@ -141,7 +144,7 @@ class SLHAloader(object):
         for key in targets.keys():
             self.targets[key] = targets[key].get(self.process)
 
-    def to_numpy(self) -> tuple[np.ndarray]:
+    def to_numpy(self) -> Tuple[np.ndarray]:
         """Converts the data to numpy arrays."""
         self.features = self.features.to_numpy()
         features = self.features.to_numpy()
@@ -155,13 +158,30 @@ def main():
     # ids = ["2", "4"]
     target_dir = "../targets"
     feat_dir = "../features"
-    dl = SLHAloader(ids, feat_dir, target_dir)
+    dl = SLHALoader(ids, feat_dir, target_dir)
     # dl.to_numpy()
     print(dl.features)
     print(dl.targets)
     targets = dl.targets.get("nlo")
     print(targets.to_numpy())
 
+    processes = [
+        ["1000022"] * 2,
+        ["1000023"] * 2, 
+        ["1000025"] * 2,
+        ["1000035"] * 2,
+    ]
+    data = {"features": [], "targets": []}
+    for process in processes:
+        dl = SLHALoader(particle_ids=process, feat_dir=feat_dir, target_dir=target_dir)
+        features = dl.features.to_numpy()
+        targets = dl.targets.get("nlo").to_numpy()
+        data["features"].append(features)
+        data["targets"].append(targets)
+    data["features"] = np.concatenate(data["features"], axis=0)
+    data["targets"] = np.concatenate(data["targets"], axis=0)
+    print(data["features"].shape)
+    print(data["targets"].shape)
     # print(targets)
 
 

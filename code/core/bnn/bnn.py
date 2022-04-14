@@ -8,7 +8,12 @@ import matplotlib.pyplot as plt
 import numpy as np
 import sys
 import pandas as pd
-from .bnn_base import _BNNBase
+import seaborn as sns
+
+if __name__  == "__main__":
+    from bnn_base import _BNNBase
+else:
+    from .bnn_base import _BNNBase
 
 np.random.seed(10)
 tf.random.set_seed(10)
@@ -128,8 +133,9 @@ class BayesianNeuralNetwork(_BNNBase):
         Raises:
             ValueError:
                 - If len(activation) == len(layers) - 1 is False.
-                - If activation is a list, and an element is str, but is not an available activation function.
-            TypeError: if activation is a list, but the elements is not str nor a Python callable.
+                - If activations is a list, and an element is str, but is not an available activation function.
+            TypeError: 
+                if activations is a list, but the elements is not str nor a Python callable.
         """
         super().__init__(
             layers=layers,
@@ -381,8 +387,12 @@ class BayesianNeuralNetwork(_BNNBase):
                 instance of tfp.mcmc.TransitionKernel.
                 """
             )
-        
-        strategy = tf.distribute.MirroredStrategy(devices=tf.config.list_logical_devices("GPU"))
+        physical_devices = tf.config.list_physical_devices("GPU")
+        print(f"Physical devices = {physical_devices}")
+        logical_devices = tf.config.list_logical_devices("GPU")
+        print(f"Logical devices = {logical_devices}")
+
+        strategy = tf.distribute.MirroredStrategy()
         device_chains = strategy.run(
             tfp.mcmc.sample_chain,
             kwargs={
@@ -396,6 +406,41 @@ class BayesianNeuralNetwork(_BNNBase):
             }
         )
         return device_chains
+
+    @tf.function
+    def sample_chain_verbose(
+        self,
+        kernel,
+        num_results,
+        num_burnin_steps,
+        num_steps_between_results=0,
+        trace_fn=0,
+        parallel_iterations=10,
+        fname=None,
+    ):
+        
+        current_state = self.weights
+        kernel_results = kernel.bootstrap_results(current_state)
+
+        #Burn in steps:
+        for i in trange(num_burnin_steps, desc="Burn-in steps"):
+            current_state, kernel_results = kernel.one_step(
+                current_state, kernel_results,
+            )
+        
+        chain = current_state
+
+        for i in trange(num_results, desc="Sampling results"):
+            current_state, kernel_results = kernel.one_step(
+                current_state, kernel_results,
+            )
+            chain = [tf.concat([state1, state2], axis=0) for state1, state2 in zip(chain, current_state)]
+            #chain.append(current_state)
+        
+        self.chain = chain
+            
+        
+        
 
 
     def sample_chain(
@@ -431,6 +476,9 @@ class BayesianNeuralNetwork(_BNNBase):
                 List of MCMC chain.
             trace (collections.namedtuple, optional):
                 Returned if `trace_fn` is not None.
+
+        Raises:
+            TypeError if `kernel` is not of type tfp.mcmc.TransitionKernel.
         """
         if not isinstance(kernel, tfp.mcmc.TransitionKernel):
             raise TypeError(
@@ -488,10 +536,20 @@ def trace_fn_adaptive_hmc(_, pkr):
         "target_accept_prob": pkr.target_accept_prob,
     }
 
+def trace_fn_chees(_, pkr):
+  return (
+        pkr.inner_results.accepted_results,
+        pkr.step,
+        pkr.max_trajectory_length,
+        pkr.inner_results.log_accept_ratio,
+        pkr.adaptation_rate,
+        pkr.averaged_max_trajectory_length,
+  )
+
 
 def main():
-    layers = [1, 10, 10, 1]
-    n_train = 10000
+    layers = [1, 20, 20, 1]
+    n_train = 1000
     n_dims = 1
     f = lambda x: x * tf.math.sin(x) * tf.math.cos(x)
     x_train = tf.random.normal(shape=(n_train, n_dims), mean=0.0, stddev=3.0)
@@ -503,7 +561,7 @@ def main():
     num_burnin_steps = 100
     num_leapfrog_steps = 100
     step_size = 0.0001
-    activations = "swish"
+    activations = "tanh"
     #activation = ["relu", "relu", "relu", "relu", "identity"]
     # activation = ["relu", "relu", "identity"]
 
@@ -511,7 +569,7 @@ def main():
         layers=layers,
         activations=activations,
         lamb=1e-3,
-        likelihood_noise=0.1,
+        likelihood_noise=1.,
         num_chains=num_chains,
     )
 
@@ -532,14 +590,14 @@ def main():
         epochs=1000,
         lr=0.001,
         batch_size=None,
-        x_val=x_val,
-        y_val=y_val,
-        dont_break=True,
+        # x_val=x_val,
+        # y_val=y_val,
+        # dont_break=True,
     )
     end = time.perf_counter()
     timeused = end - start
     print(f"{timeused=} seconds on MLE fit.")
-
+    
     if loss.get("val_loss") is not None:
         plt.plot(loss.get("val_loss"))
         plt.xlabel("epochs")
@@ -554,9 +612,14 @@ def main():
     step_size = [tf.fill(w.shape, 0.001) for w in bnn.weights]
     inner_kernel = tfp.mcmc.HamiltonianMonteCarlo(
         target_log_prob_fn=bnn.get_target_log_prob_fn(x_train, y_train),
-        num_leapfrog_steps=num_leapfrog_steps,
-        step_size=step_size,
+        num_leapfrog_steps=500,
+        step_size=0.001,
     )
+
+    # kernel = tfp.experimental.mcmc.GradientBasedTrajectoryLengthAdaptation(
+    #     inner_kernel=inner_kernel,
+    #     num_adaptation_steps=int(0.8 * num_burnin_steps)
+    # )
 
     # inner_kernel = tfp.mcmc.NoUTurnSampler(
     #     target_log_prob_fn=bnn.get_target_log_prob_fn(x_train, y_train),
@@ -568,24 +631,45 @@ def main():
     kernel = tfp.mcmc.DualAveragingStepSizeAdaptation(
         inner_kernel=inner_kernel,
         num_adaptation_steps=int(0.8 * num_burnin_steps),
-        target_accept_prob=0.75,
+        target_accept_prob=0.65,
     )
 
     start = time.perf_counter()
-    chain, trace = bnn.sample_chain(
+
+    bnn.sample_chain_verbose(
         kernel=kernel,
         num_results=num_results,
         num_burnin_steps=num_burnin_steps,
         num_steps_between_results=0,
-        fname="../models/test.npz",
-        trace_fn=trace_fn_adaptive_hmc
-        if isinstance(inner_kernel, tfp.mcmc.HamiltonianMonteCarlo)
-        else trace_fn_adaptive_no_u_turn,
     )
-    print(trace)
-    print(sum(trace["is_accepted"].numpy()) / num_results)
-    if isinstance(inner_kernel, tfp.mcmc.NoUTurnSampler):
-        print(tf.reduce_mean(trace["leapfrogs_taken"]).numpy())
+    end = time.perf_counter()
+    timeused = end - start
+    # print([w.shape for w in chain])
+    print(f"{timeused=} on verbose sampling")
+
+
+    start = time.perf_counter()
+    chain = bnn.sample_chain(
+        kernel=kernel,
+        num_results=num_results,
+        num_burnin_steps=num_burnin_steps,
+        num_steps_between_results=0,
+        fname=None,
+        trace_fn=None,
+    )
+    end = time.perf_counter()
+    timeused = end - start
+    # print([w.shape for w in chain])
+    print(f"{timeused=} on sampling")
+
+    sys.exit()
+
+    # ess = tfp.mcmc.effective_sample_size(states=chain)
+
+    # print(trace)
+    # print(sum(trace["is_accepted"].numpy()) / num_results)
+    # if isinstance(inner_kernel, tfp.mcmc.NoUTurnSampler):
+    #     print(tf.reduce_mean(trace["leapfrogs_taken"]).numpy())
 
 
     # bnn.load_weights(fname="models/test.npz")
@@ -599,7 +683,6 @@ def main():
     #     batch_size=100,
     # )
 
-    end = time.perf_counter()
     timeused = end - start
     print(f"{timeused=} seconds on mcmc sample chain.")
 
@@ -648,6 +731,14 @@ def main():
         color="g",
     )
     plt.legend()
+    plt.show()
+
+    weights = bnn.weights
+    for i in range(3):
+        print(weights[0].shape)
+        # sns.histplot(weights[0][:, 0, 0])
+        sns.kdeplot(weights[0][:, 0, i])
+        plt.figure()
     plt.show()
 
     # x = np.array(list(x_test.numpy().squeeze(-1)) * tot_num_results)

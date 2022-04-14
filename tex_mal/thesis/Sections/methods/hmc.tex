@@ -3,7 +3,7 @@ It is a Markov Chain Monte Carlo (MCMC) sampling technique that merges Gibbs sam
 It avoids random walk behaviour with a systematical exploration of the state space 
 and generates successive samples with smaller correlation. We will begin with a survey of Lagrangian and Hamiltonian dynamics followed by a description of
 the \textit{Leapfrog} integrator which is used to simulate the Hamiltonian systems. Once these are established, we will summarize the 
-HMC method in a generic manner - applicable to any continuous distribution. Moreoever, we will discuss important properties like conservation of the Hamiltonian
+HMC method in a generic manner - applicable to any continuous distribution. Moreover, we will discuss important properties like conservation of the Hamiltonian
 and local phase space volume.
 
 
@@ -13,7 +13,7 @@ For completeness, we will first survey Lagrangian mechanics from which we derive
 The Hamiltonian then lays the foundation for Hamiltonian dynamics.
 
 \subsection{Lagrangian Mechanics}
-Assume a set of \textit{generalized coordinates} $q = (q_1, ..., q_n)$. Generally, the Lagrangian can be written as
+Assume a set of \textit{generalized coordinates} $q = (q_1, \ldots, q_d)$. Generally, the Lagrangian can be written as
 \begin{equation}
   L(q, \dot{q}, t) = K(q, \dot{q}, t) - V(q, \dot{q}, t),
 \end{equation}
@@ -29,8 +29,9 @@ The Hamiltonian is constructed by the Legendre transformation,
 \end{equation}
 where
 \begin{equation}
-  p_i = \pdv{L}{\dot{q}_i}.
+  p_i = \pdv{L}{\dot{q}_i},
 \end{equation}
+for which we introduce a collective notation $p = (p_1, \ldots, p_d)$.
 The equations of motion, known as \textit{Hamilton's} equations, are given by
 \begin{equation}\label{eq:eom}
   \dv{q_i}{t} = \pdv{H}{p_i}, \qquad \dv{p_i}{t} = - \pdv{H}{q_i}.
@@ -68,24 +69,42 @@ To run one step of HMC, we need to compute the time evolution of a Hamiltonian s
 where the neural network parameters will play the role as the generalized coordinates $q$.
 The common choice of algorithm to integrate the equations of motion in eq.~\eqref{eq:eom} is \textit{Leapfrog} integration \cite{leapfrog}. This integrator is \textit{symplectic}, which means it conserves local volumes in phase space. This effectively translates to an approximately conserved value of $H(q,p)$ throughout a simulation, with slight oscillations about a mean value.
 
-Assume we approximate the true coordinates and momenta by $(\hat{q}, \hat{p})$. A single Leapfrog integration step can then be written as in algorithm \ref{algo:leapfrog}. Here $h$ represents the stepsize used in the algorithm.
+Assume we approximate the true coordinates and momenta by $(\hat{q}, \hat{p})$. A single Leapfrog integration step can then be written as in algorithm \ref{algo:leapfrog}. 
+Here $\epsilon$ represents the stepsize used in the algorithm.
 \begin{figure}[H]
 	\begin{algorithm}[H]
 		\caption{Leapfrog integration (single step)}\label{algo:leapfrog}
 		\begin{algorithmic}
-      \Procedure{LEAPFROG}{$q, p, \lambda$}
-			\State 1. $\hat{p}_i(t + h/2) = \hat{p}_i(t) - \lambda\frac{h}{2}\pdv*{V(\hat{q}(t))}{q_i} $\\
-			\State 2. $\hat{q_i}(t+h) = \hat{q}_i(t) + \lambda\frac{h}{m_i}\hat{p}_i(t+h/2)$\\
-			\State 3. $\hat{p_i}(t+h) = \hat{p}_i(t + h/2) -  \lambda\frac{h}{2}\pdv*{V(\hat{q}(t+h))}{q_i}$
+      \Procedure{LEAPFROG}{$q, p, \epsilon$} 
+      \For{$i=1,\ldots, d$} \\
+			\State 1. $\hat{p}_i(t + \epsilon/2) = \hat{p}_i(t) - \displaystyle{\frac{\epsilon}{2}}\pdv*{V(\hat{q}(t))}{q_i} $\\
+			\State 2. $\hat{q_i}(t+\epsilon) = \hat{q}_i(t) + \displaystyle{\frac{\epsilon}{m_i}} \hat{p}_i(t+\epsilon/2)$\\
+			\State 3. $\hat{p_i}(t+\epsilon) = \hat{p}_i(t + \epsilon/2) -  \displaystyle{\frac{\epsilon}{2}}\pdv*{V(\hat{q}(t+\epsilon))}{q_i}$ \\
+      \EndFor
+      \EndProcedure
+		\end{algorithmic}
+	\end{algorithm}
+\end{figure}
+It is common to set all masses $m_i = 1$, which simplifies Hamilton's equations somewhat an allows us to straight forwardly \textit{vectorize} our
+leapfrog integrator.
+\begin{figure}[H]
+	\begin{algorithm}[H]
+		\caption{Leapfrog integration (single step)}\label{algo:leapfrog}
+		\begin{algorithmic}
+      \Procedure{LEAPFROG}{$q, p, \epsilon$} 
+      \\
+			\State 1. $\hat{p}(t + \epsilon/2) = \hat{p}(t) - \displaystyle{\frac{\epsilon}{2}}\nabla_q V(\hat{q}(t))$\\
+			\State 2. $\hat{q}(t+\epsilon) = \hat{q}(t) + \epsilon \hat{p}(t+\epsilon/2)$\\
+			\State 3. $\hat{p}(t+\epsilon) = \hat{p}(t + \epsilon/2) -  \displaystyle{\frac{\epsilon}{2}}\nabla_q V(\hat{q}(t+\epsilon))$
       \EndProcedure
 		\end{algorithmic}
 	\end{algorithm}
 \end{figure}
 
-\subsection{Conservation of local phase-space volume}
+\subsection{Conservation of Local Phase-Space Volume}
 
 \section{Hamiltonian Monte Carlo}
-Hamiltonian Monte Carlo is largely developed and expanded upon by Radford Neal \cite{hmc}. The probability distribution to sample from
+Hamiltonian Monte Carlo is largely developed and expanded upon by Radford Neal \cite{hmc}. The target distribution we wish sample from
 is expressed in terms the Canonical distribution
 \begin{equation}
   P(q) \propto \exp(-V(q)),
@@ -102,22 +121,32 @@ $p_i$ such that we can express the total Hamiltonian as
 \begin{equation}
   H(q, p) = K(p) + V(q),
 \end{equation}
-with a corresponding canonical distribution over phase-space
+which we interpret as the negative log likelihood (up to a constant) of the canonical distribution over phase-space
 \begin{equation}
   P(q, p) \propto \exp\left(-H(q,p)\right).
 \end{equation}
+Before we summarize the algorithm in pseudocode, we should look at conceptual description of the algorithm.
+\begin{enumerate}
+  \item Given an initial state $q$, we randomly sample $p$ from a Gaussian distribution.
+  \item The next step is to choose a direction in phase space, in which we sample $v \sim \text{Uniform}(\{-1, 1\})$.
+  \item Now we perform $L$ leapfrog steps along the $v$ direction, for a total trajectory length of $v\epsilon L$.
+  \item At this point, we have reached a proposal state in phase-space $(q^*, p^*)$ which we perform Metropolis correction,
+  that is, we feed the proposal state and the initial state through the Metropolis-Hastings algorithm and accept the new
+  state with a given acceptance probability.
+\end{enumerate}
+This sums up a single step in HMC which returns a position state. To sample multiple such points, we simply feed the returned position state $q$ back in to the machinery 
+and redo the procedure.
 The HMC scheme is summarized in algorithm \ref{algo:hmc}.
 \begin{figure}[H]
 	\begin{algorithm}[H]
 		\caption{Hamiltonian Monte Carlo}\label{algo:hmc}
 		\begin{algorithmic}
-      \Procedure{HMC}{$L, q, p$}
-      \State Sample $u \sim U(0,1)$.
-      \State $\lambda = 1 \qq{if} u \geq 1/2 \qq{else} \lambda = -1$
+      \Procedure{HMCstep}{$L, q, p$}
+      \State Sample $v \sim \text{Uniform}(\{-1, 1\})$.
       \State $(q^*, p^*) \leftarrow (q, p)$    \Comment{Start from initial state.}
       \State $p^* \leftarrow \text{GIBBS}(p^*)$
       \For{$l = 1, ..., L$} \Comment{$L$ Leapfrog steps.}
-        \State $(q^*, p^*) \leftarrow$ LEAPFROG$(q^*, p^*, \lambda)$
+        \State $(q^*, p^*) \leftarrow$ LEAPFROG$(q^*, p^*, v)$
       \EndFor
       \State $P = \min \left(1, \exp\left[-\left(H(q^*,p^*) - H(q, p)\right)\right]\right)$
       \State Sample $u \sim U(0,1)$ \Comment{Uniform distribution on $(0,1)$.}
@@ -130,4 +159,19 @@ The HMC scheme is summarized in algorithm \ref{algo:hmc}.
 		\end{algorithmic}
 	\end{algorithm}
 \end{figure}
+
+\section{Limitations of HMC}
+Although HMC is effective at exploring the state space we wish to sample from, it suffers from the need to hand-tune
+the trajectory length $\epsilon L$. Poor choices of $\epsilon$ and $L$ can lead to a poor results.
+On one hand, if the trajectory length is too short, exploration of the state space will be limited 
+which makes HMC behave like a random-walk. Suppose we fix the trajectory length to a finite,
+but sufficiently large value.
+If the step size $\epsilon$ is too large,
+it can lead to instabilities in the leapfrog integrator, while if its chosen to be too small, it will perform far too many
+iterations to make the algorithm to be worthwhile. 
+Tuning these parameters requires preliminary runs for a given problem. 
+
+In the next chapter, we will study algorithms that adaptively sets the trajectory length of HMC,
+namely the No-U-Turn sampler combined with dual-averaging of the step size, which allows us to overcome these
+limitations and more effectively sample from the target distribution without the need for hand-tuning.
 

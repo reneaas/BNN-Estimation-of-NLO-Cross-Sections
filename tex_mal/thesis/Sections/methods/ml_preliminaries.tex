@@ -5,7 +5,7 @@ which is a subfield of machine learning that fits models on data points $x$ with
 We will confine ourselves even further and only study \textit{regression} problems, which is a class of problems where the function 
 we are trying to learn produces a continuous output, i.e a function $f : \mathbb{R}^p \to \mathbb{R}^d$.
 
-\section{Basic concepts in regression}\label{sec:basic_concepts}
+\section{Basic Concepts in Regression}\label{sec:basic_concepts}
 
 The basic conceptual framework of a supervised machine learning problem is as follows. 
 Assume a dataset $D$ is a sequence of $n$ datapoints $D = \{(x_i, y_i)\}_{i=1}^n$,
@@ -18,8 +18,8 @@ The next ingredient is to assume the targets are of the form
 for some true function $f({x}_i)$ (also known as the ground truth), where $\epsilon_i$ is introduced to account for random noise. 
 To approximate the outputs $y_i$, the standard approach is to choose a model class $\hat{f}(x; \theta)$ 
 combined with a procedure to choose parameters $\theta$ such that the model is as close to $f(x_i)$ as possible. 
-This typically involves choosing a \textit{metric} $\mathcal{L}$ to quantify the error, usually called a \textit{loss}-function 
-(or a \textit{cost}-function, but we will adopt the former term in line with the terminology used in the TensorFlow framework), 
+This typically involves choosing a \textit{metric} $\mathcal{L}$ to quantify the error, usually called a \textit{loss} function 
+(or a \textit{cost} function, but we will adopt the former term in line with the terminology used in the TensorFlow framework), 
 and minimize it with respect to the parameters of the model. The output of the model is usually denoted as
 \begin{equation}
 	\hat{y}_i = \hat{f}(x_i; \theta),
@@ -27,19 +27,26 @@ and minimize it with respect to the parameters of the model. The output of the m
 for brevity.
 
 
-\subsection{Bias-variance trade-off}\label{sec:bias_var}
-From eq.~\eqref{eq:model_assumption}, we can deduce a general feature of machine learning problems that proves challenging. We cannot directly probe the true function $f(\vb{x}_i)$, because only $y_i$ is observed. 
-Because of this, choosing a model class is a delicate process. 
+\subsection{Bias-Variance Trade-Off}\label{sec:bias_var}
+From eq.~\eqref{eq:model_assumption}, we can deduce a general feature of machine learning problems that proves challenging. 
+We cannot directly probe the true function $f(x)$, because only $y = f(x) + \epsilon$ is observed. 
+Because of this, choosing a model class is a delicate process in classical machine learning. 
 If the model class is too simple (i.e few parameters $\theta$), 
-it is likely to capture very general features of the ground truth whilst more nuances properties are missed entirely. 
+it is likely to capture very general features of the ground truth whilst more nuanced properties are missed entirely. 
 Then we say that the model has a high bias and a low variance. Increasing the model complexity 
 (i.e increasing number of parameters) allows the model to reproduce a growing number of nook-and-crannies of the data. 
-A model that is too complex is said to have a low bias and a high variance.
+A model that is too complex is said to have a low bias and a high variance. Finally, there is one last aspect that
+influences the choice of model class, and that is the size of the dataset. If it is small, a simpler model class is chosen
+because the data may not be particularly representative of the true underlying process. In a sense, there may occur
+fluctuations which would simply average out once more data is collected. Thus one opts for a simpler model class
+if the size of the dataset is small. From a Bayesian perspective, this is absurd, because we are implicitly assuming
+there is a true underlying process we want to learn. If the process is complex, then the model class should reflect this.
+Luckily, because Bayesian methods provides a natural way to assign uncertainty to a prediction, we can choose our
+model class according to how complex we think the process is, independently of how large the dataset is.
 
-Let's put these notions into mathematics.
 
-\section{Loss functions}
-For regression problems, two loss functions are commonly chosen. The first is the \textit{residual squared error} (RSS) given by
+\section{Loss Functions}
+For regression problems, two loss functions $\mathcal{L}$ are commonly chosen. The first is the \textit{residual squared error} (RSS) given by
 \begin{equation}
 	\text{RSS} = \sum_{i=1}^n \norm{\hat{y}_i - y_i}_2^2,
 \end{equation}
@@ -66,33 +73,42 @@ The terms \textit{penalizes} large values of $\theta$, effectively shrinking the
 The larger the value of the regularization strength $\lambda$, the smaller the allowed parameter space becomes.
 
 \section{Optimization}
-Once a model class and loss function is chosen, optimization of the model parameters commence. In this section, we will
+Once a model class and loss function is chosen, and an \textit{optimizer} must be chosen. In this section, we will
 study several optimization schemes, with the ultimate goal of defining the state-of-the-art optimization in modern
 machine learning, namely ADAM.
 
-\subsection{Gradient descent}
+\subsection{Gradient Descent}
 Gradient descent is the most basic optimization scheme. The update rule for the parameters is given by 
 \begin{equation}
 	\theta_{t+1} = \theta_t - \eta_t \sum_{i=1}^n \nabla_\theta \mathcal{L}(\hat{f}(x_i; \theta_t), y_i),
 \end{equation}
 where $\theta_t$ is the model parameters at iteration $t$ and $\eta_t$ is the \textit{learning rate}, 
 which in general is dependent on iteration $t$, hence the subscript.
-\subsection{Stochastic gradient descent}
-The standard gradient descent algorithm has an inherent weakness in the sense that it computes the gradient using the whole dataset
+\subsection{Stochastic Gradient Descent}
+The standard gradient descent (SGD) algorithm has an inherent weakness in the sense that it computes the gradient using the whole dataset
 at each iteration. Stochastic gradient descent improves upon this algorithm by dividing the dataset into a set of \textit{batches} $B$,
 each of which is a subset of the complete dataset. The parameter update is then performed using a randomly chosen batch $B_j \in B$ as follows:
 \begin{equation}
 	\theta_{t+1} = \theta_t - \eta_t \sum_{(x_i, y_i) \in B_j} \nabla_\theta \mathcal{L}(\hat{f}(x_i; \theta_t), y_i).
 \end{equation}
-An iteration over all batches $B_j \in B$ is called an \textit{epoch}. 
+An iteration over all batches $B_j \in B$ is called an \textit{epoch}. To simplify notation somewhat, we introduce the notation
+\begin{equation}
+	\nabla_\theta \mathcal{L}^{B} \equiv \sum_{(x_i, y_i) \in B_j} \nabla_\theta \mathcal{L}(\hat{f}(x_i; \theta_t), y_i).
+\end{equation}
+Then the update rule for SGD can be recast as
+\begin{equation}
+	\theta_{t+1} = \theta_t - \eta_t \nabla_\theta \mathcal{L}^{B}
+\end{equation}
 
-\subsection{Gradient Descent With Momentum}
+
+\subsection{Gradient Descent with Momentum}
 Stochastic gradient descent is usually accompanied by a so-called \textit{momentum} term to compensate for random
 fluctuations that may occur when computing gradients on subsets of the full dataset. The momentum term stores a running average of
 previous gradients which yields a general direction in which the gradient points in parameter space. 
+This helps the optimization process converge faster to a region of parameter space in which a minimum exist.
 Let $v_t$ be defined by the recursive equation 
 \begin{equation}
-	v_t = \gamma v_{t-1} + \eta_t \sum_{(x_i, y_i) \in B_j} \nabla_\theta \mathcal{L}(\hat{f}(x_i; \theta_t), y_i).
+	v_t = \gamma v_{t-1} + \eta_t \nabla_\theta \mathcal{L}^{B}.
 \end{equation}
 Then the update rule for the parameters is
 \begin{equation}
@@ -101,10 +117,59 @@ Then the update rule for the parameters is
 
 \subsection{RMSprop}
 In RMSprop, we not only keep a running average of the first-order moment (the momentum), 
-but we also store a running average of the second moment of the gradient. Let 
+but we also store a running average of the second moment of the gradient. Let $s_t \equiv \expval{g_t^2}$ be the running average
+of $g_t$, which is the gradient at iteration $t$. The update rule is then given by
+\begin{equation}
+	\begin{split}
+		g_t & = \nabla_\theta \mathcal{L}^B \\
+		s_t & = \beta s_{t-1} + (1-\beta)g_t^2 \\ 
+		\theta_{t+1} & = \theta_t - \eta_t \frac{g_t}{\sqrt{s_t + \epsilon}},
+	\end{split}
+\end{equation}
+where $\beta$ is a scalar that quantifies the averaging time of the second moment, roughly speaking, how far back in time it should track its value.
+Here $\epsilon$ is a scalar introduced to avoid division by zero. All other quantities are vectors. Division of these vectors is understood
+as element-wise.
 
-\section{Data preprocessing}
-\subsection{Data splitting}
-\subsection{Data scaling}
+\subsection{ADAM}
+The ADAM optimizer extends the former algorithm further by using the running average of the first moment $m_t = \expval{g_t}$
+and the second moment $s_t$
+to adapt the learning rate for each direction in parameter space.
+The update rule is a follows.
+\begin{equation}
+	\begin{split}
+		g_t & = \nabla_\theta \mathcal{L}^B \\
+		m_t & = \beta_1 m_{t-1} + (1-\beta)g_t \\
+		s_t & = \beta_2 s_{t-1} + (1 - \beta_2)g_t^2 \\
+		\hat{m}_t & = \frac{m_t}{1 - \beta_1^t} \\
+		\hat{s}_t & = \frac{s_t}{1 - \beta_2^t} \\
+		\theta_{t+1} & = \theta_t - \eta_t \frac{\hat{m}_t}{\sqrt{\hat{s}_t} + \epsilon},
+	\end{split}
+\end{equation}
+where $\beta_1 = 0.9$ and $\beta_2 = 0.99$ are typically chosen. These scalars play the same role as in RMSprop, where the quantify roughly how far
+back in "time" to evaluate the running averages. 
 
-\section{Optimization formulated in terms of Bayesian statistics}
+\section{Bayesian Formulation}
+\subsection{Bayes' Rule}
+\subsection{Bayesian Viewpoint of Optimization}
+
+Succinctly, we can write the objective of optimization as finding the optimal parameter $\hat{\theta}$ as 
+\begin{equation}
+	\hat{\theta} = \underset{\theta}{\text{arg min}} \sum_i\mathcal{L}(\hat{f}(x_i; \theta), y_i).
+\end{equation}
+Assuming a loss function is RSS with $L^2$-regularization, which is a common choice for regression tasks. Then the loss function for
+a dataset of $n$ points has the form
+\begin{equation}
+	\mathcal{L} = \frac{1}{2}\sum_i \norm{y^{(i)} - f(x^{(i)}; \theta) \theta)}_2^2 + \frac{\lambda}{2}\norm{\theta}_2^2. 
+\end{equation}
+This is interpreted as the \textit{negative log likelihood} of the posterior $p(\theta|D)$ such that 
+\begin{equation}
+	p(\theta|D) \propto \prod_i\exp\left(-\frac{1}{2}\norm{y^{(i)} - f(x^{(i)}}_2^2\right)\exp\left(-\frac{\lambda}{2}\norm{\theta}_2^2\right),
+\end{equation}
+where the likelihood function is the first factor and the prior is the second factor. Minimizing the loss function is then equivalent to
+maximizing the posterior, known as the \textit{maximum-a-posteriori} (MAP), written as
+\begin{equation}
+	\hat{\theta} = \underset{\theta}{\text{arg max}} \ p(\theta|D).
+\end{equation}
+
+\subsection{Bias-Variance Trade-Off Vanishes}
+

@@ -1,4 +1,6 @@
 \documentclass[UKenglish]{book}
+\setcounter{tocdepth}{4}
+\setcounter{secnumdepth}{4}
 \newcommand\hmmax{0}
 \newcommand\bmmax{0}
 
@@ -39,23 +41,27 @@
 	
 %%%%%%%%%%%% Neural networks %%%%%%%%%%%%%%
 %\chapter{Methods}\label{chap:methods}
+\chapter{The Physics Problem}
 \chapter{Machine Learning: Preliminaries}\label{chap:ml_preliminaries}
 \input{Sections/methods/ml_preliminaries}
 
 \chapter{Markov Chain Monte Carlo}\label{chap:mcmc}
-\input{Sections/methods/mcmc}
+\input{Sections/methods/mcmc_new}
+% \input{Sections/methods/mcmc}
 
 \chapter{Hamiltonian Monte Carlo}\label{chap:hmc}
-\input{Sections/methods/hmc}
-\chapter{The No U-Turn Sampler}\label{chap:no_u_turn_sampler}
-\input{Sections/methods/no_u_turn_sampler.tex}
+\input{Sections/methods/hmc_new}
+\chapter{The No-U-Turn Sampler}\label{chap:no_u_turn_sampler}
+\input{Sections/methods/nuts}
 
 \chapter{Bayesian Learning for Neural Networks}\label{chap:bnn}
 \input{Sections/methods/neural_networks}
 \input{Sections/methods/bnn}
 
-% \chapter{Bayesian learning of Neural Networks with Variational Inference}
-% \input{Sections/methods/variational_inference}
+\chapter{Numerical Experiments}
+\input{Sections/Experiments/experiments}
+
+\chapter{Discussion}
 
 %\input{Sections/QFT/Axiomatic}
 %\input{Sections/QFT/Pertubationtheory}

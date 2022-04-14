@@ -4,7 +4,28 @@ quality of the samples obtained by the MCMC chain. The field is vast, so we cann
 focus on the parts that lay the foundation for the main algorithms used in this thesis, namely Hamiltonian Monte Carlo and the No-U-Turn sampler. 
 Thus we will restrict our attention to samples from continuous distributions and ignore the theory for discrete spaces entirely.
 This choice is one born out of healthy pragmatism.
-We will not describe these algorithms in this chapter since the require some extra care and thus will have their own chapters devoted to them.
+We will not describe these algorithms in this chapter since they require some extra care and thus will have their own chapters devoted to them.
+
+\begin{comment}
+  \section{Curse of Dimensionality}
+The \textit{curse of dimensionality} can be understood from a geometric perspective. 
+Consider a \textit{density} $\pi(\theta)$ over a space $d$-dimensional space $Q$. Denote $\theta$ as any point in $Q$ and expectation of any function
+$f(\theta)$ as $\expval{f}_\pi$ with respect to the density. Restricting our attention to smooth sample space, the expectation can be written as
+\begin{equation}
+  \expval{f}_\theta = \int \dd \theta \pi(\theta) f(\theta). 
+\end{equation}  
+\end{comment}
+
+\section{Curse of Dimensionality}
+The \textit{curse of dimensionality} is a pervasive problem in high-dimensional problems that can be understood from a geometric perspective. 
+Consider a \textit{density} $\pi(\theta)$ over a $d$-dimensional sample space $Q$. Denote $\theta$ as any point in $Q$ and expectation of any function
+$f(\theta)$ as $\expval{f}_\pi$ with respect to the density. Restricting our attention to smooth sample space, the expectation can be written as
+\begin{equation}
+  \expval{f}_\pi = \int \dd \theta \pi(\theta) f(\theta),
+\end{equation}  
+for some parametrization of $\theta$. The expectation itself is independent of the choice of parametrization. 
+
+
 
 \section{Markov Chain Monte Carlo}\label{sec:mcmc}
 \begin{comment}
@@ -109,7 +130,54 @@ The point $\theta'$ is accepted with probability $A(\theta, \theta')$.
 
 \section{Convergence diagnostics and strategies}
 \subsection{Burn-in}
-\subsection{Autocorrelation}
+The concept of \textit{burn-in} plays a central role in MCMC methods. A MCMC chain is initiated from an initial point $\theta$, typically sampled at random. 
+But this point may be far away from a high probability region, so it is customary to discard a finite number of samples from head of the chain
+because it may not be particularly representative of the stationary distribution we wish to sample from. The number of samples discarded is called the \textit{burn-in time}. The remaining samples generated from
+the chain, which we may call the \textit{tail} of the chain, is used to compute statistics of interest. 
 \subsection{Mixing}
-\subsection{The Potential Scale Reduction Factor $\hat{R}$}
+\textit{Mixing} is a concept used to describe whether the MCMC chain has converged to its target distribution. The \textit{mixing time} is the time it takes for the chain to be sufficiently close to its target distribution. As far as the I know, there exist no definite way to measure if a MCMC chain has converged, but there exist a metric that tells you when it has not, known as the \textit{potential scale reduction factor} $\hat{R}$.
+\subsubsection{The Potential Scale Reduction Factor $\hat{R}$}
+The prescription to compute $\hat{R}$ is a as follows: 
+\begin{enumerate}
+  \item Run $M$ independent chains where the $m$'th chain generates a sequence $\theta_1^m, \ldots, \theta_{N_m}^m$ once burn-in samples are discarded.
+  \item Compute the posterior means of each chain given by
+  \begin{equation}
+    \hat{\theta}_m = \frac{1}{N_m}\sum_{i=1}^{N_m} \theta_i^m.
+  \end{equation}
+  \item Compute the variance of each chain:
+  \begin{equation}
+    \sigma_m^2 = \frac{1}{N_m - 1}\sum_{i=1}^{N_m}(\theta_i^m - \hat{\theta}_m)^2.
+  \end{equation}
+  \item Calculate the mean of the mean estimates from each chain,
+  \begin{equation}
+    \hat{\theta} = \frac{1}{M}\sum_{i=1}^M \hat{\theta}_m.
+  \end{equation}
+  \item Compute the variance about the joint mean:
+  \begin{equation}
+    B = \frac{N}{M-1}\sum_{m=1}^M (\hat{\theta}_m - \hat{\theta})^2.
+  \end{equation}
+  \item Compute the average of the variance of all $M$ chains,
+  \begin{equation}
+    W = \frac{1}{M}\sum_{m=1}^M \sigma_m^2.
+  \end{equation}
+  \item Define the estimator,
+  \begin{equation}
+    \hat{V} = \frac{N-1}{N}W + \frac{M+1}{MN}B.
+  \end{equation}
+  \item The potential scale reduction $\hat{R}$ is then
+  \begin{equation}
+    \hat{R} = \sqrt{\frac{\hat{V}}{W}}.
+  \end{equation} 
+\end{enumerate}
+as the length of each chain $N_m \to \infty$, we expect $\hat{R} \to 1$, indicating that each independent chain has the same distribution.
+Thus if $\hat{R} \approx 1$, one typically assumes the chain has converged. However, the diagnostic can really only be used to determine if the chains has not converged. From a practical point of view, a rule-of-thumb is used where if $\hat{R} < 1.1$, the chains are assumed to have converged. If $\hat{R} > 1.1$, a longer chain must be run to achieve the desired mixing.
+
+\subsection{Correlation and Thinning}
+Suppose burn-in samples are discared and we are left with a MCMC chain $\theta_1, \ldots, \theta_N$. Typically, the points in the chain are statistically \textit{correlated}, meaning they are not drawn independently from the target distribution. A common strategy
+is to apply \textit{thinning}, effectively discarding a subset of samples inbetween points. The justification for this is
+that nearby points in the chain provide sufficiently identical contributions to any computed statistic. In pratice, these points 
+are never stored by defining a finite number of samples to skip between each stored sample.
+
+\subsection{Common Practices}
+
 

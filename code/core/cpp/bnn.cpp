@@ -1,207 +1,247 @@
 #include "bnn.hpp"
-
+#include <iostream>
 using namespace std;
 
-BNN::BNN(std::vector<Layer> layers){
-    layers_ = layers;
+BNN::BNN(vector<int> layers, string activation) {
+    int n = layers.size();
+    int n_rows, n_cols;
+    for (int l = 0; l < n - 2; l++) {
+        n_rows = layers[l + 1];
+        n_cols = layers[l];
+        layers_.push_back(Layer(n_rows, n_cols, activation));
+    }
+    n_rows = layers[n - 1];
+    n_cols = layers[n - 2];
+    layers_.push_back(Layer(n_rows, n_cols, "linear"));
 }
 
 
-/*
-Adds a layer to the neural network.
-Args:
-    n_rows (int)                :   Number of units of the new layer
-    n_cols (int)                :   Number of units the former layer
-                                    or in case of the first layer,
-                                    the former layer is the input size.
-    activation (std::string)    :   Activation function. Options:
-                                    `sigmoid`, `relu`.
-*/
-void BNN::add(int n_rows, int n_cols, std::string activation){
-    layers_.push_back(Layer(n_rows, n_cols));
-
-    if (activation == "sigmoid"){
-        acts_.push_back(&BNN::sigmoid);
-        acts_derivative_.push_back(&BNN::sigmoid_derivative);
+vector<vector<double>> BNN::get_weights() {
+    vector<vector<double> > weights;
+    for (Layer layer: layers_) {
+        weights.push_back(layer.w_);
+        weights.push_back(layer.b_);
     }
-
-    else if (activation == "relu"){
-        acts_.push_back(&BNN::relu);
-        acts_derivative_.push_back(&BNN::relu_derivative);
-    }
-
-    else if (activation == "identity"){
-        acts_.push_back(&BNN::identity);
-        acts_derivative_.push_back(&BNN::identity_derivative);
-    }
-
-    num_layers_ = (int) layers_.size();
+    return weights;
 }
 
-
-/*
-Computes a forward pass given an input x.
-Args:
-    x (arma::mat)     :     Input of shape
-                            [input_size, num_points]
-Returns:
-    x (arma::mat)     :    Result of forward pass.
-*/
-arma::mat BNN::forward(arma::mat x) {
-    for (int l = 0; l < num_layers_; l++){
-        x = layers_[l].w_ * x;
-        x.each_col() += layers_[l].b_;
-        layers_[l].z_ = x;
-
-        x = (this->*acts_[l])(x);
-        layers_[l].a_ = x;
+vector<vector<double>> BNN::get_gradients() {
+    vector<vector<double> > gradients;
+    for (Layer layer: layers_) {
+        gradients.push_back(layer.w_grad_);
+        gradients.push_back(layer.b_grad_);
     }
-    return x;
+    return gradients;
 }
 
-/*
-Computes a backward pass of the network given
-given an input x and a target y.
-Args:
-    x (arma::mat)   :   Input features of shape [input_size, num_points]
-    y (arma::mat)   :   Targets of shape [output_size, num_points]
-*/
-void BNN::backward(arma::mat x, arma::mat y) {
-    int num_points = x.n_cols;
-
-    //Output layer
-    int l = num_layers_ - 1;
-    // layers_[l].err_ = arma::mean(layers_[l].a_ - y, 1);
-    // layers_[l].db = layers_[l].err_;
-    // layers_[l].dw_ = layers[l-1].a_
-    // cout << "err sz = " << arma::size(layers_[l].err_) << endl;
-
-    // cout << "OUTPUT LAYER" << endl;
-    layers_[l].err_ = layers_[l].a_ - y;
-    layers_[l].dw_ = arma::mean(layers_[l - 1].a_ * layers_[l].err_.t(), 1).t() / num_points;
-    layers_[l].db_ = arma::mean(layers_[l].err_, 1);
-
-    // cout << "err sz = " << arma::size(layers_[l].err_) << endl;
-    // cout << "dw sz = " << arma::size(layers_[l].dw_) << endl;
-    // cout << "w sz = " << arma::size(layers_[l].dw_) << endl;
-    // cout << "db sz = " << arma::size(layers_[l].db_) << endl;
-    // cout << "b sz = " << arma::size(layers_[l].b_) << endl;
-
-
-    // cout << "MID LAYER" << endl;
-    for (int l = num_layers_ - 2; l >= 1; l--) {
-        // cout << "l = " << l << endl;
-
-        layers_[l].err_ = layers_[l+1].w_.t() * layers_[l+1].err_;
-        layers_[l].db_ = arma::mean(layers_[l].err_, 1);
-        layers_[l].dw_ = (layers_[l - 1].a_ * layers_[l].err_.t()).t() / num_points;
-
-        //layers_[l].db_ = arma::mean(layers_[l].err_, 1);
-        //layers_[l].dw_ = arma::mean(layers_[l - 1].a_ * layers_[l].err_.t(), 1).t();
-        // cout << "a(l-1) sz = " << arma::size(layers_[l - 1].a_) << endl;
-        // cout << "err sz = " << arma::size(layers_[l].err_) << endl;
-        // cout << "dw sz = " << arma::size(layers_[l].dw_) << endl;
-        // cout << "w sz = " << arma::size(layers_[l].w_) << endl;
-        // cout << "db sz = " << arma::size(layers_[l].db_) << endl;
-        // cout << "b sz = " << arma::size(layers_[l].b_) << endl;
-    }
-
-    // cout << "INPUT LAYER" << endl;
-    l = 0;
-    layers_[l].err_ = layers_[l+1].w_.t() * layers_[l+1].err_;
-    layers_[l].db_ = arma::mean(layers_[l].err_, 1);
-    layers_[l].dw_ = arma::mean(x * layers_[l].err_.t(), 0).t() / num_points;
-    // cout << "dw sz = " << arma::size(layers_[l].dw_) << endl;
-    // cout << "w sz = " << arma::size(layers_[l].dw_) << endl;
-    // cout << "db sz = " << arma::size(layers_[l].db_) << endl;
-    // cout << "b sz = " << arma::size(layers_[l].b_) << endl;
-
-}
-
-void BNN::apply_gradients() {
-    for (int l = 0; l < num_layers_; l++) {
-        layers_[l].w_ -= learning_rate_ * layers_[l].dw_;
-        layers_[l].b_ -= learning_rate_ * layers_[l].db_;
+void BNN::set_weights(vector<vector<double>> weights) {
+    for (size_t l = 0; l < layers_.size(); l++) {
+        layers_[l].w_ = weights[2 * l];
+        layers_[l].b_ = weights[2 * l + 1];
     }
 }
 
-void BNN::mle_fit(arma::mat x, arma::mat y, int num_epochs, double learning_rate) {
-    learning_rate_ = learning_rate;
+void BNN::mle_fit(vector<vector<double>> X, vector<vector<double>> Y, int num_epochs, double lr) {
+    reset_gradients(); //Safety call to ensure gradients are all zero before training.
 
-    for (int i = 0; i < num_epochs; i++) {
-        cout << "i = " << i << " of " << num_epochs << "\n";
-        arma::mat yhat = forward(x);
-        backward(x, y);
-        apply_gradients();
+    for (int epoch = 0; epoch < num_epochs; epoch++) {
+        for (std::size_t i = 0; i < X.size(); i++) {
+            vector<double> tmp = forward(X[i]);
+            backward(X[i], Y[i]);
+        }
+        update_params(lr);
+        reset_gradients();
     }
 }
 
-arma::mat BNN::compute_r2(arma::mat x, arma::mat y)
-{
-    arma::mat yhat = forward(x);
-
-    arma::mat diff = yhat - y;
-    arma::mat y_mean = arma::mean(y, 1);
-    diff = diff % diff;
-
-    // y_mean.print("y mean = ");
-
-    arma::mat err = arma::sum(diff, 1);
-    // err.print("err = ");
-    diff = y - y_mean(0);
-    // cout << "diff sz = " << arma::size(diff) << endl;
-    arma::mat tmp = arma::sum(diff % diff, 1);
-    arma::mat r2 = 1 - err / tmp;
-
-    // double error = 0.;
-    // double y_mean = 0.;
-    // int l = num_layers_-1;
-    // for (int i = 0; i < num_test_; i++){
-    //     x = X_test_.col(i);
-    //     y = y_test_.col(i);
-    //     feed_forward(x);
-    //     diff = y(0) - layers_[l].activation_(0);
-    //     error += diff*diff;
-    //     y_mean += y(0);
-    // }
-    // y_mean *= (1./num_test_);
-    // double tmp = 0;
-
-    // for (int j = 0; j < num_test_; j++){
-    //     tmp += (y_test_(0, j)-y_mean)*(y_test_(0, j)-y_mean);
-    // }
-    // double r2 = 1 - error/tmp;
-    return r2;
+void BNN::update_params(double lr) {
+    for (std::size_t l = 0; l < layers_.size(); l++) {
+        int n_rows = layers_[l].n_rows_;
+        int n_cols = layers_[l].n_cols_;
+        for (int i = 0; i < n_rows; i++) {
+            layers_[l].b_[i] -= lr * layers_[l].b_grad_[i];
+            for (int j = 0; j < n_cols; j++) {
+                layers_[l].w_[i * n_cols + j] -= lr * layers_[l].w_grad_[i * n_cols + j];
+            }
+        }
+    } 
 }
 
+std::vector<double> BNN::forward(std::vector<double> x) {
 
-/*
-Hidden layer activation functions
-*/
-arma::mat BNN::sigmoid(arma::mat z) {
-    return 1./(1. + exp(-z));
+    //Input layer:
+    int n_rows = layers_[0].n_rows_;
+    int n_cols = layers_[0].n_cols_;
+    for (int i = 0; i < n_rows; i++) {
+        double tmp = 0;
+        for (int j = 0; j < n_cols; j++) {
+            tmp += layers_[0].w_[i * n_cols + j] * x[j];
+        }
+        tmp += layers_[0].b_[i];
+        layers_[0].z_[i] = tmp;
+        layers_[0].a_[i] = layers_[0].act(tmp);
+    }
+    //The remaining layers:
+    for (std::size_t l = 1; l < layers_.size(); l++) {
+        n_rows = layers_[l].n_rows_;
+        n_cols = layers_[l].n_cols_;
+        for (int i = 0; i < n_rows; i++) {
+            double tmp = 0;
+            for (int j = 0; j < n_cols; j++) {
+                tmp += layers_[l].w_[i * n_cols + j] * layers_[l-1].a_[j];
+            }
+            tmp += layers_[l].b_[i];
+            layers_[l].z_[i] = tmp;
+            layers_[l].a_[i] = layers_[l].act(tmp);
+        }
+    }
+    int L = layers_.size();
+    return layers_[L - 1].a_;
 }
 
-arma::mat BNN::sigmoid_derivative(arma::mat z) {
-    arma::vec res = 1./(1. + exp(-z));
-    return res % (1-res);
+void BNN::backward(std::vector<double> x, std::vector<double> y) {
+    size_t L = layers_.size(); //Number of layers.
+    int n_rows, n_cols;
+    double tmp;
+    //Output layer.
+    n_rows = layers_[L - 1].n_rows_;
+    n_cols = layers_[L - 1].n_cols_;
+    for (int i = 0; i < n_rows; i++) {
+        tmp = layers_[L - 1].a_[i] - y[i];
+        layers_[L - 1].err_[i] = tmp;
+
+        //Compute gradients
+        layers_[L - 1].b_grad_[i] += tmp;
+        for (int j = 0; j < n_cols; j++) {
+            layers_[L - 1].w_grad_[i * n_cols + j] += tmp * layers_[L - 2].a_[j];
+        }
+    }
+
+    //Hidden layers
+    for (size_t l = L - 2; l > 0; l--) {
+        n_rows = layers_[l].n_rows_; //Refers to n_rows in layer l and n_cols in layer l - 1 simultaneously.
+        n_cols = layers_[l].n_cols_;
+        for (int j = 0; j < n_rows; j++) {
+            tmp = 0.0;
+            for (int k = 0; k < layers_[l+1].n_rows_; k++) {
+                tmp += layers_[l+1].err_[k] * layers_[l+1].w_[k * n_rows + j];
+            }
+            tmp *= layers_[l].act_derivative(layers_[l].z_[j]);
+            layers_[l].err_[j] = tmp;
+
+            //Compute gradients 
+            layers_[l].b_grad_[j] += tmp;
+            for (int k = 0; k < n_cols; k++) {
+                layers_[l].w_grad_[j * n_cols + k] += tmp * layers_[l - 1].a_[k];
+            }
+        }
+    }
+
+    //Input layer.
+    int l = 0;
+    n_rows = layers_[l].n_rows_;
+    n_cols = layers_[l].n_cols_;
+    for (int j = 0; j < n_rows; j++) {
+        tmp = 0.0;
+        for (int k = 0; k < layers_[l+1].n_rows_; k++) {
+            tmp += layers_[l+1].err_[k] * layers_[l+1].w_[k * n_rows + j];
+        }
+        tmp *= layers_[l].act_derivative(layers_[l].z_[j]);
+
+        //Compute gradients
+        layers_[l].b_grad_[j] += tmp;
+        for (int k = 0; k < n_cols; k++) {
+            layers_[l].w_grad_[j * n_cols + k] += tmp * x[k];
+        }
+    }
 }
 
-
-arma::mat BNN::relu(arma::mat z) {
-    arma::mat s = z;
-    return s.transform( [](double val){return val*(val > 0);});
+void BNN::reset_gradients() {
+    for (Layer &layer: layers_) {
+        int n_rows = layer.n_rows_;
+        int n_cols = layer.n_cols_;
+        for (int i = 0; i < n_rows; i++) {
+            layer.b_grad_[i] = 0.;
+            for (int j = 0; j < n_cols; j++) {
+                layer.w_grad_[i * n_cols + j] = 0.;
+            }
+        }
+    }
 }
 
-arma::mat BNN::relu_derivative(arma::mat z) {
-    arma::mat s = z;
-    return s.transform( [](double val){return (val > 0);});
+double get_kinetic_energy(vector<vector<double>> momentum) {
+    double res = 0;
+    for (auto p: momentum) {
+        for (size_t i = 0; i < p.size(); i++) {
+            res += p[i] * p[i];
+        }
+    }
+    return 0.5 * res;
 }
 
-arma::mat BNN::identity(arma::mat z) {
-    return z;
+double get_potential_energy(vector<vector<double>> X, vector<vector<double>> Y) {
+    double res = 0;
+
+    //L2-error (likelihood function)
+    for (size_t i = 0; i < X.size(); i++) {
+        vector<double> y_pred = forward(X[i]);
+        res += l2_loss(y_pred, Y[i]);
+        backward(X[i], Y[i]); //Add contribution to gradients.
+    }
+
+    //Regularization term (i.e prior function)
+    for (Layer layer: layers_) {
+        int n_rows = layer.n_rows_;
+        int n_cols = layer.n_cols_;
+        for (int i = 0; i < n_rows; i++) {
+            res += layer.b_[i] * layer.b_[i];
+            for (int j = 0; j < n_cols; j++) {
+                res += layer.w_[i * n_cols + j] * layer.w_[i * n_cols + j];
+            }
+        }
+    }
+    return 0.5 * res;
 }
 
-arma::mat BNN::identity_derivative(arma::mat z) {
-    return arma::vec(size(z)).fill(1.);
+double l2_loss(std::vector<double> y_pred, std::vector<double> y_true) {
+    double res = 0;
+    for (size_t i = 0; i < y_pred.size(); i++) {
+        double tmp = y_pred[i] - y_true[i];
+        res += tmp * tmp;
+    }
+    return res;
+}
+
+vector<vector<double>> hmc_step(vector<vector<double>> X, vector<vector<double>> Y, int num_leapfrog_steps, double step_size) {
+    
+    //Sample momentum.
+    vector<vector<double>> momentum;
+    for (Layer layer: layers_) {
+        int n_rows = layer.n_rows_;
+        int n_cols = layer.n_cols_;
+        vector<double> p_w, p_b;
+        for (int i = 0; i < n_rows; i++) {
+            p_b.push_back(dist_(gen_));
+            for (int j = 0; j < n_cols; j++) {
+                p_w.push_back(dist_(gen_));
+            }
+        }
+        momentum.push_back(p_w);
+        momentum.push_back(p_b);
+    }
+    double K_init = get_kinetic_energy(momentum);
+    double V_init = get_potential_energy(X, Y);
+
+    double v = (uniform_real_dist_(gen_) > 0) ? 1 : -1; //Randomly choose direction in phase space.
+
+    // Perform num_leapfrog_steps leapfrog integration in phase space.
+    for (int step = 0; step < num_leapfrog_steps; step++) {
+
+    }
+
+
+
+
+
+    
 }
