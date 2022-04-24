@@ -1,15 +1,38 @@
-\providecommand{\href}[2]{#2}\begingroup\raggedright\begin{thebibliography}{1}
+\providecommand{\href}[2]{#2}\begingroup\raggedright\begin{thebibliography}{10}
 
-\bibitem{conceptual_intro_hmc}
-M.~Betancourt, \emph{A conceptual introduction to hamiltonian monte carlo},
-  2017.
-\newblock 10.48550/ARXIV.1701.02434.
+\bibitem{ADAM}
+D.~P. Kingma and J.~Ba, \emph{Adam: A method for stochastic optimization},
+  2014.
+\newblock 10.48550/ARXIV.1412.6980.
+
+\bibitem{bayes_theorem}
+J.~L. Devore and K.~N. Berk, \emph{Modern Mathematical Statistics with
+  Applications}, p.~80.
+\newblock Springer, 2018.
+
+\bibitem{ml_for_physicists}
+P.~Mehta, M.~Bukov, C.-H. Wang, A.~G. Day, C.~Richardson, C.~K. Fisher et~al.,
+  \emph{A high-bias, low-variance introduction to machine learning for
+  physicists},
+  \href{http://dx.doi.org/10.1016/j.physrep.2019.03.001}{\emph{Physics Reports}
+  {\bf 810} (may, 2019) 1--124}.
 
 \bibitem{geometric_ergodicity}
 G.~O. Roberts and J.~S. Rosenthal, \emph{General state space markov chains and
   {MCMC} algorithms},
   \href{http://dx.doi.org/10.1214/154957804100000024}{\emph{Probability
   Surveys} {\bf 1} (jan, 2004) }.
+
+\bibitem{rhat}
+A.~Gelman and D.~B. Rubin, \emph{{Inference from Iterative Simulation Using
+  Multiple Sequences}},
+  \href{http://dx.doi.org/10.1214/ss/1177011136}{\emph{Statistical Science}
+  {\bf 7} (1992) 457 -- 472}.
+
+\bibitem{convergence_diagnostics}
+S.~Brooks, A.~Gelman, G.~L. Jonas and X.-L. Meng, eds., \emph{Handbook of
+  Markov Chain Monte Carlo}, ch.~6.
+\newblock Springer, 2018.
 
 \bibitem{metropolis}
 N.~Metropolis, A.~W. Rosenbluth, M.~N. Rosenbluth, A.~H. Teller and E.~Teller,
@@ -27,6 +50,22 @@ W.~K. Hastings, \emph{{Monte Carlo sampling methods using Markov chains and
   [\href{http://arxiv.org/abs/https://academic.oup.com/biomet/article-pdf/57/1/97/23940249/57-1-97.pdf}{{\tt
   https://academic.oup.com/biomet/article-pdf/57/1/97/23940249/57-1-97.pdf}}].
 
+\bibitem{classical_mechanics}
+J.~S. Helbert~Goldstein, Charles~Poole, \emph{Classical Mechanics, 3rd ed.},
+  ch.~2,8.
+\newblock Addison Wesley, 2000.
+
+\bibitem{leapfrog}
+C.~M. Bishop, \emph{Pattern Recognition and Machine Learning}, ch.~11, p.~551.
+\newblock Springer New York, 2006.
+
+\bibitem{hmc}
+R.~Neal, \emph{Handbook of Markov Chain Monte Carlo}, ch.~5.
+\newblock Chapman and Hall/CRC, May, 2011.
+\newblock \href{http://arxiv.org/abs/http://dx.doi.org/10.1201/b10905}{{\tt
+  http://dx.doi.org/10.1201/b10905}}.
+\newblock 10.1201/b10905.
+
 \bibitem{nuts}
 M.~D. Hoffman and A.~Gelman, \emph{The no-u-turn sampler: Adaptively setting
   path lengths in hamiltonian monte carlo},  2011.
@@ -41,13 +80,6 @@ D.~E. Rumelhart, G.~E. Hinton and R.~J. Williams, \emph{Learning
   representations by back-propagating errors},
   \href{http://dx.doi.org/10.1038/323533a0}{\emph{Nature} {\bf 323} (1986)
   533--536}.
-
-\bibitem{ml_for_physicists}
-P.~Mehta, M.~Bukov, C.-H. Wang, A.~G. Day, C.~Richardson, C.~K. Fisher et~al.,
-  \emph{A high-bias, low-variance introduction to machine learning for
-  physicists},
-  \href{http://dx.doi.org/10.1016/j.physrep.2019.03.001}{\emph{Physics Reports}
-  {\bf 810} (May, 2019) }.
 
 \bibitem{swish}
 P.~Ramachandran, B.~Zoph and Q.~V. Le, \emph{Searching for activation

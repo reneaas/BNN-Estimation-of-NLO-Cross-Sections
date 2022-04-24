@@ -1,0 +1,253 @@
+In this chapter we will introduce the notion of \textit{Bayesian machine learning} (Bayesian ML).
+We will start from the classical view of ML
+and reformulate it in terms of Bayesian concepts. We will only concern ourselves
+with so-called supervised ML models used to solve supervised regression tasks
+as it is the only class of problems of interest in this thesis.
+We will first introduce the core of ML and its constituent ingredients.
+From this we transition to Bayes' theorem and a Bayesian framework for ML.
+Finally we discuss Bayesian inference.
+
+\section{The Core of Machine Learning}
+The basic conceptual framework of a supervised machine learning problem is as follows. 
+Assume a dataset $D$ is a sequence of $N$ datapoints $D = \{(x^{(i)}, y^{(i)})\}_{i=1}^N$,
+where $x^{(i)} \in \mathbb{R}^p$ is the set of \textit{features} 
+and $y^{(i)} \in \mathbb{R}^d$ is the \textit{target}. 
+The next ingredient is to assume the targets can be decomposed as
+\begin{equation}\label{eq:model_assumption}
+	y = f(x) + \epsilon,
+\end{equation}
+for some true function $f : \mathbb{R}^p \to \mathbb{R}^d$ (also known as the \textit{ground truth}), where $\epsilon \in \mathbb{R}^d$ is introduced to account for random noise. 
+The objective is to learn $f(x)$ from the dataset. To this end, we choose a \textit{model class} $\hat{f}(x; \theta)$ 
+parameterized by a model parameters $\theta \in \mathbb{R}^m$,
+combined with a procedure to infer an estimate of the parameters $\hat{\theta}$ such that the model is as close to $f(x)$ as possible. 
+Formally, this means choosing a \textit{metric} $\mathcal{L}$ to quantify the error, called a \textit{loss} function 
+(or a \textit{cost} function, but we will adopt the former term in line with the terminology used in the TensorFlow framework), 
+and minimize it with respect to the parameters of the model to obtain $\hat{\theta}$ 
+using an optimization algorithm. 
+For brevity, we will denote the output of a model class as $\hat{y}^{(i)} \equiv \hat{f}(x^{(i)};\theta)$.
+
+\begin{comment}
+    \subsection{Model Class and Model Complexity}
+    In the last section we used the term model class without any proper definition.
+    A model class $\hat{f}(x; \theta)$ is a function parameterized with a parameter $\theta \in \mathbb{R}^d$,
+    where $d$ are the dimension of the parameter space. The \textit{model complexity} can loosely be defined as
+    how many free parameters there are in the model class, i.e what the number $d$ is.
+\end{comment}
+
+
+
+\subsection{Loss Functions}
+For regression problems, two loss functions $\mathcal{L}$ are commonly chosen. The first is the \textit{residual sum of squares} (RSS) given by
+\begin{equation}\label{eq:rss}
+	\mathcal{L}_\text{RSS} \equiv \text{RSS} = \sum_{i=1}^N \norm{y^{(i)} - \hat{y}^{(i)}}_2^2,
+\end{equation}
+where $\norm{\cdot}_2$ denotes the $L^2$-norm. The second is the the \textit{mean squared error} (MSE), defined as
+\begin{equation}\label{eq:mse}
+	\mathcal{L}_\text{MSE}\equiv \text{MSE} = \frac{1}{N}\sum_{i=1}^N\norm{y^{(i)} - \hat{y}^{(i)}}_2^2.
+\end{equation}
+For optimization purposes, they yield equivalent optimal parameters $\hat{\theta}$, at least in principle.
+
+\subsection{Regularization}
+With datasets of limited size, \textit{overfitting} can pose a problem, yielding models that generalize poorly
+because they become overly specialized to the dataset on which $\hat{\theta}$ is inferred. 
+The implication is that the predicted target on unseen data is unlikely to be correct.
+This occurs especially if the model is too complex.   
+One strategy to overcome this, is to tack on a regularization term to the loss-function. By \textit{regularization},
+we mean an additional term that limits the size of the allowed parameter space.
+Hence, regularization imposes a constraint on the optimization problem.
+
+
+The two most commonly used regularization terms are 
+$L^2$-regularization, which adds a term to the loss function as
+\begin{equation}\label{eq:loss_l2_reg}
+	\mathcal{L} = \mathcal{L}_0 + \frac{\lambda}{2} \norm{\theta}_2^2,
+\end{equation}
+where $\lambda$ is the so-called \textit{regularization strength}, which is what we call a \textit{hyperparameter},
+and $\mathcal{L}_0$ is a loss function with no regularization term.
+The second is $L^1$-regularization, which yields a loss 
+\begin{equation}\label{eq:loss_l1_reg}
+	\mathcal{L} = \mathcal{L}_0 + \frac{\lambda}{2}\norm{\theta}_1.
+\end{equation}
+The terms \textit{penalize} large values of $\theta$, effectively shrinking the allowed parameter space.
+The larger the value of the regularization strength $\lambda$, the smaller the allowed parameter space becomes.
+
+
+More generally, we can decomposed our full loss function as
+\begin{equation}\label{eq:loss_fn}
+    \mathcal{L}(x, y, \theta) = \mathcal{L}_0 + R(\lambda_1, \ldots, \lambda_r, \theta),
+\end{equation}
+where $R(\theta)$ is a linear combination of $L^p$-regularization terms where $\lambda_i$
+are the expansion coefficients which are all treated as hyperparameters. $L^p$-regularization terms
+is defined by the $L^p$-norm
+\begin{equation}
+    \norm{x}_p = \left(\abs{x_1}^p + \cdots + \abs{x_m}^p\right)^{1/p}, \quad x \in \mathbb{R}^m.
+\end{equation}
+In practice, we typically use a single form of $L^p$-regularization but nothing
+stops us from constructing complicated regularization terms in theory.
+\subsection{Optimization}
+Once a model class and loss function is chosen, an \textit{optimizer} or \textit{optimization algorithm} must be chosen.
+By this, we mean an algorithm that uses the loss function and the model class, and minimizes the loss
+with respect to the model parameters to yield an estimate of $\hat{\theta}$. Regardless
+of which optimization algorithm we employ, we seek 
+\begin{equation}\label{eq:optimal_param}
+    \hat{\theta} = \text{arg min}_\theta \ \mathcal{L}.
+\end{equation}
+In this thesis, optimization plays a smaller role in the inference of model parameters
+than in classical ML because we do not seek a single estimate $\hat{\theta}$ in most Bayesian applications.
+We shall nevertheless utilize such algorithms for some parts but for another purpose. One of the most popular
+optimizers in the deep learning community is ADAM \cite{ADAM} which we will mainly use
+when optimization is needed.
+
+
+
+\section{Bayes' theorem}
+Our goal is to reformulate ML in terms of Bayesian concepts. The backbone of Bayesian ML
+is \textit{Bayes' theorem} \cite{bayes_theorem}. The theorem can be formulated as
+\begin{equation}
+	p(\theta | D) = \frac{p(D|\theta)p(\theta)}{p(D)},
+\end{equation}
+where $D$ is observed data and $\theta$ denotes the parameters of the model.
+Here $p(\theta)$ is called the \textit{prior} distribution and embodies our prior knowledge of $\theta$ before any new observations are considered. 
+$p(D|\theta)$ is called the \textit{likelihood} function and provides the relative probability  
+of observing $D$ for a fixed value of $\theta$. It need not be normalized to unity, which is why it only provides relative ``probabilities''.
+The \textit{posterior} distribution $p(\theta|D)$ models our belief about $\theta$ after the data $D$ is observed. 
+Finally, $p(D)$ is called the \textit{evidence} which we may regard as the normalization constant of the posterior
+such that posterior integrates to unity over parameter space.
+In the context of Bayesian ML, the evidence will not be an interesting quantity as it will not
+turn up as part of any algorithms. Moreover, it is typically intractible for sufficiently large parameter spaces.
+It is therefore common to write Bayes' theorem as 
+\begin{equation}\label{eq:bayes_theorem}
+  p(\theta|D) \propto p(D|\theta)p(\theta),
+\end{equation}
+which we too shall adopt.
+
+\section{Bayesian Framework for Machine Learning}
+The Bayesian framework for ML differs somewhat in approach to its classical counterpart.
+We define a model class in the same way as before. Choosing a loss function is substituted with
+choosing a likelihood function and a prior.
+Minimization of the loss function is replaced with maximization of the likelihood function or the posterior distribution. In fact,
+The Bayesian framework introduces several ways to infer an estimate for the optimal model parameters \cite{ml_for_physicists}.
+\begin{enumerate}
+    \item \textit{Maximum Likelihood Estimation} (MLE): The optimal parameters $\hat{\theta}$ are inferred by
+    \begin{equation}\label{eq:mle}
+        \hat{\theta} = \text{arg max}_\theta \ p(D|\theta),
+    \end{equation}
+    meaning we choose $\hat{\theta}$ as the mode of the likelihood function.
+    This is equivalent to maximizing the log-likelihood (since log is a monotonic function), i.e.
+    \begin{equation}\label{eq:map}
+        \hat{\theta} = \text{arg max}_\theta \log p(D|\theta).
+    \end{equation}
+    \item \textit{Maximum-A-Posteriori} (MAP): This estimate of $\hat{\theta}$ is defined as
+    \begin{equation}
+        \hat{\theta} = \text{arg max}_\theta \ p(\theta|D),
+    \end{equation}
+    meaning we choose $\hat{\theta}$ as a mode of the posterior distribution.
+    \item \textit{Bayes' estimate}: The estimate of $\hat{\theta}$ is chosen as the expectation of the posterior,
+    \begin{equation}
+        \hat{\theta} = \mathbb{E}_{p(\theta|D)}[\theta] = \int \dd \theta \ \theta p(\theta|D).
+    \end{equation}
+\end{enumerate}
+
+The connection between classical and Bayesian ML can be understood from what follows.
+First, let us assume that each datapoint $(x^{(i)}, y^{(i)})$ is identically and independently distributed (i.i.d.).
+The likelihood function can then generally be written as
+\begin{equation}
+    P(D|\theta) = \prod_{i=1}^N P(y^{(i)}|x^{(i)}, \theta).
+\end{equation}
+For regression tasks, the standard choice of likelihood function is the \textit{Gaussian}
+\begin{equation}
+    p(y|x, \theta) = \exp\left(-\frac{1}{2\sigma^2}\norm{y - \hat{f}(x;\theta)}_2^2\right),
+\end{equation}
+where $\sigma$ is some hyperparameter typically chosen to be the same for every datapoint $(x,y)$.
+For the full dataset, we get
+\begin{equation}\label{eq:likelihood_fn}
+    p(D|\theta) = \prod_{i=1}^N \exp \left(-\frac{1}{2\sigma^2}\norm{y^{(i)} - \hat{f}(x^{(i)};\theta)}_2^2\right).
+\end{equation}
+Now, consider the definition of MLE from eq.~\eqref{eq:mle}.
+It instructs us to maximize the expression in eq.~\eqref{eq:likelihood_fn}. If we rewrite the likelihood function a bit
+\begin{equation}
+    p(D|\theta) = \exp \left(-\frac{1}{2\sigma^2}\sum_{i=1}^N\norm{y^{(i)} - \hat{f}(x^{(i)};\theta)}_2^2\right),
+\end{equation}
+we can observe that maximization of the likelihood function simply amounts to minimization of the RSS
+and hence of the MSE, as can be seen by comparison with the expressions in eq.~\eqref{eq:rss} and eq.~\eqref{eq:mse}.
+
+We can go even further, by considering the MAP estimate. Let us introduce a Gaussian prior on the parameters
+such that
+\begin{equation}\label{eq:gaussian_prior}
+    p(\theta) \propto \exp\left(-\frac{\lambda}{2}\norm{\theta}_2^2\right).
+\end{equation}
+The posterior obtained from Bayes' theorem in eq.~\eqref{eq:bayes_theorem} by combining the prior introduced
+in eq.~\eqref{eq:gaussian_prior} and the likelihood function in eq.~\eqref{eq:likelihood_fn} is
+\begin{equation}
+    p(\theta|D) \propto p(D|\theta)p(\theta) \propto \prod_{i=1}^N \exp \left(-\frac{1}{2\sigma^2}\norm{y^{(i)} - \hat{f}(x^{(i)};\theta)}_2^2\right)\exp\left(-\frac{\lambda}{2}\norm{\theta}_2^2\right),
+\end{equation}
+which we can rewrite as
+\begin{equation}
+    p(\theta|D) \propto \exp \left(-\left[\frac{1}{2\sigma^2}\sum_{i=1}^N\norm{y^{(i)} - \hat{f}(x^{(i)};\theta)}_2^2 + \frac{\lambda}{2}\norm{\theta}_2^2\right]\right).
+\end{equation}
+Maximization of this expression is equivalent to minimization of RSS or MSE with a $L^2$-regularization term tacked on 
+which can be seen by comparison with eq.~\eqref{eq:loss_l2_reg}. 
+Obviously, we are missing a factor $1/N$ in front of the likelihood
+term which can be thought of as baked into the $\sigma$ parameter. 
+The natural generalization is that the posterior can be expressed as
+\begin{equation}\label{eq:posterior_function_of_loss}
+    p(\theta|D) \propto \exp\left(-\mathcal{L}\right),
+\end{equation}
+for any loss function as in eq.~\eqref{eq:loss_fn}. For a purpose that comes much later when
+we discuss Hamiltonian Monte Carlo, we can invert eq.~\eqref{eq:posterior_function_of_loss}
+\begin{equation}
+    \mathcal{L} = -\log Z - \log p(D|\theta) - \log p(\theta),
+\end{equation}
+for some appropriate normalization constant $Z$. Assuming that the dataset consists of observations that are i.i.d, we get
+\begin{equation}\label{eq:loss_function_of_posterior}
+    \mathcal{L} = -\log Z - \sum_{i=1}^N p(y^{(i)}|x^{(i)}, \theta) - \log p(\theta).
+\end{equation}
+Equation~\eqref{eq:loss_function_of_posterior} will play an important role later on.
+
+
+\section{Bayesian Inference}
+We have seen that there is a straight forward connection between the Bayesian framework
+and the classical view of ML by looking at estimators $\hat{\theta}$. 
+In regression tasks, however, we are seldom interested in a single estimate of the model parameter.
+Instead we seek to obtain the posterior distribution from which we can infer other quantities.
+In applications where the model class is sufficiently complex, direct computation
+of the posterior is not feasible. Instead, we must settle with an approximate posterior distribution
+which we construct using Monte Carlo Markov chains (MCMC) methods. 
+A general discussion of such methods are allocated to chapter~\ref{chap:mcmc}. For now we assume that there
+exists a way to generate samples $\theta \sim p(\theta|D)$. We approximate the posterior
+by sampling a set of model parameters $\{\theta^{(1)}, \ldots, \theta^{(n)}\}$ where $\theta^{(t)} \sim p(\theta|D)$, 
+yielding an \textit{empirical} posterior distribution. 
+
+We will primarily use the posterior to compute two classes of mathematical objects. 
+The first is the \textit{predictive distribution} of a target $y^*$ given
+an input $x^*$. The predictive distribution can be expressed as
+\begin{equation}\label{eq:predictive_distribution}
+    p(y^*|x^*, D) = \int \dd\theta \ p(y^*|x^*, \theta)p(\theta|D).
+\end{equation}
+Equation~\eqref{eq:predictive_distribution} is generally intractible since we cannot exactly compute the posterior.
+The predictive distribution is therefore approximated by generating a set of predictions
+using the empirical posterior distribution. That is, we indirectly sample from $p(y^*|x^*, D)$
+by computation of $\hat{f}(x^*;\theta^{(t)})$ for $t=1,\ldots,n$. In other words, the empirical predictive distribution
+is generated as follows.
+\begin{equation}
+    \begin{split}
+        \theta^{(t)} & \sim p(\theta|D), \\
+        f(x^*;\theta^{(t)}) & \sim p(y^*|x^*, \theta).
+    \end{split}
+\end{equation}
+
+The second class is expectation values with respect to the posterior distribution, which
+for a target function $f(\theta)$ is defined as
+\begin{equation}\label{eq:bayesian_expval}
+    \mathbb{E}_{p(\theta|D)}[f] = \int \dd\theta \ f(\theta)p(\theta|D).
+\end{equation}
+An important example of eq.~\eqref{eq:bayesian_expval} is the expectation value
+of the predictive distribution, which will be the expectation of the model class 
+with respect to the posterior
+\begin{equation}
+    \hat{y} \equiv \mathbb{E}_{p(\theta|D)}[\hat{f}(x;\theta)] = \int \dd\theta \ \hat{f}(x;\theta)p(\theta|D).
+\end{equation}
+Equation~\eqref{eq:bayesian_expval} must be approximated since we cannot hope to evaluate the posterior $p(\theta|D)$.
+Even if we could, we will be working with sufficiently large parameters spaces such that the integral itself
+is intractible in any case. Approximation of expectation values is done using MCMC methods 
+which is the subject of the next chapter.

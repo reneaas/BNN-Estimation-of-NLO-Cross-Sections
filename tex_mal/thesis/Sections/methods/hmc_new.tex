@@ -10,10 +10,13 @@ and local phase space volume.
 
 
 \section{Gradient-Informed Exploration}
-HMC uses gradient-informed exploration to efficiently traverse through the typical set.
-This is achieved by formation of a vector field which is tangent to the typical set at all points
-in the sample space. Recall that the typical does coincide with the modes of the target
-distribution $\pi(q)$. Therefore, the gradient of the target distribution itself is of limited
+HMC uses gradient-informed exploration to efficiently explore the typical set.
+This is achieved by formation of a vector field that is tangent to the typical set when inside it. Recall that the typical set does \textit{not} coincide with the modes of the target
+distribution $\pi(\theta)$. Therefore, the gradient of the target distribution alone is of limited
 value because it would move the Markov chain outside of the typical set. HMC overcomes this
-problem with an introduction of \textit{auxilliary momentum} variables inspired by analytical mechanics.
+problem with an introduction of \textit{auxilliary momentum} variables inspired by analytical mechanics. In much the same way that an planet in orbit is submerged in a gravitational field pointing towards the center of gravity, its trajectory is not aligned with the gravitational field.
+Instead, its motion is about the center of gravity which is facilited by the momentum of the planet. In this analogy, the gravitational field plays the role of the gradient of the target distribution and its orbit play the role of the typical set.
+
+\section{Canonical Distribution}
+
 

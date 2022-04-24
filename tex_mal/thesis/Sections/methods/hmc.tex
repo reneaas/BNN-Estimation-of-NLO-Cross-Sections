@@ -1,18 +1,14 @@
 In this chapter, we will study the details of the Hamiltonian Monte Carlo (HMC) method.
 It is a Markov Chain Monte Carlo (MCMC) sampling technique that merges Gibbs sampling, Hamiltonian dynamics with a final Metropolis-Hastings update.
-It avoids random walk behaviour with a systematical exploration of the state space 
-and generates successive samples with smaller correlation. We will begin with a survey of Lagrangian and Hamiltonian dynamics followed by a description of
-the \textit{Leapfrog} integrator which is used to simulate the Hamiltonian systems. Once these are established, we will summarize the 
-HMC method in a generic manner - applicable to any continuous distribution. Moreover, we will discuss important properties like conservation of the Hamiltonian
-and local phase space volume.
-
+It avoids random walk behavior by performing gradient-informed exploration of the typical set. 
+We will begin with a survey of Hamiltonian dynamics followed by a description of
+the \textit{Leapfrog} integrator which is used to simulate Hamiltonian systems. 
+Once these are established, we will describe how HMC is constructed.
 
 \section{Hamiltonian dynamics}\label{sec:hamiltonian_dynamics}
 Hamiltonian dynamics \cite{classical_mechanics} plays a central part in the HMC algorithm. 
-For completeness, we will first survey Lagrangian mechanics from which we derive the Hamiltonian. 
-The Hamiltonian then lays the foundation for Hamiltonian dynamics.
-
-\subsection{Lagrangian Mechanics}
+\begin{comment}
+  \subsection{Lagrangian Mechanics}
 Assume a set of \textit{generalized coordinates} $q = (q_1, \ldots, q_d)$. Generally, the Lagrangian can be written as
 \begin{equation}
   L(q, \dot{q}, t) = K(q, \dot{q}, t) - V(q, \dot{q}, t),
@@ -57,18 +53,29 @@ Finally, we can write down the Hamiltonian as
 \begin{equation}\label{eq:hamiltonian}
   H(q, p) = K(p) + V(q) = \sum_i \frac{p_i^2}{2m_i} + V(q).
 \end{equation}
-From Hamilton's equations in eq.~\ref{eq:eom}, we can easily show that the Hamiltonian is conserved in time $t$ by
+\end{comment}
+Let us assume that $q = (q_1, \ldots, q_d)$ are the \textit{generalized coordinates} and 
+$p = (p_1, \ldots, p_d)$ and \textit{generalized momenta} of a physical system. We will further
+assume that the Hamiltonian can be decomposed as
+\begin{equation}\label{eq:general_hamiltonian}
+  H(q, p) = V(q) + K(p),
+\end{equation}
+where $V$ denotes the \textit{potential} energy and $K$ denotes the \textit{kinetic} energy of the system. The time evolution of $q$ and $p$ are
+found solving \textit{Hamilton's} equations,
+\begin{equation}\label{eq:eom}
+  \dv{q_i}{t} = \pdv{H}{p_i}, \qquad \dv{p_i}{t} = - \pdv{H}{q_i}.
+\end{equation}
+From Hamilton's equations in eq.~\eqref{eq:eom}, we can easily show that the Hamiltonian is conserved in time $t$ by
 \begin{equation}
   \dv{H}{t} = \sum_i\left(\dv{q_i}{t}\pdv{H}{q_i} + \dv{p_i}{t}\pdv{H}{p_i}  \right)
   = \sum_i\left(\pdv{H}{p_i}\pdv{H}{q_i} - \pdv{H}{q_i}\pdv{H}{p_i}  \right) = 0.
 \end{equation}
-This motives the need for a symplectic integrator, which we will discuss next.
+A numerical integrator must thus conserve this property. The class of numerical solvers that conserve the Hamiltonian is
+called \textit{symplectic} integrators. The particular kind that HMC uses is called the \textit{Leapfrog} integrator which 
+we will discuss next.
 
 \subsection{Leapfrog integration}
-To run one step of HMC, we need to compute the time evolution of a Hamiltonian system of the form discussed in the former section,
-where the neural network parameters will play the role as the generalized coordinates $q$.
-The common choice of algorithm to integrate the equations of motion in eq.~\eqref{eq:eom} is \textit{Leapfrog} integration \cite{leapfrog}. This integrator is \textit{symplectic}, which means it conserves local volumes in phase space. This effectively translates to an approximately conserved value of $H(q,p)$ throughout a simulation, with slight oscillations about a mean value.
-
+The Leapfrog integrator\cite{leapfrog} is used in HMC to integrate eq.~\eqref{eq:eom} to generate new proposal states.
 Assume we approximate the true coordinates and momenta by $(\hat{q}, \hat{p})$. A single Leapfrog integration step can then be written as in algorithm \ref{algo:leapfrog}. 
 Here $\epsilon$ represents the stepsize used in the algorithm.
 \begin{figure}[H]
@@ -77,15 +84,17 @@ Here $\epsilon$ represents the stepsize used in the algorithm.
 		\begin{algorithmic}
       \Procedure{LEAPFROG}{$q, p, \epsilon$} 
       \For{$i=1,\ldots, d$} \\
-			\State 1. $\hat{p}_i(t + \epsilon/2) = \hat{p}_i(t) - \displaystyle{\frac{\epsilon}{2}}\pdv*{V(\hat{q}(t))}{q_i} $\\
-			\State 2. $\hat{q_i}(t+\epsilon) = \hat{q}_i(t) + \displaystyle{\frac{\epsilon}{m_i}} \hat{p}_i(t+\epsilon/2)$\\
-			\State 3. $\hat{p_i}(t+\epsilon) = \hat{p}_i(t + \epsilon/2) -  \displaystyle{\frac{\epsilon}{2}}\pdv*{V(\hat{q}(t+\epsilon))}{q_i}$ \\
+			\State $\hat{p}_i(t + \epsilon/2) = \hat{p}_i(t) - \displaystyle{\frac{\epsilon}{2}}\pdv*{V(\hat{q}(t))}{q_i} $\\
+			\State $\hat{q_i}(t+\epsilon) = \hat{q}_i(t) + \displaystyle{\frac{\epsilon}{m_i}} \hat{p}_i(t+\epsilon/2)$\\
+      \EndFor
+      \For{$i=1,\ldots, d$} \\
+      \State $\hat{p_i}(t+\epsilon) = \hat{p}_i(t + \epsilon/2) -  \displaystyle{\frac{\epsilon}{2}}\pdv*{V(\hat{q}(t+\epsilon))}{q_i}$ \\
       \EndFor
       \EndProcedure
 		\end{algorithmic}
 	\end{algorithm}
 \end{figure}
-It is common to set all masses $m_i = 1$, which simplifies Hamilton's equations somewhat an allows us to straight forwardly \textit{vectorize} our
+It is common to set all masses $m_i = 1$, which simplifies Hamilton's equations somewhat and allows us to straight forwardly \textit{vectorize} our
 leapfrog integrator.
 \begin{figure}[H]
 	\begin{algorithm}[H]
@@ -101,29 +110,30 @@ leapfrog integrator.
 	\end{algorithm}
 \end{figure}
 
-\subsection{Conservation of Local Phase-Space Volume}
-
-\section{Hamiltonian Monte Carlo}
-Hamiltonian Monte Carlo is largely developed and expanded upon by Radford Neal \cite{hmc}. The target distribution we wish sample from
-is expressed in terms the Canonical distribution
-\begin{equation}
-  P(q) \propto \exp(-V(q)),
+\section{HMC}
+Hamiltonian Monte Carlo is largely developed by Radford Neal \cite{hmc}. We seek to sample from some target distribution which we express
+in terms of a canonical distribution over the generalized coordinates
+\begin{equation}\label{eq:canonical_q}
+  \pi(q) = \exp\left(-V(q)\right).
 \end{equation}
-where $q$ represents the parameters of the model. $V(q)$ can then always be expressed as
-\begin{equation}
-  V(q) = -\log Z - \log P(q)
+In other words, we can generically express any potential energy function as the negative logarithm of the target distribution,
+\begin{equation}\label{eq:general_potential}
+  V(q) = -\log \pi(q).
 \end{equation}
-for some normalization constant $Z$. 
-This constant plays no actual role in the sampling procedure as we only need to compute the difference $V(q') - V(q)$ at two points $q'$ and $q$.
-We also need the gradient of $V$ with respect to $q$ where the constant term vanishes.
-To utilize the framework of Hamiltonian dynamics explained in section \ref{sec:hamiltonian_dynamics}, we introduce momentum variables
-$p_i$ such that we can express the total Hamiltonian as
+To utilize the framework of Hamiltonian dynamics, we introduce \textit{auxilliary}
+momentum variables $p$. This allows us to construct a canonical distribution
+over \textit{phase-space} as
 \begin{equation}
-  H(q, p) = K(p) + V(q),
+  \pi(q, p) = \exp\left(-H(q, p)\right).
 \end{equation}
-which we interpret as the negative log likelihood (up to a constant) of the canonical distribution over phase-space
+Using the form of the Hamiltonian introduced in eq.~\eqref{eq:general_hamiltonian}, we can recast the canonical distribution over phase-space as
 \begin{equation}
-  P(q, p) \propto \exp\left(-H(q,p)\right).
+  \pi(q, p) = \exp\left(-V(q)\right)\exp\left(-K(p)\right).
+\end{equation}
+The most common choice for the canonincal distribution over momentum space is a Gaussian which corresponds to the kinetic energy function
+from classical physics
+\begin{equation}\label{eq:kinetic_energy}
+  K(p) = \sum_{i=1}^d \frac{p_i^2}{2m_i}.
 \end{equation}
 Before we summarize the algorithm in pseudocode, we should look at conceptual description of the algorithm.
 \begin{enumerate}
@@ -151,14 +161,34 @@ The HMC scheme is summarized in algorithm \ref{algo:hmc}.
       \State $P = \min \left(1, \exp\left[-\left(H(q^*,p^*) - H(q, p)\right)\right]\right)$
       \State Sample $u \sim U(0,1)$ \Comment{Uniform distribution on $(0,1)$.}
       \If {$P \geq u$}
-        \State $(q, p) \leftarrow (q^*, p^*)$ \Comment{Accept proposed state.}
+        \State $(q, p) \gets (q^*, p^*)$ \Comment{Accept proposed state.}
       \Else
-        \State $(q, p) \leftarrow (q, p)$ \Comment{Reject proposed state.}
+        \State $(q, p) \gets (q, p)$ \Comment{Reject proposed state.}
       \EndIf
       \EndProcedure
 		\end{algorithmic}
 	\end{algorithm}
 \end{figure}
+
+\section{The Potential Energy Function in Bayesian ML Applications}
+We seek to use HMC in a Bayesian ML application. It is therefore important to
+discuss a general way to construct the potential energy function in such applications.
+First, recall from chapter \ref{chap:bayesian_ml} in eq.~\eqref{eq:posterior_function_of_loss} that the posterior could in general be written as
+\begin{equation}
+  p(\theta|D) \propto \exp\left(-\mathcal{L}(\theta)\right),
+\end{equation}
+where $\mathcal{L}$ was some loss function in the classical ML sense.
+However, we do not need the evidence term and simply sample from the target distribution $\pi(\theta) = p(D|\theta)p(\theta)$ instead.
+Comparison with eq.~\eqref{eq:canonical_q} makes it clear that the potential energy
+function simply is $\mathcal{L}$. Combining this with eq.~\eqref{eq:loss_function_of_posterior}, lets us conclude that the general expression
+for the potential energy is
+\begin{equation}
+  \mathcal{L} = -\log Z - \log p(D|\theta) - \log p(\theta),
+\end{equation}
+and if we assume all datapoints are i.i.d we can recast it as eq.~\eqref{eq:loss_function_of_posterior}, that is
+\begin{equation}
+  \mathcal{L} = -\log Z - \sum_{i=1}^N \log p(y^{(i)}|x^{(i)}, \theta) - \log p(\theta),
+\end{equation}
 
 \section{Limitations of HMC}
 Although HMC is effective at exploring the state space we wish to sample from, it suffers from the need to hand-tune

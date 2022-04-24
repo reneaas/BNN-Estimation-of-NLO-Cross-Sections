@@ -17,7 +17,7 @@ The next ingredient is to assume the targets are of the form
 \end{equation}
 for some true function $f({x}_i)$ (also known as the ground truth), where $\epsilon_i$ is introduced to account for random noise. 
 To approximate the outputs $y_i$, the standard approach is to choose a model class $\hat{f}(x; \theta)$ 
-combined with a procedure to choose parameters $\theta$ such that the model is as close to $f(x_i)$ as possible. 
+combined with a procedure to infer parameters $\theta$ such that the model is as close to $f(x_i)$ as possible. 
 This typically involves choosing a \textit{metric} $\mathcal{L}$ to quantify the error, usually called a \textit{loss} function 
 (or a \textit{cost} function, but we will adopt the former term in line with the terminology used in the TensorFlow framework), 
 and minimize it with respect to the parameters of the model. The output of the model is usually denoted as

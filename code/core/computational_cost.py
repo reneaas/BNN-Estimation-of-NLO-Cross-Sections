@@ -1,42 +1,117 @@
-import numpy as np
+import numpy as np 
+import pandas as pd
 import matplotlib.pyplot as plt
-import pandas as pd
-import os
-import sys
-import re
-import pandas as pd
 
-def get_data(root_dir: str):
-    # pattern = r"(\[.+?\]|[0-9]+[.]?[0-9]*|\w+)"
-    pattern = r"(\[.+?\]|\d+\.?\d*|\w+)"
-    data = []
-    with os.scandir(root_dir) as iter:
-        for entry in iter:
-            if entry.name.endswith(".txt") and entry.is_file():
-                with open(entry.path, "r") as infile:
-                    keys = infile.readline()
-                    keys = keys.split()
-                    vals = re.findall(pattern, infile.readline())
-                    tmp_data = {key: val for key, val in zip(keys, vals)}
-                    data.append(tmp_data)
-    return data
+std_config = {
+    "num_burnin_steps": 1000,
+    "batch_size": 32,
+    "num_results": 1000,
+    "num_steps_between_results": 10,
+    "num_burnin_steps": 1000,
+    "num_epochs": 2500,
+}
 
+num_samples = (
+    std_config.get("num_results") * std_config.get("num_steps_between_results") 
+    + std_config.get("num_burnin_steps")
+)
 
-root_dir = "./results"
-data = get_data(root_dir=root_dir)
+def plot_data(x, y, xlabel, ylabel, log_scale=True, xbase=2, ybase=10):
+    x = x.to_numpy()
+    y = y.to_numpy()
+    idx = np.argsort(x, axis=0)
+    x = x[idx]
+    y = y[idx]
+    plt.plot(x, y)
+    plt.scatter(x, y, label="datapoints", color="red", marker="^")
+    plt.legend()
+    plt.xlabel(xlabel)
+    plt.ylabel(ylabel)
+    if log_scale:
+        plt.xscale("log", base=xbase)
+        plt.yscale("log", base=ybase)
+    plt.show()
 
-
-# max_len = -1
-# all_keys = None
-# for d in data:
-#     if len(d.keys()) > max_len:
-#         max_len = len(d.keys())
-#         all_keys = list(d.keys())
-# merged_data = {key: [] for key in all_keys}
-# for d in data:
-#     for key in d:
-#         merged_data[key].append(d.get(key))
-# print(merged_data)
+def load_results():
+    fname = "./results/results_merged.pkl"
+    df = pd.read_pickle(fname)
+    return df
 
 
+def time_vs_leapfrogsteps_hmc():
+    df = load_results()
+    kernel = "hmc"
+    num_params = 561
+    df = df[df["kernel"] == kernel]
+    df = df[df["num_params"] == num_params]
+    df = df[df["num_epochs"] == 2500]
+    df = df[df["num_burnin_steps"] == 1000]
+    x = df["num_leapfrog_steps"]
+    y = df["timeused"] / num_samples
+    plot_data(
+        x=x, 
+        y=y, 
+        xlabel="Number of Leapfrog steps",
+        ylabel="Seconds per Sample"
+    )
+    print(x, y)
+    total_time = y * num_samples
+    print(total_time)
 
+def time_vs_parameters_hmc():
+    df = load_results()
+    for key in std_config:
+        df = df[df[key] == std_config.get(key)]
+    kernel = "hmc"
+    df = df[df["kernel"] == kernel]
+    num_leapfrog_steps = 512 
+    df = df[df["num_leapfrog_steps"] == num_leapfrog_steps]
+
+    x = df["num_params"]
+    y = df["timeused"]
+    print(df)
+    fig = plot_data(
+        x=x,
+        y=y,
+        xlabel="Number of Parameters",
+        ylabel="Time used in seconds",
+        log_scale=True,
+    )
+
+
+def leapfrog_steps_vs_parameters_nuts():
+    df = load_results()
+    kernel = "nuts"
+    df = df[df["kernel"] == kernel]
+    for key in std_config:
+        df = df[df[key] == std_config.get(key)]
+    x = df["num_params"]
+    y = df["num_leapfrog_steps"]
+    plot_data(
+        x=x,
+        y=y,
+        xlabel="Number of Parameters",
+        ylabel="Avg. Number of Leapfrog Steps",
+        log_scale=True,
+        xbase=2,
+        ybase=10,
+    )
+
+    
+
+
+
+
+
+def main():
+    time_vs_leapfrogsteps_hmc()
+    # time_vs_parameters_hmc()
+    # leapfrog_steps_vs_parameters_nuts()
+
+    # print(load_results())
+    return None
+    
+
+
+if __name__ == "__main__":
+    main()

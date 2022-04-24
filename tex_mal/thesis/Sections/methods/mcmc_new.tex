@@ -2,67 +2,80 @@ In this chapter, we will discuss fundamental ideas pertaining to \textit{Markov 
 We shall confine the discussion to continuous sample spaces which is the category of sample space focused on in this thesis.
 We will commence with a discussion of expectation values and an important notion called the \textit{typical set}. 
 We will then define and discuss Markov chains and Markov transitions after which we shall
-discuss Metropolis-Hastings sampling and its limitations. 
+discuss Metropolis-Hastings sampling and its limitations. Finally we will
+look at Gibbs sampling.
 We will adopt a geometric view to provide a natural transition to Hamiltonian Monte Carlo and the No-U-Turn sampler
-in the two following chapters. The treatment will closely follow \cite{conceptual_intro_hmc}
+in the two following chapters. 
+% The treatment will closely follow \cite{conceptual_intro_hmc}.
 
 \section{Expectation Values and the Typical Set}
-Consider a probability density function $\pi(q)$ and a $d$-dimensional sample space $Q$ where $q \in Q$. Consider $f(q)$ to be an arbitrary smooth
-function of $q$. The \textit{expectation value} of a \textit{target function} $f(q)$ with respect to the density $\pi(q)$ is then defined as
+Consider a probability density function $\pi(\theta)$ and a $m$-dimensional sample space $\Theta$ where $\theta \in \Theta$. 
+Consider $f(\theta)$ to be an arbitrary smooth
+function of $\theta$. The \textit{expectation value} of $f(\theta)$ with respect to the density $\pi(\theta)$ is then defined as
 \begin{equation}\label{eq:expval}
-    \mathbb{E}_\pi[f] = \int \dd q \ \pi(q) f(q).
+    \mathbb{E}_\pi[f] = \int \dd \theta \ \pi(\theta)f(\theta).
 \end{equation}
 We shall interchangably refer to expectation values simply as \textit{expectations}.
+We will call the function $f$ we seek to compute the expecation of as a \textit{target function}.
 For all but a few simple low-dimensional densities, computing eq.~\eqref{eq:expval} is impossible to evaluate analytically. 
 For high-dimensional spaces, evaluating the expectation over the entire sample space is computationally infeasible.
 Moreover, it is unlikely that the entire sample space contribute significantly to the expectation. Efficiently
-evaluating the expectations may thus only require evaluation of the integrand in specific regions of the sample space.
-For most purposes,the we are interested in the expectation of more than a single target function. For example, in Bayesian applications,
-we are often interested in both mean and variance of a quantity which introduces the need for several target functions. 
+evaluating the expectations should thus only require evaluation of the integrand in a subset of the sample space.
+For most purposes, we are interested in the expectation of more than a single target function. For example, in Bayesian applications,
+we are often interested in both the mean and variance of a quantity which introduces the need for several target functions. 
 Thus the numerical method should not depend on the target function in question. 
-Instead the focus is laid on the contribution from $\pi(q)\dd q$ to
-the integrand and which region of sample space that makes this quantity non-neglible. This region of sample space
-is called the \textit{typical set}. Numerical methods that efficiently sample points from the typical set are what
-we refer to as MCMC methods.
+Instead the focus is laid on the contribution from $\pi(\theta)\dd \theta$ to
+the integrand. The objective of MCMC methods is to efficiently 
+sample points from regions of sample space where this quantity is non-neglible. This region of sample space
+is called the \textit{typical set}. 
 
 \subsection{The Typical Set}
-MCMC methods are devised to efficiently sample points $q$ of the typical set. For simplicity, we can divide
-sample space into three regions
+MCMC methods are devised to efficiently sample points of the typical set. For simplicity, we can divide a
+sample space into three regions with respect to the target density $\pi(\theta)$.
 \begin{enumerate}
-    \item High-probability density region. These are regions in the neighborhood of any mode of the target density.
-    \item The typical set. This refer to the regions in which $\pi(q) \dd q$ provides a non-neglible contribution
+    \item High-probability density region. These are regions in the neighborhood of a mode of the target density.
+    \item The typical set. This refer to the regions in which $\pi(\theta) \dd \theta$ provides a non-neglible contribution
     to any expectation. This may be thought of as the high-probability region of the sample space
-    since $\pi(q) \dd q$ is proportional to probability of a state $q$ in a volume $\dd q$. 
+    since $\pi(\theta) \dd \theta$ is proportional to probability of a state $\theta$ in a volume $\dd \theta$. 
     \item Low-probability density regions. These are regions far away from any mode of the density.
 \end{enumerate}
 The first and third region will yield neglible contributions to an expectation.
 The point to stress here is that the interesting part of sample space to explore is not the high-probability region, and is
-not the part MCMC methods sample from. Instead, they sample from the region in which $\pi(q) \dd q$ is large.
+not the part MCMC methods sample from. Instead, they sample from the region in which $\pi(\theta) \dd \theta$ is large.
 Although the notion of a typical set can be formalized precisely, we will intentionally 
 operate with this somewhat imprecise definition. For our purposes, it suffices to use it merely as
 a conceptual notion to evaluate the quality of the samples stored from a MCMC chain. 
-
+\subsection{The Target Density and Bayesian Applications}
+We initially defined $\pi(\theta)$ as a probability density function, implying
+that the density is integrated to unity. In the chapter on Bayesian ML, we mentioned that we could not compute the evidence term of Bayes' theorem in 
+realistic applications and thus were only concerned a proportionality relationship $p(\theta|D)\propto p(D|\theta)p(\theta)$. Thus any MCMC methods we are interested cannot require that the $\pi(\theta)$ is normalized to unity. We only require that the density is smooth and that 
+\begin{equation}
+  0 < \int \dd\theta \ \pi(\theta) < \infty.
+\end{equation} 
+For this reason, we shall refer to $\pi(\theta)$ as the \textit{target density} or \textit{target distribution} interchangably.
+In Bayesian applications, we assume that $\pi(\theta) = p(D|\theta)p(\theta)$ such that $p(\theta|D) \propto \pi(\theta)$.
 
 \section{Markov Chains and Markov Transitions}
-Since evaluation of eq.~\eqref{eq:expval} in most interesting cases is intractible, we seek to evaluate them
-from \textit{Markov chains}. A Markov chain is a sequence of points $q_1, ..., q_N$ generated sequentially
+Since direct evaluation of eq.~\eqref{eq:expval} in most applications is intractible, we seek to approximately evaluate them
+by generating samples $\theta^{(t)}$ from the typical set using \textit{Markov chains}. A Markov chain is a sequence of points $\theta^{(1)}, \theta^{(2)}, ..., \theta^{(n)}$ generated sequentially
 using a random map called a \textit{Markov transition}. A Markov transition is a conditional probability density
-$T(q'|q)$ that yields the probability of transition from a point $q$ to $q'$. The Markov transition is often called
-the \textit{transition kernel}, which is a term we will adopt. 
+$T(\theta'|\theta)$ that yields the probability of transition from a point $\theta$ to $\theta'$. The Markov transition is also called
+a \textit{Markov kernel} which is a special case of a \textit{transition kernel}. The latter is the term we will adopt because it
+is the term used by TensorFlow Probability.
 
 An arbitrary transition kernel is not useful because the generated Markov chain is unlikely to have any relation to the target distribution
 of interest. To generate a useful Markov chain, we must use a transition kernel that preserves the target distribution. 
 The condition imposed to ensure this is expressed as
 \begin{equation}\label{eq:detailed_balance}
-    \pi(q) = \int dq' \pi(q')T(q|q').
+    \pi(\theta) = \int d\theta' \pi(\theta')T(\theta|\theta').
 \end{equation}
 The condition is formally called \textit{detailed balance}. The interpretation of the condition is that the Markov chain is reversible.
-We can start from any $q$ and use the transition kernel to produce a set of new states. The distribution generated by the Markov chain
+We can start from any $\theta$ and use the transition kernel to produce a set of new states. The distribution generated by the Markov chain
 should be distributed according the target distribution regardless of which point we used to generate the chain from. A more important
 fact is that as long as this condition is satisfied, the Markov chain will converge to and stay within the typical set.
 The standard approach to approximate eq.~\eqref{eq:expval} is with the MCMC \textit{estimator}
 \begin{equation}
-    \hat{f}_N = \frac{1}{N}\sum_{i=1}^N f(q_i).
+    \hat{f}_N = \frac{1}{N}\sum_{t=1}^N f(\theta^{(t)}).
 \end{equation}
 For large enough $N$, the estimator will converge to the true expectation such that $\lim_{N\to\infty} \hat{f}_N = \mathbb{E}_\pi[f]$.
 Obviously, the knowledge that the estimator will asymptotically converge to the true expectations are of limited use
@@ -70,61 +83,69 @@ when restricted to a practical computation in which only a finite chain can be g
 We are thus more interested in the properties of finite Markov chains.
 
 \subsection{Ideal Markov Chains}
+In order to understand the behaviour of finite Markov chains, we should first 
+consider the behaviour of ideal Markov chains.
 An ideal Markov chain can be divided into three phases.
 \begin{enumerate}
-    \item A convergence phase. The Markov chain is initiated from some point $q$ and the initially generated sequence
-    lies in a region outside the typical set. Estimators evaluated using this part of the sequence are highly biased.
-    \item An exploration phase. The Markov chain has reached the typical set and begins its first traversal of it.
-    In this phase, estimators will rapidly converge towards their true values.
+    \item A convergence phase. The Markov chain is initiated from some point $\theta$ and the initially generated sequence
+    lies in a region outside the typical set. Estimators evaluated using this part of the sequence are highly biased,
+    meaning inclusion of these points will lead to an estimator that lies relatively far away from the true expectation.
+    \item An exploration phase. The Markov chain has reached the typical set and begins its first ``traversal'' of it.
+    In this phase, estimators will rapidly converge towards the true expectations.
     \item A saturation phase. At this point, the Markov chain has explored most of the typical set and convergence
-    of the estimators slow down significantly.
+    of the estimators slow down significantly. 
 \end{enumerate}
-The ideal evaluation of estimators thus only use the parts of Markov chain generated in the second and third phase, discarding the
-the chain generated in the first phase. The notion of discarding the points from the first phase is called \textit{burn-in}.
+The ideal evaluation of estimators thus only use the parts of the Markov chain generated in the second and third phase, discarding the
+the chain generated in the first phase. The notion of discarding the chain from the first phase is called \textit{burn-in}.
+To most efficiently approximate eq.~\eqref{eq:expval}, we should really only use points generated in the exploration phase.
+Using points from the saturation phase does not hurt the estimators but yields diminishing returns
+with respect to computational resources.
 
 \subsection{Pathologies}
-Unfortunately, many target distributions embody typical sets with pathological regions where any 
+Unfortunately, many target distributions embody typical sets with pathological regions where \textit{any} 
 transition kernel that obeys eq.~\eqref{eq:detailed_balance} is not sufficient to efficiently explore the typical set.
-Geometrically, this can be regions in which the target distribution rapidly changes in certain localized regions of
+Geometrically, this can be regions in which the target distribution rapidly changed within
 the typical set.
 The pathological regions can be completely ignored by the chain for much of the exploration,
 leading to poor convergence and thus biased estimators. But as long as the transition kernel
 satisfies detailed balance, we know for a fact that the estimators \textit{must} converge eventually.
-Consequentially, the Markov chain partially be stuck near pathological regions for long periods to compensate
+Consequentially, the Markov chain will be stuck near pathological regions for long periods to compensate
 before it rapidly explores other parts of the typical set. This behaviour is repeated, 
 which makes estimators oscillate. Regardless of when the MCMC chain is terminated, the estimator will likely be biased due
 to this oscillating behaviour.
 
-\subsection{Geometric Ergodicity}
+\subsection{Geometric Ergodicity and Convergence Diagnostics}
 Generation of ideal Markov chains is a certainty if the transition kernel satisfies \textit{geometric ergodicity} \cite{geometric_ergodicity}.
 However, in most cases it is impossible to check that the condition is satisfied. Instead one uses a statistical quantitiy known
-as the \textit{potential scale reduction factor} $\hat{R}$. The ideal value is $\hat{R} = 1$. For values far away from this target,
-it is unlikely that geometric ergodicity is satisfied.
+as the \textit{potential scale reduction factor} $\hat{R}$ \cite{rhat}. The ideal value is $\hat{R} = 1$. For values far away from this target,
+it is unlikely that geometric ergodicity is satisfied. Rule-of-thumb is to assume convergence
+if $\hat{R} < 1.1$ \cite{convergence_diagnostics}.
 
 
 
 \section{Metropolis-Hastings}
 Construction of a transition kernel that ensures convergence to the typical set of the target distribution is a non-trivial problem in general.
-Fortunately, the Metropolis-Hastings algorithm provides a solution that lets us construct 
+Fortunately, the Metropolis-Hastings algorithm provides a general solution that lets us construct 
 a transition kernel with this property \cite{metropolis,metropolis_two}. 
 The algorithm consist of two components, a proposal of a new state and a correction step.
-Given a state $q$, we propose a new state $q'$ by adding a random perturbation to the initial state.
-The correction step rejects an proposed state that ends moves away from the typical set of the target distribution.
-The proposed state is formally sampled from a proposal distribution $Q(q'|q)$. The so-called \textit{acceptance probability} $a(q'| q)$, 
-that is the probability of accepting a proposed state $q'$ given an initial state $q$, is given by
+Given a state $\theta$, we propose a new state $\theta'$ by adding a random perturbation to the initial state.
+The correction step rejects a proposed state that moves away from the typical set of the target distribution
+and accepts proposals that stay within it.
+The proposed state is formally sampled from a \textit{proposal distribution} $q(\theta'|\theta)$.
+The probability of accepting the proposed state given the initial state, fittingly called the \textit{acceptance probability}, is 
 \begin{equation}\label{eq:general_acceptance_prob}
-    a(q'|q) = \min \left(1, \frac{Q(q|q')\pi(q')}{Q(q'|q)\pi (q)}\right).
+    a(\theta'|\theta) = \min \left(1, \frac{q(\theta|\theta')\pi(\theta')}{q(\theta'|\theta)\pi (\theta)}\right).
 \end{equation}
-
+These steps are summarized in algorithm~\ref{algo:general_metropolis}.
 \begin{figure}[H]
     \begin{algorithm}[H]
       \caption{Metropolis-Hastings}\label{algo:general_metropolis}
       \begin{algorithmic}
-        \Procedure{METROPOLIS-HASTINGS}{$q$}\\
-        \State Sample $q' \sim Q(q'|q)$\\
-        \State $\displaystyle{a(q'|q) \leftarrow \min \left(1, \frac{Q(q|q')\pi(q')}{Q(q'|q)\pi (q)}\right)}$\\
+        \Procedure{METROPOLIS-HASTINGS}{$\theta$}\\
+        \State Sample $\theta' \sim q(\theta'|\theta)$\\
+        \State $\displaystyle{a(\theta'|\theta) \leftarrow \min \left(1, \frac{q(\theta|\theta')\pi(\theta')}{q(\theta'|\theta)\pi (\theta)}\right)}$\\
         \State Sample $u \sim \text{Uniform}(0,1)$. \\
-        \If {$a(q'|q) \geq u$}
+        \If {$a(\theta'|\theta) \geq u$}
           \State $\theta \leftarrow \theta'$ \Comment{Accept transition}
         \Else
           \State $\theta \leftarrow \theta$  \Comment{Reject transition}
@@ -134,54 +155,61 @@ that is the probability of accepting a proposed state $q'$ given an initial stat
     \end{algorithm}
   \end{figure}
 
-There are many valid choices for proposal distribution. A common choice is a Gaussian distribution $Q(q'|q) = \mathcal{N}(q'|q, \Sigma)$
-which we will refer to as \textit{random walk Metropolis}.
+\subsection{The Proposal Distribution}
+There are many valid choices for proposal distribution. A common choice is a Gaussian distribution $q(\theta'|\theta) = \mathcal{N}(\theta'|\theta, \Sigma)$,
+where $\Sigma$ is the \textit{covariance matrix}.
+We will refer to the Metropolis-Hastings algorithm with this proprosal distribution as \textit{random walk Metropolis}.
 More precisely, this means that a proposed state is given by
 \begin{equation}
-    q' = q + r
+  \theta' = \theta + \delta
 \end{equation}
-where $r \sim \mathcal{N}(0, I)$. This distribution is symmetric such that $Q(q'|q) = Q(q|q')$, implying that the acceptance probability
+where $\delta \sim \mathcal{N}(0, I)$. This distribution is symmetric such that $q(\theta'|\theta) = q(\theta|\theta')$, implying that the acceptance probability
 reduces to
 \begin{equation}\label{eq:symmetric_acceptance_prob}
-    a(q'|q) = \min \left(1, \frac{\pi(q')}{\pi(q)}\right).
+    a(\theta'|\theta) = \min \left(1, \frac{\pi(\theta')}{\pi(\theta)}\right).
 \end{equation}
 Hence, evaluation of the acceptance probability only requires evaluating the target distribution at the initial state and the proposed state.
 
 \subsection{Random Walk Metropolis}
 The random walk Metropolis algorithm does suffer from slow convergence to, and exploration of, the typical set in high-dimensional spaces.
-This can be understood because of the following: a random perturbation will likely cause the proposed state
-to lie outside the typical set, which leads to rejection of the proposed state. We can compensate
-for this flaw by reducing the standard deviation of each dimension, but this will naturally lead to slow movement through
-sample space. The slow exploration also leads to a Markov chain where consecutive embody
+This can be understood because of the following. 
+As we increase the dimension of the sample space, the volume outside of the typical set becomes increasingly larger than the volume of the typical set itself.
+This implies with increasing probability that a random perturbation any initial state will cause the proposed state
+to lie outside the typical set for a fixed covariance matrix.
+We can compensate
+for this flaw by reducing the values of $\Sigma_{ij}$, but this will naturally lead to slow exploration of
+sample space. The slow exploration also leads to a Markov chain where consecutive
+samples embody
 a relatively large measure of correlation. The effect is that the effective sample size grows slowly
 and efficient evaluation of eq.~\eqref{eq:expval} becomes difficult.
 Fortunately, there exists a solution; \textit{gradient-informed} exploration of the sample space, manifested in
 the form of \textit{Hamiltonian Monte Carlo}. This algorithm is a special case of a Metropolis-Hastings algorithm
-in which the proposal distribution $Q(q'|q)$ is a special one utilizing Hamiltonian dynamics and Gibbs sampling
-to produce a new proposal state $q'$. This is the topic of the next chapter.
+in which the proposal distribution $q(\theta'|\theta)$ is a special one utilizing Hamiltonian dynamics and Gibbs sampling
+to produce a new proposal state $\theta'$. This is the topic of the next chapter.
 
 \section{Gibbs Sampling}
 The final standard MCMC algorithm we need is the \textit{Gibbs} sampler. It plays a small
 part of the sampling in HMC and so we should therefore briefly discuss it.
 It is a MCMC sampling method used for multi-variate probability densities, and
 so is only meaningful to discuss for $d > 1$ dimensions.
-Suppose $\gamma^{(t)}$ represents the parameters at iteration $t$. 
-The next sample $\gamma^{(t+1)}$ in the Markov chain is drawn according to a
+Suppose $\theta^{(t)}$ represents the parameters at iteration $t$. 
+The next sample $\theta^{(t+1)}$ in the Markov chain is drawn according to a
 conditional distribution as follows.
 \begin{equation}\label{eq:gibbs_sampling}
-  \gamma_i^{(t+1)} \sim P(\gamma_i|\gamma_{1}^{(t+1)}, \ldots \gamma_{i-1}^{(t+1)}, \gamma_{i+1}^{(t)}, \ldots, \gamma_{d}^{(t)}).
+  \theta_i^{(t+1)} \sim P(\theta_i|\theta_{1}^{(t+1)}, \ldots \theta_{i-1}^{(t+1)}, \theta_{i+1}^{(t)}, \ldots, \theta_{d}^{(t)}).
 \end{equation}
 We may summarize this as a function in algorithm~\ref{algo:gibbs} which 
-given an initial state $\gamma^{(t)}$ returns a new state sampled according to eq.~\eqref{eq:gibbs_sampling}.
+given an initial state $\theta^{(t)}$ returns a new state $\theta^{(t+1)}$
+sampled according to eq.~\eqref{eq:gibbs_sampling}.
 \begin{figure}[H]
   \begin{algorithm}[H]
     \caption{Gibbs sampling}\label{algo:gibbs}
     \begin{algorithmic}
-      \Function{GIBBS}{$\gamma^{(t)}$}
+      \Function{GIBBS}{$\theta^{(t)}$}
         \For{$i=1,\ldots, d$}
-          \State Sample $\gamma_i^{(t+1)} \sim P(\gamma_i|\gamma_{1}^{(t+1)}, \ldots \gamma_{i-1}^{(t+1)}, \gamma_{i+1}^{(t)}, \ldots, \gamma_{d}^{(t)}).$
+          \State Sample $\theta_i^{(t+1)} \sim P(\theta_i|\theta_{1}^{(t+1)}, \ldots \theta_{i-1}^{(t+1)}, \theta_{i+1}^{(t)}, \ldots, \theta_{d}^{(t)}).$
         \EndFor \\
-        \Return $\gamma^{(t+1)} = \left(\gamma_1^{(t+1)}, \ldots, \gamma_d^{(t+1)}\right)$.
+        \Return $\theta^{(t+1)} = \left(\theta_1^{(t+1)}, \ldots, \theta_d^{(t+1)}\right)$.
       \EndFunction
     \end{algorithmic}
   \end{algorithm}

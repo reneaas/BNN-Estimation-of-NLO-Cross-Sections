@@ -1,24 +1,4 @@
 
-\section{Bayesian Inference}
-The foundation for Bayesian inference is Bayes' theorem, which can be formulated as
-\begin{equation}
-	P(\theta | D) = \frac{P(D|\theta)P(\theta)}{P(D)}.
-\end{equation}
-where $D$ is observed data and $\theta$ are the model parameters.
-Some useful terminology is in order. $P(\theta)$ is called the \textit{prior} distribution and embodies our prior knowledge of $\theta$ before any new observations are considered. $P(D|\theta)$ is called the \textit{likelihood} function and provides information about $\theta$ learned from observing the data $D$. The \textit{posterior} distribution $P(\theta|D)$ models our belief about $\theta$ after the data $D$ is observed. More succinctly, we can write Bayes' theorem as
-\begin{equation}
-  P(\theta|D) \propto P(\theta|D)P(\theta),
-\end{equation}
-because its rarely of interest, or tractable, to compute $P(D)$, known as the \textit{evidence}.
-
-The objective of Bayesian inference is to compute the \textit{predictive} distribution for an unseen datapoint $y^*$, which can be expressed as
-the integral over all parameters of the posterior distribution weighted by the likelihood. Given a dataset of observations $D = \{y^{(1)}, \ldots, y^{(n)}\}$, this implies
-\begin{equation}
-  P(y^*|D) = \int P(y^*, \theta|D)\dd\theta =\int P(y^*|\theta, D)P(\theta|D)\dd \theta = \int P(y^*|\theta)P(\theta|D)\dd\theta,
-\end{equation}
-which loosely describes the probability of observing $y^*$ given the observations in $D$.
-
-
 \section{Bayesian Framework for Neural Networks}
 
 We can specialize the equations used in Bayesian inference for neural networks in the context of regression.
@@ -61,26 +41,6 @@ which is an approximation to the \textit{maximum likelihood estimate} (MLE). Fur
 \end{equation}
 The diagonal terms of eq.~\eqref{eq:covariance} yields the sample \textit{variance} of the components of $\{\hat{y}^{(i)}\}_{i=1}^n$.
 
-\begin{comment}
-\section{Sources of Uncertainty}
-The main motivation utilizing Bayesian inference to neural networks is to be able to quantify uncertainty. 
-Uncertainty can be further divided into two categories:
-\begin{itemize}
-  \item \textbf{Epistemic uncertainty}: the systematic uncertainty. It practice, this uncertainty can be quantified by 
-  the posterior of the model $P(\theta|D)$. Thus it quantifies the uncertainty in the model itself.
-  \item \textbf{Aleatoric uncertainty}: the statistical uncertainty, related to the conditional distribution $P(y|x, \theta)$.
-  This uncertainty quantifies the error due to random chance, and measures the random noise in the data.
-\end{itemize}
-In principle, in the infinite data limit, both errors goes to zero as there's only a single parametrization $\theta$ that explains all data $D$,
-and there's only a single output $y$ for a given $x$ and $\theta$. However, neural networks as so-called \textit{over-parametrized}
-models in the sense that they have many equivalent parametrizations. These occur due to underlying symmetries of the model, 
-two of which are \textit{weight-space symmetry} and \textit{scaling symmetry}. The former means that we can permute parameters
-in two adjacent and produce the same output as before the permutation. 
-The latter case occur when the network uses non-linear activation that obey $\sigma(\alpha x) = \alpha \sigma(x)$. 
-This relation implies that we can rescale the parameters 
-of two adjacent layers by a factor of $\alpha$ and $1/\alpha$ respectively and produce the same output. Thus a parametrization
-that explains a set of observations does not exist for sufficiently complex models.
-\end{comment}
 
 \section{Bayesian learning using HMC}
 To learn from the data $D$ using HMC, we need to define a potential energy function $V(q)$ 
