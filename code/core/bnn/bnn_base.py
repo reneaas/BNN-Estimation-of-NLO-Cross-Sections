@@ -244,8 +244,8 @@ class _BNNBase(object):
         for kernel_name, bias_name, activation_name in zip(kernel, bias, activations):
             self._weights.extend(
                 [
-                    tf.convert_to_tensor(model[kernel_name], name=kernel_name),
-                    tf.convert_to_tensor(model[bias_name], name=bias_name),
+                    tf.convert_to_tensor(model[kernel_name], name=kernel_name, dtype=tf.float32),
+                    tf.convert_to_tensor(model[bias_name], name=bias_name, dtype=tf.float32),
                 ]
             )
             self._activations.append(
@@ -278,7 +278,8 @@ class _BNNBase(object):
         if batch_size is not None:
             ds = ds.batch(batch_size=batch_size)
         return ds
-    
+
+    @tf.function
     def _dense_layer(self, x, w, b, activation):
         """Computes the output of a dense layer.
 

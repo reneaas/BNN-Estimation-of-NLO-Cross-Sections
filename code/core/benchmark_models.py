@@ -7,7 +7,7 @@ import seaborn as sns
 from bnn.bnn import BayesianNeuralNetwork
 from slha_loader.slha_loader import SLHALoader
 from utils.preprocessing import split_data
-
+from time import sleep
 
 import sys
 
@@ -37,12 +37,16 @@ def main():
 
     #Load models
     model_names1 = [
-        f"models/{i+1}_small_hidden_layers.npz" for i in range(4)
+        f"old_models/{i+1}_small_hidden_layers.npz" for i in range(4)
     ] 
     model_names2 = [
-        f"models/{i+1}_hidden_layers_tanh.npz" for i in range(5)
+        f"old_models/{i+1}_hidden_layers_tanh.npz" for i in range(5)
     ]
     model_names = model_names1 + model_names2
+
+    model_names = [r"old_models/4_small_hidden_layers.npz"]
+    model_names = [r"models/kernel_nuts_results_1000_burnin_1000_epochs_2500_leapfrogsteps_512_nodes_[5, 2048, 1].npz"]
+
     print(*model_names)
 
     models = [
@@ -53,29 +57,39 @@ def main():
         bnn.load_model(fname=model_name)
     print(*models)
 
+
     model_predictions = [
         bnn(x_test).numpy().squeeze(-1) for bnn in models
     ]
-
+    print([p.shape for p in model_predictions])
+    print("Computed model predictions")
+    sleep(10)
     model_predictions_mean = [
         np.mean(prediction, axis=0) for prediction in model_predictions
     ]
     print([p.shape for p in model_predictions_mean])
-
+    print("Computed mean predictions")
+    sleep(10)
     model_predictions_std = [
         np.std(prediction, axis=0) for prediction in model_predictions
     ]
-
+    print("Computed model std")
+    sleep(10)
     rel_error = [
         (y_test - y_mean) / y_test for y_mean in model_predictions_mean
     ]
     rel_error = [err.numpy() for err in rel_error]
+    print("Computed relative error")
+    sleep(10)
 
     std_residual = [
         (y_test - y_mean) / y_std for y_mean, y_std in zip(model_predictions_mean, model_predictions_std) 
     ]
     std_residual = [arr.numpy() for arr in std_residual]
+    print("Computed standardized resdisuals")
+    sleep(10)
 
+    sys.exit()
 
 
     rel_error_mean = [
@@ -112,11 +126,15 @@ def main():
     print(len(num_params))
 
 
-    n_bins = 10
-    fig = plt.hist(x=abs_rel_error, bins=n_bins, density=True, histtype="step", cumulative=True, label=num_params)
+    n_bins = 100
+    plt.hist(x=abs_rel_error, bins=n_bins, density=True, histtype="step", cumulative=True, label=num_params)
     plt.legend()
     plt.show()
 
+    plt.hist(x=rel_error, bins=n_bins, density=True, histtype="step", label=num_params)
+    plt.legend()
+    plt.show()
+    
     sys.exit()
 
 
@@ -150,4 +168,5 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    with tf.device("/CPU:0"):
+        main()  
