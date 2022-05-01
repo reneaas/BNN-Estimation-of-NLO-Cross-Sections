@@ -17,6 +17,11 @@ P.~Mehta, M.~Bukov, C.-H. Wang, A.~G. Day, C.~Richardson, C.~K. Fisher et~al.,
   \href{http://dx.doi.org/10.1016/j.physrep.2019.03.001}{\emph{Physics Reports}
   {\bf 810} (may, 2019) 1--124}.
 
+\bibitem{conceptual_intro_hmc}
+M.~Betancourt, \emph{A conceptual introduction to hamiltonian monte carlo},
+  2017.
+\newblock 10.48550/ARXIV.1701.02434.
+
 \bibitem{geometric_ergodicity}
 G.~O. Roberts and J.~S. Rosenthal, \emph{General state space markov chains and
   {MCMC} algorithms},
@@ -58,13 +63,6 @@ J.~S. Helbert~Goldstein, Charles~Poole, \emph{Classical Mechanics, 3rd ed.},
 \bibitem{leapfrog}
 C.~M. Bishop, \emph{Pattern Recognition and Machine Learning}, ch.~11, p.~551.
 \newblock Springer New York, 2006.
-
-\bibitem{hmc}
-R.~Neal, \emph{Handbook of Markov Chain Monte Carlo}, ch.~5.
-\newblock Chapman and Hall/CRC, May, 2011.
-\newblock \href{http://arxiv.org/abs/http://dx.doi.org/10.1201/b10905}{{\tt
-  http://dx.doi.org/10.1201/b10905}}.
-\newblock 10.1201/b10905.
 
 \bibitem{nuts}
 M.~D. Hoffman and A.~Gelman, \emph{The no-u-turn sampler: Adaptively setting

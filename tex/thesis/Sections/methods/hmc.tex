@@ -5,167 +5,166 @@ We will begin with a survey of Hamiltonian dynamics followed by a description of
 the \textit{Leapfrog} integrator which is used to simulate Hamiltonian systems. 
 Once these are established, we will describe how HMC is constructed.
 
-\section{Hamiltonian dynamics}\label{sec:hamiltonian_dynamics}
-Hamiltonian dynamics \cite{classical_mechanics} plays a central part in the HMC algorithm. 
-\begin{comment}
-  \subsection{Lagrangian Mechanics}
-Assume a set of \textit{generalized coordinates} $q = (q_1, \ldots, q_d)$. Generally, the Lagrangian can be written as
-\begin{equation}
-  L(q, \dot{q}, t) = K(q, \dot{q}, t) - V(q, \dot{q}, t),
+\section{Hamiltonian Dynamics}\label{sec:hamiltonian_dynamics}
+\textit{Hamiltonian dynamics} \cite{classical_mechanics} is a formulation of classical mechanics that allows us to compute the time evolution
+of a physical system. The fundamental mathematical object of the theory is the \textit{Hamiltonian} which governs the time evolution of the \textit{coordinates} $q = (q_1, \ldots, q_d)$ and \textit{momenta} $p = (p_1,\ldots, p_d)$ of the system. 
+The 2d-dimensional space defined by the points $(q, p)$ is called \textit{phase-space}.
+The precise relationship is formulated by \textit{Hamilton's equations}
+\begin{equation}\label{eq:hamiltons_eqs}
+  \dv{q_i}{t} = \pdv{H}{p_i}, \qquad \dv{p_i}{t} = - \pdv{H}{q_i}, \qq{for} i=1,\ldots, d.
 \end{equation}
-where $K$ is the kinetic energy and $V$ is the potential energy of the system. We shall restrict the treatment to the case where there is no explicit dependence on time $t$. The solutions $q(t)$ can be found by solving the \textit{Euler--Lagrange} equations given by
-\begin{equation}
-  \dv{}{t}\pdv{L}{\dot{q}_i} - \pdv{L}{q_i} = 0.
-\end{equation}
-
-\subsection{Hamiltonian Mechanics}
-The Hamiltonian is constructed by the Legendre transformation,
-\begin{equation}
-  H(q, p, t) = \sum_i p_i \dot{q}_i(q, p) - L(q, \dot{q}(q, p), t),
-\end{equation}
-where
-\begin{equation}
-  p_i = \pdv{L}{\dot{q}_i},
-\end{equation}
-for which we introduce a collective notation $p = (p_1, \ldots, p_d)$.
-The equations of motion, known as \textit{Hamilton's} equations, are given by
-\begin{equation}\label{eq:eom}
-  \dv{q_i}{t} = \pdv{H}{p_i}, \qquad \dv{p_i}{t} = - \pdv{H}{q_i}.
-\end{equation}
-
-For the purpose of utilizing this framework in the context of HMC, it's assumed that the form of the Lagrangian is
-\begin{equation}
-  L(q, \dot{q}) = K(\dot{q}) - V(q),
-\end{equation}
-where
-\begin{equation}\label{eq:kinetic_energy}
-  K(\dot{q}) = \sum_i \frac{1}{2}m_i\dot{q}^2_i.
-\end{equation}
-The generalized momentum of coordinate $q_i$ is
-\begin{equation}
-  p_i = \pdv{K}{\dot{q}_i} = m\dot{q}_i,
-\end{equation}
-from which it follows that the Legendre transformed kinetic energy can be written as
-\begin{equation}\label{eq:kinetic_energy}
-  K(p) = \sum_i \frac{p_i^2}{2m_i}.
-\end{equation}
-Finally, we can write down the Hamiltonian as
+The objective is to use the $2d$ coupled differential equations in eq.~\eqref{eq:hamiltons_eqs} to find $(q(t), p(t))$ given some initial condition $(q(0), p(0))$ where $t$ represents time. A system governed by Hamilton's equations are called a \textit{Hamiltonian system}. For the purpose of constructing a MCMC method, we need not consider the most general theory of Hamiltonian dynamics and we will therefore refrain from doing so. We shall confine our focus to Hamiltonians which can be decomposed as
 \begin{equation}\label{eq:hamiltonian}
-  H(q, p) = K(p) + V(q) = \sum_i \frac{p_i^2}{2m_i} + V(q).
-\end{equation}
-\end{comment}
-Let us assume that $q = (q_1, \ldots, q_d)$ are the \textit{generalized coordinates} and 
-$p = (p_1, \ldots, p_d)$ and \textit{generalized momenta} of a physical system. We will further
-assume that the Hamiltonian can be decomposed as
-\begin{equation}\label{eq:general_hamiltonian}
   H(q, p) = V(q) + K(p),
 \end{equation}
-where $V$ denotes the \textit{potential} energy and $K$ denotes the \textit{kinetic} energy of the system. The time evolution of $q$ and $p$ are
-found solving \textit{Hamilton's} equations,
-\begin{equation}\label{eq:eom}
-  \dv{q_i}{t} = \pdv{H}{p_i}, \qquad \dv{p_i}{t} = - \pdv{H}{q_i}.
-\end{equation}
-From Hamilton's equations in eq.~\eqref{eq:eom}, we can easily show that the Hamiltonian is conserved in time $t$ by
+where $V$ is the \textit{potential energy} and $K$ is the \textit{kinetic energy} of the system. The Hamiltonian in eq.~\eqref{eq:hamiltonian} corresponds to the total energy of the system. A key feature is that the Hamiltonian is \textit{conserved} through time. This observation follows from
 \begin{equation}
   \dv{H}{t} = \sum_i\left(\dv{q_i}{t}\pdv{H}{q_i} + \dv{p_i}{t}\pdv{H}{p_i}  \right)
   = \sum_i\left(\pdv{H}{p_i}\pdv{H}{q_i} - \pdv{H}{q_i}\pdv{H}{p_i}  \right) = 0.
 \end{equation}
-A numerical integrator must thus conserve this property. The class of numerical solvers that conserve the Hamiltonian is
-called \textit{symplectic} integrators. The particular kind that HMC uses is called the \textit{Leapfrog} integrator which 
-we will discuss next.
+Thus any solution $(q(t), p(t))$ will be confined to a hyperplane defined by the Hamiltonian and the initial condition.
+
+Evolving a Hamiltonian system from some initial point $(q(0), p(0))$ is in general a non-trivial task. Exact solutions can only be computed for simple systems. This in general we must equip our arsenal with a numerical method that computes an approximate solution. There is a class of numerical methods called \textit{symplectic integrators} that takes advantage of the underlying geometry enforced by Hamilton's equations which allow accurate solutions of long time periods at a lower computational cost than typical higher-order methods such as Runge-Kutta.
+The particular symplectic integrator used in HMC is called the \textit{Leapfrog integrator} which we shall discuss next.
 
 \subsection{Leapfrog integration}
-The Leapfrog integrator\cite{leapfrog} is used in HMC to integrate eq.~\eqref{eq:eom} to generate new proposal states.
-Assume we approximate the true coordinates and momenta by $(\hat{q}, \hat{p})$. A single Leapfrog integration step can then be written as in algorithm \ref{algo:leapfrog}. 
-Here $\epsilon$ represents the stepsize used in the algorithm.
+The Leapfrog integrator \cite{leapfrog} is used in HMC to integrate eq.~\eqref{eq:hamiltons_eqs} to generate new proposal states. 
+First assume that we \textit{discretize} the time-coordinate $t$ into 
+discrete time coordinates defined by an initial time $t_0$ and a \textit{step size} $\epsilon$ which defines the distance between each time coordinate.
+The $k$-th time coordinate can be generated by 
+\begin{equation}
+  t_k = t_0 + k\epsilon.
+\end{equation}
+To please mathematicians, we introduce functions $\hat{q}$ and $\hat{p}$ to represent the discretized approximations to the exact solution $(q(t), p(t))$. From an initial point $(q(t_0), p(t_0))$, we simulate the system to obtain approximate values of the exact solution at discrete times $t_1, \ldots, t_n$. 
+
+Consider a single Leapfrog step from a point $(\hat{q}(t), \hat{p}(t))$. 
+Its approximation to $(q(t+\epsilon), q(t + \epsilon))$ is then computed as formulated in algorithm~\ref{algo:leapfrog}.
 \begin{figure}[H]
 	\begin{algorithm}[H]
-		\caption{Leapfrog integration (single step)}\label{algo:leapfrog}
+		\caption{Leapfrog Integration}\label{algo:leapfrog}
 		\begin{algorithmic}
-      \Procedure{LEAPFROG}{$q, p, \epsilon$} 
-      \For{$i=1,\ldots, d$} \\
-			\State $\hat{p}_i(t + \epsilon/2) = \hat{p}_i(t) - \displaystyle{\frac{\epsilon}{2}}\pdv*{V(\hat{q}(t))}{q_i} $\\
-			\State $\hat{q_i}(t+\epsilon) = \hat{q}_i(t) + \displaystyle{\frac{\epsilon}{m_i}} \hat{p}_i(t+\epsilon/2)$\\
+      \Function{Leapfrog}{$V, q, p, \epsilon$} 
+      \For{$i=1,\ldots, d$}
+        \State $p_i' \gets p_i - \displaystyle{\frac{\epsilon}{2}\pdv{V(q)}{q_i}}$
+        \State $q_i' \gets q_i + \displaystyle{\frac{\epsilon}{m_i}p_i'}$
+        \State $p_i' \gets p_i' - \displaystyle{\frac{\epsilon}{2}\pdv{V(q')}{q_i}}$
       \EndFor
-      \For{$i=1,\ldots, d$} \\
-      \State $\hat{p_i}(t+\epsilon) = \hat{p}_i(t + \epsilon/2) -  \displaystyle{\frac{\epsilon}{2}}\pdv*{V(\hat{q}(t+\epsilon))}{q_i}$ \\
-      \EndFor
-      \EndProcedure
+      \State \Return $(q', p')$
+      \EndFunction
 		\end{algorithmic}
 	\end{algorithm}
 \end{figure}
-It is common to set all masses $m_i = 1$, which simplifies Hamilton's equations somewhat and allows us to straight forwardly \textit{vectorize} our
-leapfrog integrator.
+\noindent Note the introduction of the \textit{masses} $m_i$. For now they may simply be regarded as some constants belonging to the Hamiltonian system. 
+When used in HMC, it is common to set all masses $m_i = 1$ from which we can formulate the algorithm in vectorized form, as seen in algorithm~\ref{algo:vec_leapfrog}.
 \begin{figure}[H]
 	\begin{algorithm}[H]
-		\caption{Leapfrog integration (single step)}\label{algo:leapfrog}
+		\caption{Vectorized Leapfrog Integration}\label{algo:vec_leapfrog}
 		\begin{algorithmic}
-      \Procedure{LEAPFROG}{$q, p, \epsilon$} 
-      \\
-			\State 1. $\hat{p}(t + \epsilon/2) = \hat{p}(t) - \displaystyle{\frac{\epsilon}{2}}\nabla_q V(\hat{q}(t))$\\
-			\State 2. $\hat{q}(t+\epsilon) = \hat{q}(t) + \epsilon \hat{p}(t+\epsilon/2)$\\
-			\State 3. $\hat{p}(t+\epsilon) = \hat{p}(t + \epsilon/2) -  \displaystyle{\frac{\epsilon}{2}}\nabla_q V(\hat{q}(t+\epsilon))$
-      \EndProcedure
+      \Function{VectorizedLeapfrog}{$V, q, p, \epsilon$} 
+      \State $p' \gets p - \displaystyle{\frac{\epsilon}{2}}\nabla_q V(q)$
+      \State $q' \gets q + \epsilon p'$
+      \State $p' \gets p' - \displaystyle{\frac{\epsilon}{2}}\nabla_q V(q')$
+      \State \Return $(q', p')$
+      \EndFunction
 		\end{algorithmic}
 	\end{algorithm}
 \end{figure}
 
-\section{HMC}
-Hamiltonian Monte Carlo is largely developed by Radford Neal \cite{hmc}. We seek to sample from some target distribution which we express
-in terms of a canonical distribution over the generalized coordinates
-\begin{equation}\label{eq:canonical_q}
-  \pi(q) = \exp\left(-V(q)\right).
+\section{Generating a Proposal State}
+Our next objective is to understand how we connect an arbitrary target distribution $\pi(\theta)$
+and Hamiltonian dynamics. In this section we will weave these together and show how we
+generate new proposal state $\theta'$ which will undergo a Metropolis-Hastings step.
+The results discussed in this section can be understood as representing the proposal distribution $q(\theta'|\theta)$ used during the Metropolis-Hastings step,
+as we summarized in algorithm~\ref{algo:general_metropolis}. 
+
+The fundamental assumption we make is that the target distribution can be expressed in terms of a
+canonical distribution over coordinate space
+\begin{equation}\label{eq:canonical_coordinate}
+  \pi(q) \propto \exp\left(-V(q)\right),
 \end{equation}
-In other words, we can generically express any potential energy function as the negative logarithm of the target distribution,
-\begin{equation}\label{eq:general_potential}
-  V(q) = -\log \pi(q).
+where $q$ represents the model parameters $\theta$. We will stick to this convention to avoid confusion and 
+utilize the formulation of Hamiltonian dynamics discussed hitherto. Once we want to apply it in a Bayesian ML context,
+we simply replace $q \to \theta$. From eq.~\eqref{eq:canonical_coordinate}, we can generally define the potential
+energy function in terms of the target distribution
+\begin{equation}\label{eq:potential_energy}
+  V(q) = - \log \pi(q),
 \end{equation}
-To utilize the framework of Hamiltonian dynamics, we introduce \textit{auxilliary}
-momentum variables $p$. This allows us to construct a canonical distribution
-over \textit{phase-space} as
+up to a normalization constant. Hence once the target distribution is known,
+we use eq.~\eqref{eq:potential_energy} to obtain the potential energy of the system.
+
+We now turn to the problem of constructing the Hamiltonian so we can utilize Hamilton's equations.
+To achieve this, we must introduce \textit{auxilliary} momenta $p$ so we can define a kinetic energy function
+and evolve the system through what we may regard as \textit{fictitious time} $t$. 
+The momenta are sampled from some distribution of our own choice. We can proceed in the same way we did
+with the potential energy function and express a the momentum distribution is terms of a canonical distribution
+over momentum space
 \begin{equation}
-  \pi(q, p) = \exp\left(-H(q, p)\right).
+  \pi(p) \propto \exp\left(-K(p)\right),
 \end{equation}
-Using the form of the Hamiltonian introduced in eq.~\eqref{eq:general_hamiltonian}, we can recast the canonical distribution over phase-space as
+such that
 \begin{equation}
-  \pi(q, p) = \exp\left(-V(q)\right)\exp\left(-K(p)\right).
+  K(p) = -\log \pi (p),
 \end{equation}
-The most common choice for the canonincal distribution over momentum space is a Gaussian which corresponds to the kinetic energy function
-from classical physics
-\begin{equation}\label{eq:kinetic_energy}
-  K(p) = \sum_{i=1}^d \frac{p_i^2}{2m_i}.
+up to a constant. The commonly chosen expression for kinetic energy is 
+the one found in classical physics
+\begin{equation}\label{eq:K_classical_physics}
+  K(p) = \sum_{i=1}^d \frac{p_i^2}{2m_i},
 \end{equation}
-Before we summarize the algorithm in pseudocode, we should look at conceptual description of the algorithm.
+from which the canonical distribution is inferred to be
+\begin{equation}\label{eq:canonical_p}
+  \pi(p) \propto \exp\left(-\sum_{i=1}^d \frac{p_i^2}{2m_i}\right) = \prod_{i=1}^d \exp\left(-\frac{p_i^2}{2m_i}\right).
+\end{equation}
+Hence, with the kinetic energy from eq.~\eqref{eq:K_classical_physics}, we 
+sample each momentum independently from a Gaussian distribution with zero mean and variance $\sigma_i^2 = m_i$.
+
+Now that we understand how we specify the potential energy for a given target distribution and
+the kinetic energy of the auxilliary momenta, we can formulate full canonical distribution over phase-space as
+\begin{equation}\label{eq:full_canonical}
+  \pi(q, p) = \pi(q)\pi(p) \propto \exp\left(-V(q)\right)\exp\left(-K(p)\right) = \exp\left(-H(q, p)\right).
+\end{equation}
+We are naturally just interested in generating a new coordinate $q'$. Using Hamilton's equations
+with the Hamiltonian implied by eq.~\eqref{eq:full_canonical}, we can simulate the fictitious Hamiltonian
+system using Hamilton's equation in eq.~\eqref{eq:hamiltons_eqs} to generate a new state $(q', p')$. The proposal state
+is then obtained by the projection map $(q', p') \mapsto q'$.
+
+Before we summarize the algorithm in a neat manner, we should briefly outline it conceptually. 
 \begin{enumerate}
-  \item Given an initial state $q$, we randomly sample $p$ from a Gaussian distribution.
-  \item The next step is to choose a direction in phase space, in which we sample $v \sim \text{Uniform}(\{-1, 1\})$.
-  \item Now we perform $L$ leapfrog steps along the $v$ direction, for a total trajectory length of $v\epsilon L$.
-  \item At this point, we have reached a proposal state in phase-space $(q^*, p^*)$ which we perform Metropolis correction,
-  that is, we feed the proposal state and the initial state through the Metropolis-Hastings algorithm and accept the new
-  state with a given acceptance probability.
+  \item Given an initial state $q$, we randomly sample the auxilliary momenta $p$ using eq.~\eqref{eq:canonical_p}
+  to generate an initial condition $(q, p)$ to use with Hamilton's equations.
+  \item We randomly choose to simulate the system forwards or backwards in time by sampling a variable $v \sim \text{Uniform}(\{-1, 1\})$
+  from which the step size is set as $v\epsilon$. Forwards in time is represented by $v = 1$ and backwards in time is represented by $v = -1$.
+  \item Perform $L$ Leapfrog steps using algorithm~\ref{algo:leapfrog} for a total trajectory length of $\epsilon L$ to produce
+  a proposal point $(q', p')$.
+  \item Perform a Metropolis-Hastings correction on the proposal state to accept or reject it.
+  \item Project the phase-space point onto coordinate space and return $q'$ is accepted or $q$ if rejected in the previous step.
 \end{enumerate}
-This sums up a single step in HMC which returns a position state. To sample multiple such points, we simply feed the returned position state $q$ back in to the machinery 
+This essentially summarizes the practical steps of HMC. The introduction of randomly simulating
+forwards and backwards in time is to ensure that the algorithm is reversible and can obey the detailed balance condition discussed in chapter~\ref{chap:mcmc}.
+To be really rigorous, we must reverse the sign of final momentum as well, but since we shall use a Gaussian distribution, changing the sign
+of the momenta makes no difference to the value of the kinetic energy. 
+To generate a Markov chain by this procedure, we simply feed the returned position state back in to the machinery 
 and redo the procedure.
 The HMC scheme is summarized in algorithm \ref{algo:hmc}.
 \begin{figure}[H]
 	\begin{algorithm}[H]
 		\caption{Hamiltonian Monte Carlo}\label{algo:hmc}
 		\begin{algorithmic}
-      \Procedure{HMCstep}{$L, q, p$}
-      \State Sample $v \sim \text{Uniform}(\{-1, 1\})$.
-      \State $(q^*, p^*) \leftarrow (q, p)$    \Comment{Start from initial state.}
-      \State $p^* \leftarrow \text{GIBBS}(p^*)$
-      \For{$l = 1, ..., L$} \Comment{$L$ Leapfrog steps.}
-        \State $(q^*, p^*) \leftarrow$ LEAPFROG$(q^*, p^*, v)$
+      \Function{HMCstep}{$q, H, L, \epsilon$}
+      \State Sample $p \sim \mathcal{N}(0, \text{diag}(m_1, \ldots, m_d))$ \Comment{Sample auxilliary momenta}
+      \State Sample $v \sim \text{Uniform}(\{-1, 1\})$. \Comment{Randomly choose direction in time.}
+      \State $(q', p') \leftarrow (q, p)$    \Comment{Initialize the initial state.}
+      \For{$l = 1, ..., L$} \Comment{Simulate Hamiltonian system for $L$ Leapfrog steps.}
+        \State $(q', p') \leftarrow$ LEAPFROG$(q', p', v\epsilon)$ 
       \EndFor
-      \State $P = \min \left(1, \exp\left[-\left(H(q^*,p^*) - H(q, p)\right)\right]\right)$
+      \State $a = \min \left(1, \exp\left[-\left(H(q^*,p^*) - H(q, p)\right)\right]\right)$ \Comment{Compute acceptance probability}
       \State Sample $u \sim U(0,1)$ \Comment{Uniform distribution on $(0,1)$.}
-      \If {$P \geq u$}
-        \State $(q, p) \gets (q^*, p^*)$ \Comment{Accept proposed state.}
+      \If {$a \geq u$} \Comment{Perform Metropolis-Hastings correction}
+        \State $q \gets q'$ \Comment{Accept proposed state.}
       \Else
-        \State $(q, p) \gets (q, p)$ \Comment{Reject proposed state.}
+        \State $q \gets q$ \Comment{Reject proposed state.}
       \EndIf
-      \EndProcedure
+      \State \Return $q$
+      \EndFunction
 		\end{algorithmic}
 	\end{algorithm}
 \end{figure}

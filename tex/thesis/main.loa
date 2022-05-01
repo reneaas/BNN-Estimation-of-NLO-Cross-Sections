@@ -1,0 +1,9 @@
+\contentsline {algorithm}{\numberline {3.1}{\ignorespaces Metropolis-Hastings\relax }}{14}{figure.caption.7}%
+\contentsline {algorithm}{\numberline {3.2}{\ignorespaces Gibbs sampling\relax }}{15}{figure.caption.8}%
+\contentsline {algorithm}{\numberline {4.1}{\ignorespaces Leapfrog Integration\relax }}{18}{figure.caption.9}%
+\contentsline {algorithm}{\numberline {4.2}{\ignorespaces Vectorized Leapfrog Integration\relax }}{18}{figure.caption.10}%
+\contentsline {algorithm}{\numberline {4.3}{\ignorespaces Hamiltonian Monte Carlo\relax }}{20}{figure.caption.11}%
+\contentsline {algorithm}{\numberline {5.1}{\ignorespaces BuildTree function\relax }}{25}{figure.caption.12}%
+\contentsline {algorithm}{\numberline {5.2}{\ignorespaces Naive NUTS sampler\relax }}{26}{figure.caption.13}%
+\contentsline {algorithm}{\numberline {6.1}{\ignorespaces Backpropagation: Forward pass\relax }}{31}{figure.caption.14}%
+\contentsline {algorithm}{\numberline {6.2}{\ignorespaces Backpropagation: Backward pass\relax }}{31}{figure.caption.15}%

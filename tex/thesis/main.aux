@@ -21,7 +21,7 @@
 \providecommand\HyField@AuxAddToCoFields[2]{}
 \bibstyle{JHEP}
 \babel@aux{UKenglish}{}
-\@writefile{toc}{\contentsline {chapter}{Introduction}{1}{chapter*.4}\protected@file@percent }
+\@writefile{toc}{\contentsline {chapter}{Introduction}{1}{chapter*.5}\protected@file@percent }
 \@writefile{toc}{\contentsline {chapter}{\numberline {1}The Physics Problem}{3}{chapter.1}\protected@file@percent }
 \@writefile{lof}{\addvspace {10\p@ }}
 \@writefile{lot}{\addvspace {10\p@ }}
@@ -72,6 +72,7 @@
 \newlabel{eq:predictive_distribution@cref}{{[equation][25][2]2.25}{[1][8][]9}}
 \newlabel{eq:bayesian_expval}{{2.27}{9}{Bayesian Inference}{equation.2.4.27}{}}
 \newlabel{eq:bayesian_expval@cref}{{[equation][27][2]2.27}{[1][9][]9}}
+\citation{conceptual_intro_hmc}
 \@writefile{toc}{\contentsline {chapter}{\numberline {3}Markov Chain Monte Carlo}{11}{chapter.3}\protected@file@percent }
 \@writefile{lof}{\addvspace {10\p@ }}
 \@writefile{lot}{\addvspace {10\p@ }}
@@ -85,30 +86,30 @@
 \@writefile{toc}{\contentsline {section}{\numberline {3.2}Markov Chains and Markov Transitions}{12}{section.3.2}\protected@file@percent }
 \newlabel{eq:detailed_balance}{{3.3}{12}{Markov Chains and Markov Transitions}{equation.3.2.3}{}}
 \newlabel{eq:detailed_balance@cref}{{[equation][3][3]3.3}{[1][12][]12}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {3.2.1}Ideal Markov Chains}{12}{subsection.3.2.1}\protected@file@percent }
 \citation{geometric_ergodicity}
 \citation{rhat}
 \citation{convergence_diagnostics}
 \citation{metropolis,metropolis_two}
+\@writefile{toc}{\contentsline {subsection}{\numberline {3.2.1}Ideal Markov Chains}{13}{subsection.3.2.1}\protected@file@percent }
 \@writefile{toc}{\contentsline {subsection}{\numberline {3.2.2}Pathologies}{13}{subsection.3.2.2}\protected@file@percent }
 \@writefile{toc}{\contentsline {subsection}{\numberline {3.2.3}Geometric Ergodicity and Convergence Diagnostics}{13}{subsection.3.2.3}\protected@file@percent }
 \@writefile{toc}{\contentsline {section}{\numberline {3.3}Metropolis-Hastings}{13}{section.3.3}\protected@file@percent }
 \newlabel{eq:general_acceptance_prob}{{3.5}{13}{Metropolis-Hastings}{equation.3.3.5}{}}
 \newlabel{eq:general_acceptance_prob@cref}{{[equation][5][3]3.5}{[1][13][]13}}
-\@writefile{loa}{\contentsline {algorithm}{\numberline {1}{\ignorespaces Metropolis-Hastings\relax }}{14}{figure.caption.6}\protected@file@percent }
+\@writefile{loa}{\contentsline {algorithm}{\numberline {3.1}{\ignorespaces Metropolis-Hastings\relax }}{14}{figure.caption.7}\protected@file@percent }
 \providecommand*\caption@xref[2]{\@setref\relax\@undefined{#1}}
-\newlabel{algo:general_metropolis}{{1}{14}{Metropolis-Hastings\relax }{figure.caption.6}{}}
-\newlabel{algo:general_metropolis@cref}{{[algorithm][1][]1}{[1][13][]14}}
+\newlabel{algo:general_metropolis}{{3.1}{14}{Metropolis-Hastings\relax }{figure.caption.7}{}}
+\newlabel{algo:general_metropolis@cref}{{[algorithm][1][3]3.1}{[1][13][]14}}
 \@writefile{toc}{\contentsline {subsection}{\numberline {3.3.1}The Proposal Distribution}{14}{subsection.3.3.1}\protected@file@percent }
 \newlabel{eq:symmetric_acceptance_prob}{{3.7}{14}{The Proposal Distribution}{equation.3.3.7}{}}
 \newlabel{eq:symmetric_acceptance_prob@cref}{{[equation][7][3]3.7}{[1][14][]14}}
 \@writefile{toc}{\contentsline {subsection}{\numberline {3.3.2}Random Walk Metropolis}{14}{subsection.3.3.2}\protected@file@percent }
 \@writefile{toc}{\contentsline {section}{\numberline {3.4}Gibbs Sampling}{14}{section.3.4}\protected@file@percent }
-\newlabel{eq:gibbs_sampling}{{3.8}{15}{Gibbs Sampling}{equation.3.4.8}{}}
-\newlabel{eq:gibbs_sampling@cref}{{[equation][8][3]3.8}{[1][15][]15}}
-\@writefile{loa}{\contentsline {algorithm}{\numberline {2}{\ignorespaces Gibbs sampling\relax }}{15}{figure.caption.7}\protected@file@percent }
-\newlabel{algo:gibbs}{{2}{15}{Gibbs sampling\relax }{figure.caption.7}{}}
-\newlabel{algo:gibbs@cref}{{[algorithm][2][]2}{[1][15][]15}}
+\newlabel{eq:gibbs_sampling}{{3.8}{14}{Gibbs Sampling}{equation.3.4.8}{}}
+\newlabel{eq:gibbs_sampling@cref}{{[equation][8][3]3.8}{[1][14][]14}}
+\@writefile{loa}{\contentsline {algorithm}{\numberline {3.2}{\ignorespaces Gibbs sampling\relax }}{15}{figure.caption.8}\protected@file@percent }
+\newlabel{algo:gibbs}{{3.2}{15}{Gibbs sampling\relax }{figure.caption.8}{}}
+\newlabel{algo:gibbs@cref}{{[algorithm][2][3]3.2}{[1][14][]15}}
 \citation{classical_mechanics}
 \citation{leapfrog}
 \@writefile{toc}{\contentsline {chapter}{\numberline {4}Hamiltonian Monte Carlo}{17}{chapter.4}\protected@file@percent }
@@ -116,154 +117,157 @@
 \@writefile{lot}{\addvspace {10\p@ }}
 \newlabel{chap:hmc}{{4}{17}{Hamiltonian Monte Carlo}{chapter.4}{}}
 \newlabel{chap:hmc@cref}{{[chapter][4][]4}{[1][17][]17}}
-\@writefile{toc}{\contentsline {section}{\numberline {4.1}Hamiltonian dynamics}{17}{section.4.1}\protected@file@percent }
-\newlabel{sec:hamiltonian_dynamics}{{4.1}{17}{Hamiltonian dynamics}{section.4.1}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {4.1}Hamiltonian Dynamics}{17}{section.4.1}\protected@file@percent }
+\newlabel{sec:hamiltonian_dynamics}{{4.1}{17}{Hamiltonian Dynamics}{section.4.1}{}}
 \newlabel{sec:hamiltonian_dynamics@cref}{{[section][1][4]4.1}{[1][17][]17}}
-\newlabel{eq:general_hamiltonian}{{4.1}{17}{Hamiltonian dynamics}{equation.4.1.1}{}}
-\newlabel{eq:general_hamiltonian@cref}{{[equation][1][4]4.1}{[1][17][]17}}
-\newlabel{eq:eom}{{4.2}{17}{Hamiltonian dynamics}{equation.4.1.2}{}}
-\newlabel{eq:eom@cref}{{[equation][2][4]4.2}{[1][17][]17}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {4.1.1}Leapfrog integration}{17}{subsection.4.1.1}\protected@file@percent }
-\citation{hmc}
-\@writefile{loa}{\contentsline {algorithm}{\numberline {3}{\ignorespaces Leapfrog integration (single step)\relax }}{18}{figure.caption.8}\protected@file@percent }
-\newlabel{algo:leapfrog}{{3}{18}{Leapfrog integration (single step)\relax }{figure.caption.8}{}}
-\newlabel{algo:leapfrog@cref}{{[algorithm][3][]3}{[1][17][]18}}
-\@writefile{loa}{\contentsline {algorithm}{\numberline {4}{\ignorespaces Leapfrog integration (single step)\relax }}{18}{figure.caption.9}\protected@file@percent }
-\newlabel{algo:leapfrog}{{4}{18}{Leapfrog integration (single step)\relax }{figure.caption.9}{}}
-\newlabel{algo:leapfrog@cref}{{[algorithm][4][]4}{[1][18][]18}}
-\@writefile{toc}{\contentsline {section}{\numberline {4.2}HMC}{18}{section.4.2}\protected@file@percent }
-\newlabel{eq:canonical_q}{{4.4}{18}{HMC}{equation.4.2.4}{}}
-\newlabel{eq:canonical_q@cref}{{[equation][4][4]4.4}{[1][18][]18}}
-\newlabel{eq:general_potential}{{4.5}{18}{HMC}{equation.4.2.5}{}}
-\newlabel{eq:general_potential@cref}{{[equation][5][4]4.5}{[1][18][]18}}
-\newlabel{eq:kinetic_energy}{{4.8}{19}{HMC}{equation.4.2.8}{}}
-\newlabel{eq:kinetic_energy@cref}{{[equation][8][4]4.8}{[1][18][]19}}
-\@writefile{loa}{\contentsline {algorithm}{\numberline {5}{\ignorespaces Hamiltonian Monte Carlo\relax }}{19}{figure.caption.10}\protected@file@percent }
-\newlabel{algo:hmc}{{5}{19}{Hamiltonian Monte Carlo\relax }{figure.caption.10}{}}
-\newlabel{algo:hmc@cref}{{[algorithm][5][]5}{[1][19][]19}}
-\@writefile{toc}{\contentsline {section}{\numberline {4.3}The Potential Energy Function in Bayesian ML Applications}{19}{section.4.3}\protected@file@percent }
+\newlabel{eq:hamiltons_eqs}{{4.1}{17}{Hamiltonian Dynamics}{equation.4.1.1}{}}
+\newlabel{eq:hamiltons_eqs@cref}{{[equation][1][4]4.1}{[1][17][]17}}
+\newlabel{eq:hamiltonian}{{4.2}{17}{Hamiltonian Dynamics}{equation.4.1.2}{}}
+\newlabel{eq:hamiltonian@cref}{{[equation][2][4]4.2}{[1][17][]17}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.1.1}Leapfrog integration}{18}{subsection.4.1.1}\protected@file@percent }
+\@writefile{loa}{\contentsline {algorithm}{\numberline {4.1}{\ignorespaces Leapfrog Integration\relax }}{18}{figure.caption.9}\protected@file@percent }
+\newlabel{algo:leapfrog}{{4.1}{18}{Leapfrog Integration\relax }{figure.caption.9}{}}
+\newlabel{algo:leapfrog@cref}{{[algorithm][1][4]4.1}{[1][18][]18}}
+\@writefile{loa}{\contentsline {algorithm}{\numberline {4.2}{\ignorespaces Vectorized Leapfrog Integration\relax }}{18}{figure.caption.10}\protected@file@percent }
+\newlabel{algo:vec_leapfrog}{{4.2}{18}{Vectorized Leapfrog Integration\relax }{figure.caption.10}{}}
+\newlabel{algo:vec_leapfrog@cref}{{[algorithm][2][4]4.2}{[1][18][]18}}
+\@writefile{toc}{\contentsline {section}{\numberline {4.2}Generating a Proposal State}{18}{section.4.2}\protected@file@percent }
+\newlabel{eq:canonical_coordinate}{{4.5}{18}{Generating a Proposal State}{equation.4.2.5}{}}
+\newlabel{eq:canonical_coordinate@cref}{{[equation][5][4]4.5}{[1][18][]18}}
+\newlabel{eq:potential_energy}{{4.6}{19}{Generating a Proposal State}{equation.4.2.6}{}}
+\newlabel{eq:potential_energy@cref}{{[equation][6][4]4.6}{[1][19][]19}}
+\newlabel{eq:K_classical_physics}{{4.9}{19}{Generating a Proposal State}{equation.4.2.9}{}}
+\newlabel{eq:K_classical_physics@cref}{{[equation][9][4]4.9}{[1][19][]19}}
+\newlabel{eq:canonical_p}{{4.10}{19}{Generating a Proposal State}{equation.4.2.10}{}}
+\newlabel{eq:canonical_p@cref}{{[equation][10][4]4.10}{[1][19][]19}}
+\newlabel{eq:full_canonical}{{4.11}{19}{Generating a Proposal State}{equation.4.2.11}{}}
+\newlabel{eq:full_canonical@cref}{{[equation][11][4]4.11}{[1][19][]19}}
+\@writefile{loa}{\contentsline {algorithm}{\numberline {4.3}{\ignorespaces Hamiltonian Monte Carlo\relax }}{20}{figure.caption.11}\protected@file@percent }
+\newlabel{algo:hmc}{{4.3}{20}{Hamiltonian Monte Carlo\relax }{figure.caption.11}{}}
+\newlabel{algo:hmc@cref}{{[algorithm][3][4]4.3}{[1][19][]20}}
+\@writefile{toc}{\contentsline {section}{\numberline {4.3}The Potential Energy Function in Bayesian ML Applications}{20}{section.4.3}\protected@file@percent }
 \@writefile{toc}{\contentsline {section}{\numberline {4.4}Limitations of HMC}{20}{section.4.4}\protected@file@percent }
 \citation{nuts}
-\@writefile{toc}{\contentsline {chapter}{\numberline {5}The No-U-Turn Sampler}{21}{chapter.5}\protected@file@percent }
+\@writefile{toc}{\contentsline {chapter}{\numberline {5}The No-U-Turn Sampler}{23}{chapter.5}\protected@file@percent }
 \@writefile{lof}{\addvspace {10\p@ }}
 \@writefile{lot}{\addvspace {10\p@ }}
-\newlabel{chap:no_u_turn_sampler}{{5}{21}{The No-U-Turn Sampler}{chapter.5}{}}
-\newlabel{chap:no_u_turn_sampler@cref}{{[chapter][5][]5}{[1][21][]21}}
-\@writefile{toc}{\contentsline {section}{\numberline {5.1}Preliminary definitions}{21}{section.5.1}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {5.1.1}Generation of Candidate Points and Stopping Criterion}{22}{subsection.5.1.1}\protected@file@percent }
-\newlabel{eq:nuts_stop1}{{5.6}{22}{Generation of Candidate Points and Stopping Criterion}{equation.5.1.6}{}}
-\newlabel{eq:nuts_stop1@cref}{{[equation][6][5]5.6}{[1][22][]22}}
-\newlabel{eq:nuts_stop2}{{5.9}{22}{Generation of Candidate Points and Stopping Criterion}{equation.5.1.9}{}}
-\newlabel{eq:nuts_stop2@cref}{{[equation][9][5]5.9}{[1][22][]22}}
-\@writefile{toc}{\contentsline {subsubsection}{\numberline {5.1.1.1}Choosing candidate points}{22}{subsubsection.5.1.1.1}\protected@file@percent }
-\@writefile{toc}{\contentsline {section}{\numberline {5.2}The Naive NUTS Algorithm}{23}{section.5.2}\protected@file@percent }
-\@writefile{loa}{\contentsline {algorithm}{\numberline {6}{\ignorespaces BuildTree function\relax }}{23}{figure.caption.11}\protected@file@percent }
-\newlabel{algo:build_tree}{{6}{23}{BuildTree function\relax }{figure.caption.11}{}}
-\newlabel{algo:build_tree@cref}{{[algorithm][6][]6}{[1][23][]23}}
-\@writefile{loa}{\contentsline {algorithm}{\numberline {7}{\ignorespaces Naive NUTS sampler\relax }}{24}{figure.caption.12}\protected@file@percent }
-\newlabel{algo:nuts_naive}{{7}{24}{Naive NUTS sampler\relax }{figure.caption.12}{}}
-\newlabel{algo:nuts_naive@cref}{{[algorithm][7][]7}{[1][23][]24}}
-\@writefile{toc}{\contentsline {section}{\numberline {5.3}Efficient NUTS}{24}{section.5.3}\protected@file@percent }
-\@writefile{toc}{\contentsline {section}{\numberline {5.4}Dual-Averaging Step Size Adaptation}{25}{section.5.4}\protected@file@percent }
-\@writefile{toc}{\contentsline {section}{\numberline {5.5}NUTS with Dual-Averaging Step Size Adaptation}{25}{section.5.5}\protected@file@percent }
+\newlabel{chap:no_u_turn_sampler}{{5}{23}{The No-U-Turn Sampler}{chapter.5}{}}
+\newlabel{chap:no_u_turn_sampler@cref}{{[chapter][5][]5}{[1][23][]23}}
+\@writefile{toc}{\contentsline {section}{\numberline {5.1}Preliminary definitions}{23}{section.5.1}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {5.1.1}Generation of Candidate Points and Stopping Criterion}{24}{subsection.5.1.1}\protected@file@percent }
+\newlabel{eq:nuts_stop1}{{5.6}{24}{Generation of Candidate Points and Stopping Criterion}{equation.5.1.6}{}}
+\newlabel{eq:nuts_stop1@cref}{{[equation][6][5]5.6}{[1][24][]24}}
+\newlabel{eq:nuts_stop2}{{5.9}{24}{Generation of Candidate Points and Stopping Criterion}{equation.5.1.9}{}}
+\newlabel{eq:nuts_stop2@cref}{{[equation][9][5]5.9}{[1][24][]24}}
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {5.1.1.1}Choosing candidate points}{24}{subsubsection.5.1.1.1}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {5.2}The Naive NUTS Algorithm}{25}{section.5.2}\protected@file@percent }
+\@writefile{loa}{\contentsline {algorithm}{\numberline {5.1}{\ignorespaces BuildTree function\relax }}{25}{figure.caption.12}\protected@file@percent }
+\newlabel{algo:build_tree}{{5.1}{25}{BuildTree function\relax }{figure.caption.12}{}}
+\newlabel{algo:build_tree@cref}{{[algorithm][1][5]5.1}{[1][25][]25}}
+\@writefile{loa}{\contentsline {algorithm}{\numberline {5.2}{\ignorespaces Naive NUTS sampler\relax }}{26}{figure.caption.13}\protected@file@percent }
+\newlabel{algo:nuts_naive}{{5.2}{26}{Naive NUTS sampler\relax }{figure.caption.13}{}}
+\newlabel{algo:nuts_naive@cref}{{[algorithm][2][5]5.2}{[1][25][]26}}
+\@writefile{toc}{\contentsline {section}{\numberline {5.3}Efficient NUTS}{26}{section.5.3}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {5.4}Dual-Averaging Step Size Adaptation}{27}{section.5.4}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {5.5}NUTS with Dual-Averaging Step Size Adaptation}{27}{section.5.5}\protected@file@percent }
 \citation{tf}
-\@writefile{toc}{\contentsline {chapter}{\numberline {6}Bayesian Learning for Neural Networks}{27}{chapter.6}\protected@file@percent }
+\@writefile{toc}{\contentsline {chapter}{\numberline {6}Bayesian Learning for Neural Networks}{29}{chapter.6}\protected@file@percent }
 \@writefile{lof}{\addvspace {10\p@ }}
 \@writefile{lot}{\addvspace {10\p@ }}
-\newlabel{chap:bnn}{{6}{27}{Bayesian Learning for Neural Networks}{chapter.6}{}}
-\newlabel{chap:bnn@cref}{{[chapter][6][]6}{[1][27][]27}}
-\@writefile{toc}{\contentsline {section}{\numberline {6.1}Neural Networks}{27}{section.6.1}\protected@file@percent }
-\newlabel{sec:neural_networks}{{6.1}{27}{Neural Networks}{section.6.1}{}}
-\newlabel{sec:neural_networks@cref}{{[section][1][6]6.1}{[1][27][]27}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {6.1.1}Basic Mathematical Structure}{27}{subsection.6.1.1}\protected@file@percent }
+\newlabel{chap:bnn}{{6}{29}{Bayesian Learning for Neural Networks}{chapter.6}{}}
+\newlabel{chap:bnn@cref}{{[chapter][6][]6}{[1][29][]29}}
+\@writefile{toc}{\contentsline {section}{\numberline {6.1}Neural Networks}{29}{section.6.1}\protected@file@percent }
+\newlabel{sec:neural_networks}{{6.1}{29}{Neural Networks}{section.6.1}{}}
+\newlabel{sec:neural_networks@cref}{{[section][1][6]6.1}{[1][29][]29}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {6.1.1}Basic Mathematical Structure}{29}{subsection.6.1.1}\protected@file@percent }
 \citation{backprop}
 \citation{ml_for_physicists}
-\newlabel{eq:nn_forward_pass}{{6.2}{28}{Basic Mathematical Structure}{equation.6.1.2}{}}
-\newlabel{eq:nn_forward_pass@cref}{{[equation][2][6]6.2}{[1][27][]28}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {6.1.2}Backpropagation}{28}{subsection.6.1.2}\protected@file@percent }
-\newlabel{eq:backprop1}{{6.3}{28}{Backpropagation}{equation.6.1.3}{}}
-\newlabel{eq:backprop1@cref}{{[equation][3][6]6.3}{[1][28][]28}}
-\newlabel{eq:backprop2}{{6.4}{28}{Backpropagation}{equation.6.1.4}{}}
-\newlabel{eq:backprop2@cref}{{[equation][4][6]6.4}{[1][28][]28}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {6.1.3}Loss Function for Regression}{28}{subsection.6.1.3}\protected@file@percent }
-\@writefile{loa}{\contentsline {algorithm}{\numberline {8}{\ignorespaces Backpropagation: Forward pass\relax }}{29}{figure.caption.13}\protected@file@percent }
-\newlabel{algo:forward_pass}{{8}{29}{Backpropagation: Forward pass\relax }{figure.caption.13}{}}
-\newlabel{algo:forward_pass@cref}{{[algorithm][8][]8}{[1][28][]29}}
-\@writefile{loa}{\contentsline {algorithm}{\numberline {9}{\ignorespaces Backpropagation: Backward pass\relax }}{29}{figure.caption.14}\protected@file@percent }
-\newlabel{algo:backward_pass}{{9}{29}{Backpropagation: Backward pass\relax }{figure.caption.14}{}}
-\newlabel{algo:backward_pass@cref}{{[algorithm][9][]9}{[1][29][]29}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {6.1.4}Regularization in Neural Networks}{29}{subsection.6.1.4}\protected@file@percent }
+\newlabel{eq:nn_forward_pass}{{6.2}{30}{Basic Mathematical Structure}{equation.6.1.2}{}}
+\newlabel{eq:nn_forward_pass@cref}{{[equation][2][6]6.2}{[1][29][]30}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {6.1.2}Backpropagation}{30}{subsection.6.1.2}\protected@file@percent }
+\newlabel{eq:backprop1}{{6.3}{30}{Backpropagation}{equation.6.1.3}{}}
+\newlabel{eq:backprop1@cref}{{[equation][3][6]6.3}{[1][30][]30}}
+\newlabel{eq:backprop2}{{6.4}{30}{Backpropagation}{equation.6.1.4}{}}
+\newlabel{eq:backprop2@cref}{{[equation][4][6]6.4}{[1][30][]30}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {6.1.3}Loss Function for Regression}{30}{subsection.6.1.3}\protected@file@percent }
+\@writefile{loa}{\contentsline {algorithm}{\numberline {6.1}{\ignorespaces Backpropagation: Forward pass\relax }}{31}{figure.caption.14}\protected@file@percent }
+\newlabel{algo:forward_pass}{{6.1}{31}{Backpropagation: Forward pass\relax }{figure.caption.14}{}}
+\newlabel{algo:forward_pass@cref}{{[algorithm][1][6]6.1}{[1][30][]31}}
+\@writefile{loa}{\contentsline {algorithm}{\numberline {6.2}{\ignorespaces Backpropagation: Backward pass\relax }}{31}{figure.caption.15}\protected@file@percent }
+\newlabel{algo:backward_pass}{{6.2}{31}{Backpropagation: Backward pass\relax }{figure.caption.15}{}}
+\newlabel{algo:backward_pass@cref}{{[algorithm][2][6]6.2}{[1][31][]31}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {6.1.4}Regularization in Neural Networks}{31}{subsection.6.1.4}\protected@file@percent }
 \citation{swish}
-\@writefile{toc}{\contentsline {section}{\numberline {6.2}Activation Functions}{30}{section.6.2}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {6.2.1}Sigmoid}{30}{subsection.6.2.1}\protected@file@percent }
-\newlabel{eq:sigmoid}{{6.11}{30}{Sigmoid}{equation.6.2.11}{}}
-\newlabel{eq:sigmoid@cref}{{[equation][11][6]6.11}{[1][30][]30}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {6.2.2}ReLU}{30}{subsection.6.2.2}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {6.2.3}Swish}{30}{subsection.6.2.3}\protected@file@percent }
-\@writefile{toc}{\contentsline {section}{\numberline {6.3}Bayesian Framework for Neural Networks}{30}{section.6.3}\protected@file@percent }
-\newlabel{eq:nn_likelihood}{{6.16}{31}{Bayesian Framework for Neural Networks}{equation.6.3.16}{}}
-\newlabel{eq:nn_likelihood@cref}{{[equation][16][6]6.16}{[1][30][]31}}
-\newlabel{eq:covariance}{{6.20}{31}{Bayesian Framework for Neural Networks}{equation.6.3.20}{}}
-\newlabel{eq:covariance@cref}{{[equation][20][6]6.20}{[1][31][]31}}
-\@writefile{toc}{\contentsline {section}{\numberline {6.4}Bayesian learning using HMC}{31}{section.6.4}\protected@file@percent }
-\newlabel{eq:generic_potential_energy}{{6.21}{31}{Bayesian learning using HMC}{equation.6.4.21}{}}
-\newlabel{eq:generic_potential_energy@cref}{{[equation][21][6]6.21}{[1][31][]31}}
-\newlabel{eq:model_priors}{{6.22}{31}{Bayesian learning using HMC}{equation.6.4.22}{}}
-\newlabel{eq:model_priors@cref}{{[equation][22][6]6.22}{[1][31][]31}}
-\newlabel{eq:special_potential_energy}{{6.23}{31}{Bayesian learning using HMC}{equation.6.4.23}{}}
-\newlabel{eq:special_potential_energy@cref}{{[equation][23][6]6.23}{[1][31][]31}}
-\@writefile{toc}{\contentsline {chapter}{\numberline {7}Numerical Experiments}{33}{chapter.7}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {6.2}Activation Functions}{32}{section.6.2}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {6.2.1}Sigmoid}{32}{subsection.6.2.1}\protected@file@percent }
+\newlabel{eq:sigmoid}{{6.11}{32}{Sigmoid}{equation.6.2.11}{}}
+\newlabel{eq:sigmoid@cref}{{[equation][11][6]6.11}{[1][32][]32}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {6.2.2}ReLU}{32}{subsection.6.2.2}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {6.2.3}Swish}{32}{subsection.6.2.3}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {6.3}Bayesian Framework for Neural Networks}{32}{section.6.3}\protected@file@percent }
+\newlabel{eq:nn_likelihood}{{6.16}{33}{Bayesian Framework for Neural Networks}{equation.6.3.16}{}}
+\newlabel{eq:nn_likelihood@cref}{{[equation][16][6]6.16}{[1][32][]33}}
+\newlabel{eq:covariance}{{6.20}{33}{Bayesian Framework for Neural Networks}{equation.6.3.20}{}}
+\newlabel{eq:covariance@cref}{{[equation][20][6]6.20}{[1][33][]33}}
+\@writefile{toc}{\contentsline {section}{\numberline {6.4}Bayesian learning using HMC}{33}{section.6.4}\protected@file@percent }
+\newlabel{eq:generic_potential_energy}{{6.21}{33}{Bayesian learning using HMC}{equation.6.4.21}{}}
+\newlabel{eq:generic_potential_energy@cref}{{[equation][21][6]6.21}{[1][33][]33}}
+\newlabel{eq:model_priors}{{6.22}{33}{Bayesian learning using HMC}{equation.6.4.22}{}}
+\newlabel{eq:model_priors@cref}{{[equation][22][6]6.22}{[1][33][]33}}
+\newlabel{eq:special_potential_energy}{{6.23}{33}{Bayesian learning using HMC}{equation.6.4.23}{}}
+\newlabel{eq:special_potential_energy@cref}{{[equation][23][6]6.23}{[1][33][]33}}
+\@writefile{toc}{\contentsline {chapter}{\numberline {7}Numerical Experiments}{35}{chapter.7}\protected@file@percent }
 \@writefile{lof}{\addvspace {10\p@ }}
 \@writefile{lot}{\addvspace {10\p@ }}
-\@writefile{toc}{\contentsline {section}{\numberline {7.1}The Dataset}{33}{section.7.1}\protected@file@percent }
-\newlabel{sec:dataset}{{7.1}{33}{The Dataset}{section.7.1}{}}
-\newlabel{sec:dataset@cref}{{[section][1][7]7.1}{[1][33][]33}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {7.1.1}Data Generation}{33}{subsection.7.1.1}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {7.1.2}Data Scaling and Transformations}{33}{subsection.7.1.2}\protected@file@percent }
-\@writefile{toc}{\contentsline {section}{\numberline {7.2}Performance Metrics}{33}{section.7.2}\protected@file@percent }
-\newlabel{seq:perf_metrics}{{7.2}{33}{Performance Metrics}{section.7.2}{}}
-\newlabel{seq:perf_metrics@cref}{{[section][2][7]7.2}{[1][33][]33}}
-\@writefile{toc}{\contentsline {section}{\numberline {7.3}Results}{33}{section.7.3}\protected@file@percent }
-\newlabel{sec:results}{{7.3}{33}{Results}{section.7.3}{}}
-\newlabel{sec:results@cref}{{[section][3][7]7.3}{[1][33][]33}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {7.3.1}Benchmarks of Hyperparameters}{33}{subsection.7.3.1}\protected@file@percent }
-\newlabel{subsec:benchmarks}{{7.3.1}{33}{Benchmarks of Hyperparameters}{subsection.7.3.1}{}}
-\newlabel{subsec:benchmarks@cref}{{[subsection][1][7,3]7.3.1}{[1][33][]33}}
-\@writefile{toc}{\contentsline {subsubsection}{\numberline {7.3.1.1}Baseline Model}{33}{subsubsection.7.3.1.1}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsubsection}{\numberline {7.3.1.2}Pretraining}{33}{subsubsection.7.3.1.2}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsubsection}{\numberline {7.3.1.3}Burn-in length}{33}{subsubsection.7.3.1.3}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsubsection}{\numberline {7.3.1.4}Number of model parameters}{33}{subsubsection.7.3.1.4}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {7.3.2}Neutralino-Neutralino Cross Sections}{33}{subsection.7.3.2}\protected@file@percent }
-\newlabel{subsec:neuralino_experiments}{{7.3.2}{33}{Neutralino-Neutralino Cross Sections}{subsection.7.3.2}{}}
-\newlabel{subsec:neuralino_experiments@cref}{{[subsection][2][7,3]7.3.2}{[1][33][]33}}
-\@writefile{toc}{\contentsline {chapter}{\numberline {8}Discussion}{35}{chapter.8}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {7.1}The Dataset}{35}{section.7.1}\protected@file@percent }
+\newlabel{sec:dataset}{{7.1}{35}{The Dataset}{section.7.1}{}}
+\newlabel{sec:dataset@cref}{{[section][1][7]7.1}{[1][35][]35}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {7.1.1}Data Generation}{35}{subsection.7.1.1}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {7.1.2}Data Scaling and Transformations}{35}{subsection.7.1.2}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {7.2}Performance Metrics}{35}{section.7.2}\protected@file@percent }
+\newlabel{seq:perf_metrics}{{7.2}{35}{Performance Metrics}{section.7.2}{}}
+\newlabel{seq:perf_metrics@cref}{{[section][2][7]7.2}{[1][35][]35}}
+\@writefile{toc}{\contentsline {section}{\numberline {7.3}Results}{35}{section.7.3}\protected@file@percent }
+\newlabel{sec:results}{{7.3}{35}{Results}{section.7.3}{}}
+\newlabel{sec:results@cref}{{[section][3][7]7.3}{[1][35][]35}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {7.3.1}Benchmarks of Hyperparameters}{35}{subsection.7.3.1}\protected@file@percent }
+\newlabel{subsec:benchmarks}{{7.3.1}{35}{Benchmarks of Hyperparameters}{subsection.7.3.1}{}}
+\newlabel{subsec:benchmarks@cref}{{[subsection][1][7,3]7.3.1}{[1][35][]35}}
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {7.3.1.1}Baseline Model}{35}{subsubsection.7.3.1.1}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {7.3.1.2}Pretraining}{35}{subsubsection.7.3.1.2}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {7.3.1.3}Burn-in length}{35}{subsubsection.7.3.1.3}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {7.3.1.4}Number of model parameters}{35}{subsubsection.7.3.1.4}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {7.3.2}Neutralino-Neutralino Cross Sections}{35}{subsection.7.3.2}\protected@file@percent }
+\newlabel{subsec:neuralino_experiments}{{7.3.2}{35}{Neutralino-Neutralino Cross Sections}{subsection.7.3.2}{}}
+\newlabel{subsec:neuralino_experiments@cref}{{[subsection][2][7,3]7.3.2}{[1][35][]35}}
+\@writefile{toc}{\contentsline {chapter}{\numberline {8}Discussion}{37}{chapter.8}\protected@file@percent }
 \@writefile{lof}{\addvspace {10\p@ }}
 \@writefile{lot}{\addvspace {10\p@ }}
-\newlabel{chap:conclusion}{{8}{37}{Conclusion}{chapter*.15}{}}
-\newlabel{chap:conclusion@cref}{{[chapter][8][]8}{[1][37][]37}}
-\@writefile{toc}{\contentsline {chapter}{Conclusion}{38}{chapter*.15}\protected@file@percent }
-\@writefile{toc}{\contentsline {chapter}{Appendices}{39}{section*.16}\protected@file@percent }
+\newlabel{chap:conclusion}{{8}{39}{Conclusion}{chapter*.16}{}}
+\newlabel{chap:conclusion@cref}{{[chapter][8][]8}{[1][39][]39}}
+\@writefile{toc}{\contentsline {chapter}{Conclusion}{40}{chapter*.16}\protected@file@percent }
+\@writefile{toc}{\contentsline {chapter}{Appendices}{41}{section*.17}\protected@file@percent }
 \bibdata{bibliography.bib}
-\@writefile{toc}{\contentsline {chapter}{Appendix A}{41}{appendix*.17}\protected@file@percent }
+\@writefile{toc}{\contentsline {chapter}{Appendix A}{43}{appendix*.18}\protected@file@percent }
 \@writefile{lof}{\addvspace {10\p@ }}
 \@writefile{lot}{\addvspace {10\p@ }}
-\@writefile{toc}{\contentsline {section}{\numberline {A.1}Appendix 1 title }{41}{section.Alph0.1}\protected@file@percent }
-\newlabel{sec:appendix_1_label}{{A.1}{41}{Appendix 1 title}{section.Alph0.1}{}}
-\newlabel{sec:appendix_1_label@cref}{{[subappendix][1][2147483647,0]A.1}{[1][41][]41}}
+\@writefile{toc}{\contentsline {section}{\numberline {A.1}Appendix 1 title }{43}{section.Alph0.1}\protected@file@percent }
+\newlabel{sec:appendix_1_label}{{A.1}{43}{Appendix 1 title}{section.Alph0.1}{}}
+\newlabel{sec:appendix_1_label@cref}{{[subappendix][1][2147483647,0]A.1}{[1][43][]43}}
 \bibcite{ADAM}{{1}{}{{}}{{}}}
 \bibcite{bayes_theorem}{{2}{}{{}}{{}}}
 \bibcite{ml_for_physicists}{{3}{}{{}}{{}}}
-\bibcite{geometric_ergodicity}{{4}{}{{}}{{}}}
-\bibcite{rhat}{{5}{}{{}}{{}}}
-\bibcite{convergence_diagnostics}{{6}{}{{}}{{}}}
-\bibcite{metropolis}{{7}{}{{}}{{}}}
-\bibcite{metropolis_two}{{8}{}{{}}{{}}}
-\bibcite{classical_mechanics}{{9}{}{{}}{{}}}
-\bibcite{leapfrog}{{10}{}{{}}{{}}}
-\bibcite{hmc}{{11}{}{{}}{{}}}
+\bibcite{conceptual_intro_hmc}{{4}{}{{}}{{}}}
+\bibcite{geometric_ergodicity}{{5}{}{{}}{{}}}
+\bibcite{rhat}{{6}{}{{}}{{}}}
+\bibcite{convergence_diagnostics}{{7}{}{{}}{{}}}
+\bibcite{metropolis}{{8}{}{{}}{{}}}
+\bibcite{metropolis_two}{{9}{}{{}}{{}}}
+\bibcite{classical_mechanics}{{10}{}{{}}{{}}}
+\bibcite{leapfrog}{{11}{}{{}}{{}}}
 \bibcite{nuts}{{12}{}{{}}{{}}}
 \bibcite{tf}{{13}{}{{}}{{}}}
 \bibcite{backprop}{{14}{}{{}}{{}}}
 \bibcite{swish}{{15}{}{{}}{{}}}
 \providecommand\NAT@force@numbers{}\NAT@force@numbers
-\gdef \@abspage@last{55}
+\gdef \@abspage@last{59}

@@ -1,58 +1,59 @@
 In this chapter, we will discuss fundamental ideas pertaining to \textit{Markov Chain Monte Carlo} (MCMC) methods.
-We shall confine the discussion to continuous sample spaces which is the category of sample space focused on in this thesis.
+We shall confine the discussion to continuous sample spaces which is the kind needed in this thesis.
 We will commence with a discussion of expectation values and an important notion called the \textit{typical set}. 
 We will then define and discuss Markov chains and Markov transitions after which we shall
 discuss Metropolis-Hastings sampling and its limitations. Finally we will
 look at Gibbs sampling.
-We will adopt a geometric view to provide a natural transition to Hamiltonian Monte Carlo and the No-U-Turn sampler
+We will adopt a geometric view where possible to provide a natural transition to Hamiltonian Monte Carlo and the No-U-Turn sampler
 in the two following chapters. 
 % The treatment will closely follow \cite{conceptual_intro_hmc}.
 
 \section{Expectation Values and the Typical Set}
-Consider a probability density function $\pi(\theta)$ and a $m$-dimensional sample space $\Theta$ where $\theta \in \Theta$. 
+Consider a \textit{target density} $\pi(\theta)$ and an $m$-dimensional sample space $\Theta$ where $\theta \in \Theta$. 
 Consider $f(\theta)$ to be an arbitrary smooth
 function of $\theta$. The \textit{expectation value} of $f(\theta)$ with respect to the density $\pi(\theta)$ is then defined as
 \begin{equation}\label{eq:expval}
     \mathbb{E}_\pi[f] = \int \dd \theta \ \pi(\theta)f(\theta).
 \end{equation}
 We shall interchangably refer to expectation values simply as \textit{expectations}.
-We will call the function $f$ we seek to compute the expecation of as a \textit{target function}.
-For all but a few simple low-dimensional densities, computing eq.~\eqref{eq:expval} is impossible to evaluate analytically. 
-For high-dimensional spaces, evaluating the expectation over the entire sample space is computationally infeasible.
-Moreover, it is unlikely that the entire sample space contribute significantly to the expectation. Efficiently
-evaluating the expectations should thus only require evaluation of the integrand in a subset of the sample space.
+We will call the function $f$ we seek to compute the expectation of as the \textit{target function}.
+For all but a few simple low-dimensional densities, evaluation of eq.~\eqref{eq:expval} is impossible analytically. 
+To complicate things further, numerical evaluation with numerical integration techniques of the expectation in high-dimensional spaces quickly becomes computationally
+infeasible as the dimensionality increases due to limited computational resources. 
+Even worse, we may not even be able to write down the expression of $\pi(\theta)$ completely.
+Fortunately, it is unlikely that the entire sample space contribute significantly to the expectation.
+If we could somehow pick out the points in sample space that \textit{does}, only knowing $\pi(\theta)$ up to a normalization constant, we could
+make approximate computations of expectations tractible. 
 For most purposes, we are interested in the expectation of more than a single target function. For example, in Bayesian applications,
 we are often interested in both the mean and variance of a quantity which introduces the need for several target functions. 
 Thus the numerical method should not depend on the target function in question. 
-Instead the focus is laid on the contribution from $\pi(\theta)\dd \theta$ to
+Instead the focus should be laid on the contribution from $\pi(\theta)\dd \theta$ to
 the integrand. The objective of MCMC methods is to efficiently 
 sample points from regions of sample space where this quantity is non-neglible. This region of sample space
-is called the \textit{typical set}. 
+is called the \textit{typical set} \cite{conceptual_intro_hmc}. 
 
 \subsection{The Typical Set}
 MCMC methods are devised to efficiently sample points of the typical set. For simplicity, we can divide a
 sample space into three regions with respect to the target density $\pi(\theta)$.
 \begin{enumerate}
     \item High-probability density region. These are regions in the neighborhood of a mode of the target density.
-    \item The typical set. This refer to the regions in which $\pi(\theta) \dd \theta$ provides a non-neglible contribution
+    In general, as the dimensionality increases, the contribution from $\pi(\theta) \dd \theta$ becomes neglible here.
+    \item The typical set. This refers to the regions in which $\pi(\theta) \dd \theta$ provides a non-neglible contribution
     to any expectation. This may be thought of as the high-probability region of the sample space
-    since $\pi(\theta) \dd \theta$ is proportional to probability of a state $\theta$ in a volume $\dd \theta$. 
-    \item Low-probability density regions. These are regions far away from any mode of the density.
+    since $\pi(\theta) \dd \theta$ is, at least, proportional to probability of a volume $\dd\theta$ in the neighborhood of $\theta$. 
+    \item Low-probability density regions. These are regions far away from any mode of the density. This region, too, will generally
+    yield neglible contributions to the integrand.
 \end{enumerate}
-The first and third region will yield neglible contributions to an expectation.
-The point to stress here is that the interesting part of sample space to explore is not the high-probability region, and is
-not the part MCMC methods sample from. Instead, they sample from the region in which $\pi(\theta) \dd \theta$ is large.
 Although the notion of a typical set can be formalized precisely, we will intentionally 
 operate with this somewhat imprecise definition. For our purposes, it suffices to use it merely as
-a conceptual notion to evaluate the quality of the samples stored from a MCMC chain. 
+a conceptual notion to evaluate the quality of the samples generated by an MCMC chain. 
 \subsection{The Target Density and Bayesian Applications}
-We initially defined $\pi(\theta)$ as a probability density function, implying
-that the density is integrated to unity. In the chapter on Bayesian ML, we mentioned that we could not compute the evidence term of Bayes' theorem in 
-realistic applications and thus were only concerned a proportionality relationship $p(\theta|D)\propto p(D|\theta)p(\theta)$. Thus any MCMC methods we are interested cannot require that the $\pi(\theta)$ is normalized to unity. We only require that the density is smooth and that 
+In the chapter on Bayesian ML, we mentioned that we could not compute the evidence term of Bayes' theorem in 
+realistic applications and thus were only concerned witha proportionality relationship $p(\theta|D)\propto p(D|\theta)p(\theta)$. Thus any MCMC methods we are interested cannot require that the $\pi(\theta)$ is normalized to unity. We only require that the density is smooth and that 
 \begin{equation}
   0 < \int \dd\theta \ \pi(\theta) < \infty.
 \end{equation} 
-For this reason, we shall refer to $\pi(\theta)$ as the \textit{target density} or \textit{target distribution} interchangably.
+Sometimes we may refer to the target density as the \textit{target distribution}.
 In Bayesian applications, we assume that $\pi(\theta) = p(D|\theta)p(\theta)$ such that $p(\theta|D) \propto \pi(\theta)$.
 
 \section{Markov Chains and Markov Transitions}
@@ -65,13 +66,13 @@ is the term used by TensorFlow Probability.
 
 An arbitrary transition kernel is not useful because the generated Markov chain is unlikely to have any relation to the target distribution
 of interest. To generate a useful Markov chain, we must use a transition kernel that preserves the target distribution. 
-The condition imposed to ensure this is expressed as
+The condition that ensures this is
 \begin{equation}\label{eq:detailed_balance}
     \pi(\theta) = \int d\theta' \pi(\theta')T(\theta|\theta').
 \end{equation}
 The condition is formally called \textit{detailed balance}. The interpretation of the condition is that the Markov chain is reversible.
 We can start from any $\theta$ and use the transition kernel to produce a set of new states. The distribution generated by the Markov chain
-should be distributed according the target distribution regardless of which point we used to generate the chain from. A more important
+should be distributed according the target distribution regardless of which point we used to generate the chain from, given a long enough chain. A more important
 fact is that as long as this condition is satisfied, the Markov chain will converge to and stay within the typical set.
 The standard approach to approximate eq.~\eqref{eq:expval} is with the MCMC \textit{estimator}
 \begin{equation}
@@ -80,7 +81,7 @@ The standard approach to approximate eq.~\eqref{eq:expval} is with the MCMC \tex
 For large enough $N$, the estimator will converge to the true expectation such that $\lim_{N\to\infty} \hat{f}_N = \mathbb{E}_\pi[f]$.
 Obviously, the knowledge that the estimator will asymptotically converge to the true expectations are of limited use
 when restricted to a practical computation in which only a finite chain can be generated. 
-We are thus more interested in the properties of finite Markov chains.
+We must therefore understand the properties of finite Markov chains so we can efficiently use them to approximate eq.~\eqref{eq:expval}.
 
 \subsection{Ideal Markov Chains}
 In order to understand the behaviour of finite Markov chains, we should first 
@@ -96,16 +97,15 @@ An ideal Markov chain can be divided into three phases.
     of the estimators slow down significantly. 
 \end{enumerate}
 The ideal evaluation of estimators thus only use the parts of the Markov chain generated in the second and third phase, discarding the
-the chain generated in the first phase. The notion of discarding the chain from the first phase is called \textit{burn-in}.
+the chain generated in the first phase. The notion of discarding the chain from the first phase is called \textit{burn-in} or \textit{mixing}.
 To most efficiently approximate eq.~\eqref{eq:expval}, we should really only use points generated in the exploration phase.
-Using points from the saturation phase does not hurt the estimators but yields diminishing returns
+Using points from the saturation phase does not hurt the estimators but yield diminishing returns
 with respect to computational resources.
 
 \subsection{Pathologies}
 Unfortunately, many target distributions embody typical sets with pathological regions where \textit{any} 
-transition kernel that obeys eq.~\eqref{eq:detailed_balance} is not sufficient to efficiently explore the typical set.
-Geometrically, this can be regions in which the target distribution rapidly changed within
-the typical set.
+transition kernel that obey eq.~\eqref{eq:detailed_balance} is not sufficient to efficiently explore the typical set.
+Geometrically, this can be regions in the typical set in which the target distribution rapidly changes.
 The pathological regions can be completely ignored by the chain for much of the exploration,
 leading to poor convergence and thus biased estimators. But as long as the transition kernel
 satisfies detailed balance, we know for a fact that the estimators \textit{must} converge eventually.
@@ -141,22 +141,23 @@ These steps are summarized in algorithm~\ref{algo:general_metropolis}.
     \begin{algorithm}[H]
       \caption{Metropolis-Hastings}\label{algo:general_metropolis}
       \begin{algorithmic}
-        \Procedure{METROPOLIS-HASTINGS}{$\theta$}\\
-        \State Sample $\theta' \sim q(\theta'|\theta)$\\
-        \State $\displaystyle{a(\theta'|\theta) \leftarrow \min \left(1, \frac{q(\theta|\theta')\pi(\theta')}{q(\theta'|\theta)\pi (\theta)}\right)}$\\
-        \State Sample $u \sim \text{Uniform}(0,1)$. \\
+        \Function{METROPOLIS-HASTINGS}{$\theta$}
+        \State Sample $\theta' \sim q(\theta'|\theta)$
+        \State $\displaystyle{a(\theta'|\theta) \leftarrow \min \left(1, \frac{q(\theta|\theta')\pi(\theta')}{q(\theta'|\theta)\pi (\theta)}\right)}$
+        \State Sample $u \sim \text{Uniform}(0,1)$.
         \If {$a(\theta'|\theta) \geq u$}
           \State $\theta \leftarrow \theta'$ \Comment{Accept transition}
         \Else
           \State $\theta \leftarrow \theta$  \Comment{Reject transition}
-        \EndIf\\
-        \EndProcedure
+        \EndIf 
+        \State \Return $\theta$
+        \EndFunction
       \end{algorithmic}
     \end{algorithm}
   \end{figure}
 
 \subsection{The Proposal Distribution}
-There are many valid choices for proposal distribution. A common choice is a Gaussian distribution $q(\theta'|\theta) = \mathcal{N}(\theta'|\theta, \Sigma)$,
+There are many valid choices of proposal distributions. A common choice is a Gaussian distribution $q(\theta'|\theta) = \mathcal{N}(\theta'|\theta, \Sigma)$,
 where $\Sigma$ is the \textit{covariance matrix}.
 We will refer to the Metropolis-Hastings algorithm with this proprosal distribution as \textit{random walk Metropolis}.
 More precisely, this means that a proposed state is given by
@@ -174,10 +175,10 @@ Hence, evaluation of the acceptance probability only requires evaluating the tar
 The random walk Metropolis algorithm does suffer from slow convergence to, and exploration of, the typical set in high-dimensional spaces.
 This can be understood because of the following. 
 As we increase the dimension of the sample space, the volume outside of the typical set becomes increasingly larger than the volume of the typical set itself.
-This implies with increasing probability that a random perturbation any initial state will cause the proposed state
+This implies with increasing probability that a random perturbation of an arbitrary initial state will cause the proposed state
 to lie outside the typical set for a fixed covariance matrix.
 We can compensate
-for this flaw by reducing the values of $\Sigma_{ij}$, but this will naturally lead to slow exploration of
+for this flaw by reducing the values of $\Sigma_{ij}$, but this will naturally lead to slow exploration of the
 sample space. The slow exploration also leads to a Markov chain where consecutive
 samples embody
 a relatively large measure of correlation. The effect is that the effective sample size grows slowly

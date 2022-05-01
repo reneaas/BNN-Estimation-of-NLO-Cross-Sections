@@ -85,17 +85,17 @@ is summarized algorithm \ref{algo:forward_pass}.
     \begin{algorithm}[H]
         \caption{Backpropagation: Backward pass}\label{algo:backward_pass}
         \begin{algorithmic}
-        \Procedure{BackwardPass}{$y$}
+        \Procedure{BackwardPass}{$\mathcal{L}, x, y$}
         \For{$j=1,2,\ldots, n_L$}
-        \State $\Delta_j^L \leftarrow a_j^L - y_j$
-        \State $\pdv*{E}{b_j^L} \leftarrow \Delta_j^L$
-        \State $\pdv*{E}{W_{jk}^L} \leftarrow \Delta_j^L a_k^{L-1}$
+        \State $\Delta_j^L \gets \pdv*{\mathcal{L}}{z_j^L}$
+        \State $\pdv*{\mathcal{L}}{b_j^L} \leftarrow \Delta_j^L$
+        \State $\pdv*{\mathcal{L}}{W_{jk}^L} \leftarrow \Delta_j^L a_k^{L-1}$
         \EndFor
         \For{$\ell = L-1, \ldots, 1$}
         \For{$j = 1, \ldots, n_\ell$}
         \State $\Delta_j^\ell \leftarrow \left(\sum_k \Delta_k^{\ell+1}W_{kj}^{\ell+1}\right) \sigma'(z_j^\ell)$
-        \State $\pdv*{E}{b_j^\ell} \leftarrow \Delta_j^\ell$
-        \State $\pdv*{E}{W_{jk}^\ell} \leftarrow \Delta_j^\ell a_k^{\ell-1}$
+        \State $\pdv*{\mathcal{L}}{b_j^\ell} \leftarrow \Delta_j^\ell$
+        \State $\pdv*{\mathcal{L}}{W_{jk}^\ell} \leftarrow \Delta_j^\ell a_k^{\ell-1}$
         \State update $b_j^\ell$ and $W_{jk}^\ell$
         \EndFor
         \EndFor

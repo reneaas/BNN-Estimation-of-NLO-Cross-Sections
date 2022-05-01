@@ -5,37 +5,37 @@ The style file: JHEP.bst
 Database file #1: bibliography.bib
 You've used 15 entries,
             2188 wiz_defined-function locations,
-            622 strings with 6538 characters,
-and the built_in function-call counts, 4079 in all, are:
-= -- 396
+            621 strings with 6573 characters,
+and the built_in function-call counts, 4002 in all, are:
+= -- 384
 > -- 199
 < -- 0
 + -- 58
 - -- 43
-* -- 302
-:= -- 586
-add.period$ -- 23
+* -- 293
+:= -- 576
+add.period$ -- 21
 call.type$ -- 15
-change.case$ -- 10
+change.case$ -- 11
 chr.to.int$ -- 0
 cite$ -- 15
-duplicate$ -- 192
-empty$ -- 411
+duplicate$ -- 184
+empty$ -- 403
 format.name$ -- 43
-if$ -- 1053
+if$ -- 1032
 int.to.chr$ -- 0
 int.to.str$ -- 15
-missing$ -- 37
-newline$ -- 56
+missing$ -- 35
+newline$ -- 54
 num.names$ -- 16
 pop$ -- 79
 preamble$ -- 1
 purify$ -- 0
 quote$ -- 0
-skip$ -- 107
+skip$ -- 109
 stack$ -- 0
 substring$ -- 163
-swap$ -- 60
+swap$ -- 59
 text.length$ -- 0
 text.prefix$ -- 0
 top$ -- 0
@@ -43,4 +43,4 @@ type$ -- 0
 warning$ -- 0
 while$ -- 30
 width$ -- 17
-write$ -- 152
+write$ -- 147
