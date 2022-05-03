@@ -1,9 +1,25 @@
-In this chapter, we will study the details of the Hamiltonian Monte Carlo (HMC) method.
-It is a Markov Chain Monte Carlo (MCMC) sampling technique that merges Gibbs sampling, Hamiltonian dynamics with a final Metropolis-Hastings update.
-It avoids random walk behavior by performing gradient-informed exploration of the typical set. 
-We will begin with a survey of Hamiltonian dynamics followed by a description of
-the \textit{Leapfrog} integrator which is used to simulate Hamiltonian systems. 
-Once these are established, we will describe how HMC is constructed.
+In this chapter, we will study the details of Hamiltonian Monte Carlo. It is a Markov chain Monte Carlo method that uses gradient-informed
+steps to generate a proposal state for Metropolis correction. It uses Hamiltonian dynamics
+which is the mathematical framework that allow gradient-informed exploration by treating the model parameters
+as ``coordinates'' of a fictitous physical system and introducing auxilliary variables representing the momentum of the system. 
+The coordinates and momenta are required to obey a particular set of coupled differential equations called Hamilton's equations.
+The differential equations cannot in general be solved exactly and are instead simulated. 
+The particular kind of numerical method used to achieve this
+is called the Leapfrog integrator. At the end of a simulation, a new set of coordinates and momenta 
+will be generated,
+which is regarded as the proposal state to undergo Metropolis correction.
+If accepted, we keep the proposed coordinates as the next parameter in the Markov chain. Otherwise, the initial coordinates
+assume this role. The auxilliary momentum is discarded as it play no important role for the actual Markov chain.
+
+We begin by presenting Hamiltonian dynamics and the Leapfrog integrator.
+Once established we show how it can be used to work construct an MCMC method.
+Next, we will see how to apply the method to Bayesian machine learning models before we finalize the
+chapter with a discussion on some limitations of the method.
+
+
+
+
+
 
 \section{Hamiltonian Dynamics}\label{sec:hamiltonian_dynamics}
 \textit{Hamiltonian dynamics} \cite{classical_mechanics} is a formulation of classical mechanics that allows us to compute the time evolution

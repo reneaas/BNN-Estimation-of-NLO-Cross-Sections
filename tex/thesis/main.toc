@@ -24,9 +24,9 @@
 \contentsline {chapter}{\numberline {4}Hamiltonian Monte Carlo}{17}{chapter.4}%
 \contentsline {section}{\numberline {4.1}Hamiltonian Dynamics}{17}{section.4.1}%
 \contentsline {subsection}{\numberline {4.1.1}Leapfrog integration}{18}{subsection.4.1.1}%
-\contentsline {section}{\numberline {4.2}Generating a Proposal State}{18}{section.4.2}%
+\contentsline {section}{\numberline {4.2}Generating a Proposal State}{19}{section.4.2}%
 \contentsline {section}{\numberline {4.3}The Potential Energy Function in Bayesian ML Applications}{20}{section.4.3}%
-\contentsline {section}{\numberline {4.4}Limitations of HMC}{20}{section.4.4}%
+\contentsline {section}{\numberline {4.4}Limitations of HMC}{21}{section.4.4}%
 \contentsline {chapter}{\numberline {5}The No-U-Turn Sampler}{23}{chapter.5}%
 \contentsline {section}{\numberline {5.1}Preliminary definitions}{23}{section.5.1}%
 \contentsline {subsection}{\numberline {5.1.1}Generation of Candidate Points and Stopping Criterion}{24}{subsection.5.1.1}%
