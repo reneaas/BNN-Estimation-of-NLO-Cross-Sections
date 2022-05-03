@@ -1,8 +1,9 @@
 import re
 import sys
 import time
-
 import matplotlib.pyplot as plt
+plt.rc("text", usetex = True)
+
 import numpy as np
 import pandas as pd
 import seaborn as sns
@@ -59,9 +60,18 @@ def main():
     #     r"old_models/3_hidden_layers_tanh.npz"
     # ]
 
-    model_names = [
-        f"old_models/{i+1}_hidden_layers_tanh.npz" for i in range(4)
+    model_names1 = [
+        f"models/{i}_small_hidden_layers.npz" for i in range(1, 6)
     ]
+
+    model_names2 = [
+        f"models/{i}_hidden_layers_tanh.npz" for i in range(1, 6)
+    ]
+
+    model_names = []
+    for name1, name2 in zip(model_names1, model_names2):
+        model_names.extend([name1, name2])
+    
 
     # model_names = [
     #     f"old_models/{i+1}_small_hidden_layers.npz" for i in range(4)
@@ -81,6 +91,7 @@ def main():
     model_predictions = [bnn(x_test).numpy().squeeze(-1) for bnn in models]
     mean_predictions = [np.mean(p, axis=0) for p in model_predictions]
     predictions_std = [np.std(p, axis=0) for p in model_predictions]
+    num_params = [bnn.num_params for bnn in models]
 
 
 
@@ -99,24 +110,36 @@ def main():
     n_bins = 100
     max_x = -100
     min_x = 100
-    for residual, name in zip(standardized_residuals, model_names):
+    for residual, name, params in zip(standardized_residuals, model_names, num_params):
         pattern = r".*(\d).*"
         label = re.findall(pattern, name)
+        label = "N = " + str(params)
         plt.hist(residual, histtype="step", density=True, bins=n_bins, label=label)
         max_x = max(residual) if max(residual) > max_x else max_x
         min_x = min(residual) if min(residual) < min_x else min_x
+    
+    for i, residual in enumerate(standardized_residuals):
     # Create normal distribution
     x = np.linspace(min_x, max_x, 1001)
     # x = np.linspace(-2, 2, 1000)
     normal_dist = np.exp(-0.5 * x ** 2) / np.sqrt(2 * np.pi)
-    plt.plot(x, normal_dist, color="black", linestyle="--")
-    plt.legend()
-    # sns.histplot(standardized_residuals[1], fill=False, )
-    plt.show()
+    plt.plot(x, normal_dist, color="black", linestyle="--", label="$\mathcal{N}(0, 1)$")
+    sz = 14
+    plt.xticks(size=sz)
+    plt.yticks(size=sz)
+    plt.xlabel("Standardized residual", fontsize=sz)
+    plt.ylabel("Density", fontsize=sz)
 
-    plt.hist(rel_err[0], histtype="step", density=True, bins=n_bins)
+    plt.legend(fontsize=sz)
+    # plt.show()
+    path = r"/Users/reneaas/Documents/skole/master/thesis/master_thesis/tex/thesis/figures/standardized_residuals"
+    figname = "/".join([
+        path,
+        "standardized_residual_simple_models.pdf",
+    ])
+    plt.savefig(figname)
     # sns.histplot(standardized_residuals[1], fill=False, )
-    plt.show()
+    # plt.show()
 
 
 if __name__ == "__main__":

@@ -60,7 +60,7 @@
 \contentsline {subsubsection}{\numberline {7.3.1.4}Number of model parameters}{35}{subsubsection.7.3.1.4}%
 \contentsline {subsection}{\numberline {7.3.2}Neutralino-Neutralino Cross Sections}{35}{subsection.7.3.2}%
 \contentsline {chapter}{\numberline {8}Discussion}{37}{chapter.8}%
-\contentsline {chapter}{Conclusion}{40}{chapter*.16}%
-\contentsline {chapter}{Appendices}{41}{section*.17}%
-\contentsline {chapter}{Appendix A}{43}{appendix*.18}%
+\contentsline {chapter}{Conclusion}{40}{chapter*.18}%
+\contentsline {chapter}{Appendices}{41}{section*.19}%
+\contentsline {chapter}{Appendix A}{43}{appendix*.20}%
 \contentsline {section}{\numberline {A.1}Appendix 1 title }{43}{section.Alph0.1}%
