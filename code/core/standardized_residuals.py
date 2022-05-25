@@ -60,17 +60,21 @@ def main():
     #     r"old_models/3_hidden_layers_tanh.npz"
     # ]
 
-    model_names1 = [
-        f"models/{i}_small_hidden_layers.npz" for i in range(1, 6)
-    ]
+    # model_names1 = [
+    #     f"models/{i}_small_hidden_layers.npz" for i in range(1, 6)
+    # ]
 
-    model_names2 = [
+    # model_names2 = [
+    #     f"models/{i}_hidden_layers_tanh.npz" for i in range(1, 6)
+    # ]
+
+    # model_names = []
+    # for name1, name2 in zip(model_names1, model_names2):
+    #     model_names.extend([name1, name2])
+
+    model_names = [
         f"models/{i}_hidden_layers_tanh.npz" for i in range(1, 6)
     ]
-
-    model_names = []
-    for name1, name2 in zip(model_names1, model_names2):
-        model_names.extend([name1, name2])
     
 
     # model_names = [
@@ -110,16 +114,18 @@ def main():
     n_bins = 100
     max_x = -100
     min_x = 100
-    for residual, name, params in zip(standardized_residuals, model_names, num_params):
-        pattern = r".*(\d).*"
-        label = re.findall(pattern, name)
-        label = "N = " + str(params)
+
+    for i, residual in enumerate(standardized_residuals):
+        label = f"Model {i+1}"
         plt.hist(residual, histtype="step", density=True, bins=n_bins, label=label)
         max_x = max(residual) if max(residual) > max_x else max_x
         min_x = min(residual) if min(residual) < min_x else min_x
     
-    for i, residual in enumerate(standardized_residuals):
+    
+        
     # Create normal distribution
+    min_x = -5
+    max_x = 5   
     x = np.linspace(min_x, max_x, 1001)
     # x = np.linspace(-2, 2, 1000)
     normal_dist = np.exp(-0.5 * x ** 2) / np.sqrt(2 * np.pi)
@@ -129,6 +135,7 @@ def main():
     plt.yticks(size=sz)
     plt.xlabel("Standardized residual", fontsize=sz)
     plt.ylabel("Density", fontsize=sz)
+    plt.xlim((min_x, max_x))
 
     plt.legend(fontsize=sz)
     # plt.show()

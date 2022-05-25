@@ -1,7 +1,7 @@
 In this chapter, we will study the details of Hamiltonian Monte Carlo. It is a Markov chain Monte Carlo method that uses gradient-informed
-steps to generate a proposal state for Metropolis correction. It uses Hamiltonian dynamics
-which is the mathematical framework that allow gradient-informed exploration by treating the model parameters
-as ``coordinates'' of a fictitous physical system and introducing auxilliary variables representing the momentum of the system. 
+steps to generate a proposal state for Metropolis correction. This is achieved by usage of Hamiltonian dynamics
+which allow gradient-informed exploration by treating the model parameters
+as ``coordinates'' of a fictitous physical system and introducing auxilliary variables representing its momenta. 
 The coordinates and momenta are required to obey a particular set of coupled differential equations called Hamilton's equations.
 The differential equations cannot in general be solved exactly and are instead simulated. 
 The particular kind of numerical method used to achieve this
@@ -9,38 +9,36 @@ is called the Leapfrog integrator. At the end of a simulation, a new set of coor
 will be generated,
 which is regarded as the proposal state to undergo Metropolis correction.
 If accepted, we keep the proposed coordinates as the next parameter in the Markov chain. Otherwise, the initial coordinates
-assume this role. The auxilliary momentum is discarded as it play no important role for the actual Markov chain.
+assume this role. The auxilliary momenta is discarded and resampled on each iteration as they play no important role for the actual Markov chain.
 
 We begin by presenting Hamiltonian dynamics and the Leapfrog integrator.
-Once established we show how it can be used to work construct an MCMC method.
+Once established we show how the framework is used to construct an MCMC method.
 Next, we will see how to apply the method to Bayesian machine learning models before we finalize the
 chapter with a discussion on some limitations of the method.
 
 
 
-
-
-
 \section{Hamiltonian Dynamics}\label{sec:hamiltonian_dynamics}
 \textit{Hamiltonian dynamics} \cite{classical_mechanics} is a formulation of classical mechanics that allows us to compute the time evolution
-of a physical system. The fundamental mathematical object of the theory is the \textit{Hamiltonian} which governs the time evolution of the \textit{coordinates} $q = (q_1, \ldots, q_d)$ and \textit{momenta} $p = (p_1,\ldots, p_d)$ of the system. 
-The 2d-dimensional space defined by the points $(q, p)$ is called \textit{phase-space}.
+of a physical system. The fundamental mathematical object of the theory is the \textit{Hamiltonian} $H$ which governs the time evolution of the \textit{coordinates} $q = (q_1, \ldots, q_d)$ and \textit{momenta} $p = (p_1,\ldots, p_d)$ of the system. 
+The $2d$-dimensional space defined by the points $(q, p)$ is called \textit{phase-space}.
 The precise relationship is formulated by \textit{Hamilton's equations}
 \begin{equation}\label{eq:hamiltons_eqs}
   \dv{q_i}{t} = \pdv{H}{p_i}, \qquad \dv{p_i}{t} = - \pdv{H}{q_i}, \qq{for} i=1,\ldots, d.
 \end{equation}
-The objective is to use the $2d$ coupled differential equations in eq.~\eqref{eq:hamiltons_eqs} to find $(q(t), p(t))$ given some initial condition $(q(0), p(0))$ where $t$ represents time. A system governed by Hamilton's equations are called a \textit{Hamiltonian system}. For the purpose of constructing a MCMC method, we need not consider the most general theory of Hamiltonian dynamics and we will therefore refrain from doing so. We shall confine our focus to Hamiltonians which can be decomposed as
+The objective is to use the $2d$ coupled differential equations in eq.~\eqref{eq:hamiltons_eqs} to find $(q(t), p(t))$ given some initial condition $(q(0), p(0))$ where $t$ represents time. A system governed by Hamilton's equations is called a \textit{Hamiltonian system}. For the purpose of constructing a MCMC method, we need not consider the most general theory of Hamiltonian dynamics and we will therefore refrain from doing so. We shall confine our focus to Hamiltonians which can be decomposed as
 \begin{equation}\label{eq:hamiltonian}
   H(q, p) = V(q) + K(p),
 \end{equation}
-where $V$ is the \textit{potential energy} and $K$ is the \textit{kinetic energy} of the system. The Hamiltonian in eq.~\eqref{eq:hamiltonian} corresponds to the total energy of the system. A key feature is that the Hamiltonian is \textit{conserved} through time. This observation follows from
+where $V$ is the \textit{potential energy} and $K$ is the \textit{kinetic energy} of the system. The particular kind of Hamiltonian in eq.~\eqref{eq:hamiltonian} corresponds to the total energy of the system. A key feature is that this Hamiltonian is \textit{conserved} through time. This observation follows from
 \begin{equation}
   \dv{H}{t} = \sum_i\left(\dv{q_i}{t}\pdv{H}{q_i} + \dv{p_i}{t}\pdv{H}{p_i}  \right)
   = \sum_i\left(\pdv{H}{p_i}\pdv{H}{q_i} - \pdv{H}{q_i}\pdv{H}{p_i}  \right) = 0.
 \end{equation}
 Thus any solution $(q(t), p(t))$ will be confined to a hyperplane defined by the Hamiltonian and the initial condition.
 
-Evolving a Hamiltonian system from some initial point $(q(0), p(0))$ is in general a non-trivial task. Exact solutions can only be computed for simple systems. This in general we must equip our arsenal with a numerical method that computes an approximate solution. There is a class of numerical methods called \textit{symplectic integrators} that takes advantage of the underlying geometry enforced by Hamilton's equations which allow accurate solutions of long time periods at a lower computational cost than typical higher-order methods such as Runge-Kutta.
+Evolving a Hamiltonian system from some initial point $(q(0), p(0))$ is in general a non-trivial task. Exact solutions can only be computed for simple systems. To arm ourselves with a robust MCMC method, then, we must employ a numerical method to approximate the solutions. 
+To this end, there is a class of numerical methods called \textit{symplectic integrators} that take advantage of the underlying geometry enforced by Hamilton's equations which allow accurate solutions over long time periods at a lower computational cost than typical higher-order methods such as fourth-order Runge-Kutta.
 The particular symplectic integrator used in HMC is called the \textit{Leapfrog integrator} which we shall discuss next.
 
 \subsection{Leapfrog integration}
@@ -88,8 +86,8 @@ When used in HMC, it is common to set all masses $m_i = 1$ from which we can for
 
 \section{Generating a Proposal State}
 Our next objective is to understand how we connect an arbitrary target distribution $\pi(\theta)$
-and Hamiltonian dynamics. In this section we will weave these together and show how we
-generate new proposal state $\theta'$ which will undergo a Metropolis-Hastings step.
+to Hamiltonian dynamics. In this section we will weave these together and show how we
+generate a new proposal state $\theta'$ which will undergo a Metropolis correction.
 The results discussed in this section can be understood as representing the proposal distribution $q(\theta'|\theta)$ used during the Metropolis-Hastings step,
 as we summarized in algorithm~\ref{algo:general_metropolis}. 
 
@@ -105,14 +103,14 @@ energy function in terms of the target distribution
 \begin{equation}\label{eq:potential_energy}
   V(q) = - \log \pi(q),
 \end{equation}
-up to a normalization constant. Hence once the target distribution is known,
+up to a constant. Hence once the target distribution is known,
 we use eq.~\eqref{eq:potential_energy} to obtain the potential energy of the system.
 
 We now turn to the problem of constructing the Hamiltonian so we can utilize Hamilton's equations.
 To achieve this, we must introduce \textit{auxilliary} momenta $p$ so we can define a kinetic energy function
 and evolve the system through what we may regard as \textit{fictitious time} $t$. 
 The momenta are sampled from some distribution of our own choice. We can proceed in the same way we did
-with the potential energy function and express a the momentum distribution is terms of a canonical distribution
+with the potential energy function and express the momentum distribution in terms of a canonical distribution
 over momentum space
 \begin{equation}
   \pi(p) \propto \exp\left(-K(p)\right),
@@ -134,7 +132,7 @@ Hence, with the kinetic energy from eq.~\eqref{eq:K_classical_physics}, we
 sample each momentum independently from a Gaussian distribution with zero mean and variance $\sigma_i^2 = m_i$.
 
 Now that we understand how we specify the potential energy for a given target distribution and
-the kinetic energy of the auxilliary momenta, we can formulate full canonical distribution over phase-space as
+the kinetic energy of the auxilliary momenta, we can formulate the full canonical distribution over phase-space as
 \begin{equation}\label{eq:full_canonical}
   \pi(q, p) = \pi(q)\pi(p) \propto \exp\left(-V(q)\right)\exp\left(-K(p)\right) = \exp\left(-H(q, p)\right).
 \end{equation}
@@ -143,23 +141,23 @@ with the Hamiltonian implied by eq.~\eqref{eq:full_canonical}, we can simulate t
 system using Hamilton's equation in eq.~\eqref{eq:hamiltons_eqs} to generate a new state $(q', p')$. The proposal state
 is then obtained by the projection map $(q', p') \mapsto q'$.
 
-Before we summarize the algorithm in a neat manner, we should briefly outline it conceptually. 
+Before we summarize the algorithm in a neat manner, we shall briefly outline it conceptually. 
 \begin{enumerate}
-  \item Given an initial state $q$, we randomly sample the auxilliary momenta $p$ using eq.~\eqref{eq:canonical_p}
+  \item Given an initial state $q$, we randomly sample the auxilliary momenta $p$ from the distribution in eq.~\eqref{eq:canonical_p}
   to generate an initial condition $(q, p)$ to use with Hamilton's equations.
   \item We randomly choose to simulate the system forwards or backwards in time by sampling a variable $v \sim \text{Uniform}(\{-1, 1\})$
-  from which the step size is set as $v\epsilon$. Forwards in time is represented by $v = 1$ and backwards in time is represented by $v = -1$.
+  from which the step size is set as $v\epsilon$. Forwards in time is represented by $v = 1$ and backwards in time is represented by $v = -1$. 
   \item Perform $L$ Leapfrog steps using algorithm~\ref{algo:leapfrog} for a total trajectory length of $\epsilon L$ to produce
   a proposal point $(q', p')$.
   \item Perform a Metropolis-Hastings correction on the proposal state to accept or reject it.
-  \item Project the phase-space point onto coordinate space and return $q'$ is accepted or $q$ if rejected in the previous step.
+  \item Project the phase-space point onto coordinate space and return $q'$ if accepted, or $q$ if rejected, in the previous step.
 \end{enumerate}
 This essentially summarizes the practical steps of HMC. The introduction of randomly simulating
-forwards and backwards in time is to ensure that the algorithm is reversible and can obey the detailed balance condition discussed in chapter~\ref{chap:mcmc}.
-To be really rigorous, we must reverse the sign of final momentum as well, but since we shall use a Gaussian distribution, changing the sign
+forwards and backwards in time is to ensure that the algorithm is reversible and obeys the detailed balance condition discussed in chapter~\ref{chap:mcmc}.
+To please mathematicians once more, we must really reverse the sign of the final momenta as well, but since we shall use a Gaussian distribution, changing the sign
 of the momenta makes no difference to the value of the kinetic energy. 
-To generate a Markov chain by this procedure, we simply feed the returned position state back in to the machinery 
-and redo the procedure.
+To generate a Markov chain by this procedure, we simply feed the returned coordinate state back in to the machinery 
+and reiterate.
 The HMC scheme is summarized in algorithm \ref{algo:hmc}.
 \begin{figure}[H]
 	\begin{algorithm}[H]
@@ -194,29 +192,32 @@ First, recall from chapter \ref{chap:bayesian_ml} in eq.~\eqref{eq:posterior_fun
 \end{equation}
 where $\mathcal{L}$ was some loss function in the classical ML sense.
 However, we do not need the evidence term and simply sample from the target distribution $\pi(\theta) = p(D|\theta)p(\theta)$ instead.
-Comparison with eq.~\eqref{eq:canonical_q} makes it clear that the potential energy
+Comparison with eq.~\eqref{eq:canonical_coordinate} makes it clear that the potential energy
 function simply is $\mathcal{L}$. Combining this with eq.~\eqref{eq:loss_function_of_posterior}, lets us conclude that the general expression
 for the potential energy is
 \begin{equation}
-  \mathcal{L} = -\log Z - \log p(D|\theta) - \log p(\theta),
+  \mathcal{L} = - \log p(D|\theta) - \log p(\theta),
 \end{equation}
-and if we assume all datapoints are i.i.d we can recast it as eq.~\eqref{eq:loss_function_of_posterior}, that is
+up to a constant.
+If we assume all datapoints are i.i.d we can recast it as eq.~\eqref{eq:loss_function_of_posterior}, that is
 \begin{equation}
-  \mathcal{L} = -\log Z - \sum_{i=1}^N \log p(y^{(i)}|x^{(i)}, \theta) - \log p(\theta),
+  \mathcal{L} = -\sum_{i=1}^N \log p(y^{(i)}|x^{(i)}, \theta) - \log p(\theta).
 \end{equation}
 
 \section{Limitations of HMC}
 Although HMC is effective at exploring the state space we wish to sample from, it suffers from the need to hand-tune
-the trajectory length $\epsilon L$. Poor choices of $\epsilon$ and $L$ can lead to a poor results.
+the trajectory length $\epsilon L$. Poor choices of $\epsilon$ and $L$ can lead to poor results.
 On one hand, if the trajectory length is too short, exploration of the state space will be limited 
 which makes HMC behave like a random-walk. Suppose we fix the trajectory length to a finite,
 but sufficiently large value.
 If the step size $\epsilon$ is too large,
 it can lead to instabilities in the leapfrog integrator, while if its chosen to be too small, it will perform far too many
-iterations to make the algorithm to be worthwhile. 
-Tuning these parameters requires preliminary runs for a given problem. 
+iterations to make the algorithm worthwhile. 
+Tuning these parameters requires preliminary runs for the problem at hand and analysis of so-called \textit{trace statistics}, 
+which essentially measures the quality of the generated Markov chain. 
 
 In the next chapter, we will study algorithms that adaptively sets the trajectory length of HMC,
 namely the No-U-Turn sampler combined with dual-averaging of the step size, which allows us to overcome these
-limitations and more effectively sample from the target distribution without the need for hand-tuning.
+limitations and more effectively sample from the target distribution without the need for hand-tuning
+and analysis of trace statistics.
 
