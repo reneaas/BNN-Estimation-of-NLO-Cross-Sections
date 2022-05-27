@@ -1,9 +1,12 @@
 \section{Neural Networks}\label{sec:neural_networks}
-In this chapter, we will introduce the mathematical formalism underpinning
-neural networks. For convenience, we will adopt the terminology used by Tensorflow\cite{tf} 
-to help make the transition from the mathematics to their machine learning framework easier.
-We will stay general and assume a set of inputs $x \in \mathbb{R}^p$ and corresponding targets $y \in \mathbb{R}^d$. 
+In this chapter, we will finally discuss the main topic of this thesis, \textit{Bayesian neural networks} (BNNs).
+We will start off introducing the mathematical formalism of neural networks. 
+We will then discuss the \textit{backpropagation} algorithm, which is the standard
+algorithm used to compute the gradient of the model with respect to a specified loss. 
+We will then finalize the chapter with how Bayesian learning of neural networks work. We will stay general and assume a set of inputs $x \in \mathbb{R}^p$ and corresponding targets $y \in \mathbb{R}^d$. 
 These serve as the training data on which the neural network is trained.
+We will adopt the terminalogy used by the TensorFlow framework \cite{tf} to help make the
+transition from mathematics to code easier. 
 
 \subsection{Basic Mathematical Structure}
 A neural network is most generally defined as a non-linear function $f : \mathbb{R}^p \to \mathbb{R}^d$.
@@ -29,7 +32,7 @@ The activation in layer $\ell$ is computed through the recursive equation:
 A special case of eq.~\eqref{eq:nn_forward_pass} applies to $\ell = 1$ where $a^0 = x \in \mathbb{R}^p$ is assumed. 
 
 \subsection{Backpropagation}
-The standard approach to train a neural network is by minimization of some loss function by employing the \textit{backpropagation} algorithm\cite{backprop}. The algorithm boils down to four equations defining a recursive algorithm that approximates the gradient with respect to the parameters of the model.
+The standard approach to train a neural network is by minimization of some loss function by employing the backpropagation algorithm \cite{backprop} to compute its gradient recursively. The algorithm boils down to four equations defining a recursive algorithm that approximates the gradient with respect to the parameters of the model.
 Consider $\mathcal{L}$ as the loss function, quanitifying the error between the target and the model output.
 The first of the four equations quantifes the error in the output layer.
 \begin{equation}\label{eq:backprop1}
@@ -50,7 +53,7 @@ For the biases, the gradients are
 
 With these four equations, we can fit the neural network using minimization techniques such as stochastic gradient descent or more complex methods such as ADAM (pages 13-19 in \cite{ml_for_physicists}). 
 Although not the focus of this thesis, we might use these methods in conjunction with HMC to speed up convergence to the stationary distribution. Furthermore, the computation of gradients in combination with
-HMC can be performed with the backpropagation algorithm.
+HMC or NUTS is achieved with the backpropagation algorithm using \textit{automatic differentiation}.
 
 \subsection{Loss Function for Regression}
 In this thesis, we are concerned with regression tasks. The activation function of the final layer $\sigma_L$ is then just the identity function. The typical loss function chosen to solve regression tasks is the $L_2$-norm, which for a single output can be written as 
