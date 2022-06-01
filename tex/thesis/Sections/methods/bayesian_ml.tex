@@ -213,7 +213,7 @@ Instead we seek to obtain the posterior distribution from which we can infer oth
 In applications where the model class is sufficiently complex, direct computation
 of the posterior is not feasible. Instead, we must settle with an approximate posterior distribution
 which we construct using Monte Carlo Markov chains (MCMC) methods. 
-A general discussion of such methods are allocated to chapter~\ref{chap:mcmc}. For now we assume that there
+The discussion of such methods is allocated to chapter~\ref{chap:mcmc}. For now we assume that there
 exists a way to generate samples $\theta \sim p(\theta|D)$. We approximate the posterior
 by sampling a set of model parameters $\{\theta^{(1)}, \ldots, \theta^{(n)}\}$ where $\theta^{(t)} \sim p(\theta|D)$, 
 yielding an \textit{empirical} posterior distribution. 
@@ -229,7 +229,7 @@ The predictive distribution is therefore approximated by generating a set of pre
 using the empirical posterior distribution. That is, we indirectly sample from $p(y^*|x^*, D)$
 by computation of $\hat{f}(x^*;\theta^{(t)})$ for $t=1,\ldots,n$. In other words, the empirical predictive distribution
 is generated as follows.
-\begin{equation}
+\begin{equation}\label{eq:predictive_dist_approx}
     \begin{split}
         \theta^{(t)} & \sim p(\theta|D), \\
         f(x^*;\theta^{(t)}) & \sim p(y^*|x^*, \theta).

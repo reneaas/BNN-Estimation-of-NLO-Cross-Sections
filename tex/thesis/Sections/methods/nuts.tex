@@ -1,18 +1,16 @@
-HMC is considered a state-of-the-art sampling method, 
-but suffers the need for manual tuning of the number of leapfrog steps $L$
-and the step size $\epsilon$. In this chapter, we will study a sampling method called \textit{The No-U-Turn sampler} (NUTS) \cite{nuts} built upon
-HMC that dynamically adapts the integration length $\epsilon L$. Moreover, we will look at how we can adaptively set the step size
-to help NUTS reach a stopping criterion faster.
-
+Hamiltonian Monte Carlo is considered a state-of-the-art sampler that produces successive samples with low correlation
+that may lie far apart in sample space, 
+but suffers the need for manual tuning of the trajectory length $\epsilon L$. 
+In this chapter, we will study an improved sampler called the \textit{No-U-Turn} sampler (NUTS) \cite{nuts}. This sampler uses the machinery of HMC while adapting the trajectory length. This eliminates the need for hand-tuning and analysis of trace statistics gathered from preliminary runs. Even better, it achieves this at approximately the same computational cost as HMC. 
 
 \section{Preliminary definitions}
-The NUTS algorithm introduces a collection of new ideas that need proper development before we delve into the algorithm itself.
-Given generalized coordinates $q = (q_1, ..., q_d)$ and generalized momenta $p = (p_1, ..., p_d)$, we introduce a \textit{slice} variable $u$
-with corresponding conditional distributions
+The No-U-Turn sampler introduces a collection of new ideas that need proper development before we delve into the algorithm itself.
+Given coordinates $q = (q_1, ..., q_d)$ and  momenta $p = (p_1, ..., p_d)$, we introduce a \textit{slice} variable $u$
+with corresponding conditional distribution
 \begin{equation}
     p(u|q, p) = \text{Uniform}\left(u; \left[0, \exp\left\{-H(q, p)\right\}\right]\right),
 \end{equation}
-and
+which imply the conditional distribution
 \begin{equation}
     p(q, p|u) = \text{Uniform}\left( q, p; \left\{q', p' \bigg| \exp\left\{-H(q, p)\right\} \geq u \right\} \right).
 \end{equation}

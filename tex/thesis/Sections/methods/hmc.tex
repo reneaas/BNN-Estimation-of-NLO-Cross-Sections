@@ -1,7 +1,7 @@
-In this chapter, we will study the details of Hamiltonian Monte Carlo. It is a Markov chain Monte Carlo method that uses gradient-informed
+In this chapter, we will explore the details of Hamiltonian Monte Carlo. It is a Markov chain Monte Carlo method that uses gradient-informed
 steps to generate a proposal state for Metropolis correction. This is achieved by usage of Hamiltonian dynamics
 which allow gradient-informed exploration by treating the model parameters
-as ``coordinates'' of a fictitous physical system and introducing auxilliary variables representing its momenta. 
+as ``coordinates'' of a fictitous physical system, and introducing auxilliary variables representing its momenta. 
 The coordinates and momenta are required to obey a particular set of coupled differential equations called Hamilton's equations.
 The differential equations cannot in general be solved exactly and are instead simulated. 
 The particular kind of numerical method used to achieve this
@@ -98,7 +98,7 @@ canonical distribution over coordinate space
 \end{equation}
 where $q$ represents the model parameters $\theta$. We will stick to this convention to avoid confusion and 
 utilize the formulation of Hamiltonian dynamics discussed hitherto. Once we want to apply it in a Bayesian ML context,
-we simply replace $q \to \theta$. From eq.~\eqref{eq:canonical_coordinate}, we can generally define the potential
+we simply replace $q \to \theta$. From eq.~\eqref{eq:canonical_coordinate}, we can find the potential
 energy function in terms of the target distribution
 \begin{equation}\label{eq:potential_energy}
   V(q) = - \log \pi(q),
@@ -109,7 +109,7 @@ we use eq.~\eqref{eq:potential_energy} to obtain the potential energy of the sys
 We now turn to the problem of constructing the Hamiltonian so we can utilize Hamilton's equations.
 To achieve this, we must introduce \textit{auxilliary} momenta $p$ so we can define a kinetic energy function
 and evolve the system through what we may regard as \textit{fictitious time} $t$. 
-The momenta are sampled from some distribution of our own choice. We can proceed in the same way we did
+The momenta are sampled from some distribution of our own choice. We can proceed in the same way as we did
 with the potential energy function and express the momentum distribution in terms of a canonical distribution
 over momentum space
 \begin{equation}
@@ -139,7 +139,14 @@ the kinetic energy of the auxilliary momenta, we can formulate the full canonica
 We are naturally just interested in generating a new coordinate $q'$. Using Hamilton's equations
 with the Hamiltonian implied by eq.~\eqref{eq:full_canonical}, we can simulate the fictitious Hamiltonian
 system using Hamilton's equation in eq.~\eqref{eq:hamiltons_eqs} to generate a new state $(q', p')$. The proposal state
-is then obtained by the projection map $(q', p') \mapsto q'$.
+is then obtained by the projection map $(q', p') \mapsto q'$. 
+
+As stated in the beginning of this section, we may regard the details outlined here as an elaborate explanation of the proposal distribution $q(\theta'|\theta)$. The final keypoint to consider is how we can make it symmetric so
+that we only need to evaluate $\pi(q', p')$ at the Metropolis step using eq.~\eqref{eq:symmetric_acceptance_prob}. It can be shown that we only need two additional steps. We must randomly choose to sample forwards or backwards in time. The second step is the negate the momenta at the end of the generation of the state, $p \mapsto -p$. The acceptance probability can then be computed as
+\begin{equation}
+  a = \min \left(1, \frac{\pi(q', p')}{\pi(q, p)}\right) = \min \left(1, \exp\left\{-\left(H(q',p') - H(q, p)\right)\right\}\right).
+\end{equation}
+But this should always be evaluated to $a = 1$ if $H$ is indeed conserved. But the catch is that the dynamics is only approximated using the Leapfrog integrator. The best the integrator can do is conserve $H$ on average, with its value oscillating about the initial value.
 
 Before we summarize the algorithm in a neat manner, we shall briefly outline it conceptually. 
 \begin{enumerate}
@@ -170,7 +177,7 @@ The HMC scheme is summarized in algorithm \ref{algo:hmc}.
       \For{$l = 1, ..., L$} \Comment{Simulate Hamiltonian system for $L$ Leapfrog steps.}
         \State $(q', p') \leftarrow$ LEAPFROG$(q', p', v\epsilon)$ 
       \EndFor
-      \State $a = \min \left(1, \exp\left[-\left(H(q^*,p^*) - H(q, p)\right)\right]\right)$ \Comment{Compute acceptance probability}
+      \State $a = \min \left(1, \exp\left[-\left(H(q',p') - H(q, p)\right)\right]\right)$ \Comment{Compute acceptance probability}
       \State Sample $u \sim U(0,1)$ \Comment{Uniform distribution on $(0,1)$.}
       \If {$a \geq u$} \Comment{Perform Metropolis-Hastings correction}
         \State $q \gets q'$ \Comment{Accept proposed state.}
@@ -183,7 +190,7 @@ The HMC scheme is summarized in algorithm \ref{algo:hmc}.
 	\end{algorithm}
 \end{figure}
 
-\section{The Potential Energy Function in Bayesian ML Applications}
+\section{The Potential Energy Function in Bayesian Machine Learning Applications}
 We seek to use HMC in a Bayesian ML application. It is therefore important to
 discuss a general way to construct the potential energy function in such applications.
 First, recall from chapter \ref{chap:bayesian_ml} in eq.~\eqref{eq:posterior_function_of_loss} that the posterior could in general be written as
@@ -199,12 +206,12 @@ for the potential energy is
   \mathcal{L} = - \log p(D|\theta) - \log p(\theta),
 \end{equation}
 up to a constant.
-If we assume all datapoints are i.i.d we can recast it as eq.~\eqref{eq:loss_function_of_posterior}, that is
-\begin{equation}
+If we assume all $N$ datapoints are i.i.d. we can recast it as eq.~\eqref{eq:loss_function_of_posterior}, that is
+\begin{equation}\label{eq:potential_energy_bayesian}
   \mathcal{L} = -\sum_{i=1}^N \log p(y^{(i)}|x^{(i)}, \theta) - \log p(\theta).
 \end{equation}
 
-\section{Limitations of HMC}
+\section{Limitations of Hamiltonian Monte Carlo}
 Although HMC is effective at exploring the state space we wish to sample from, it suffers from the need to hand-tune
 the trajectory length $\epsilon L$. Poor choices of $\epsilon$ and $L$ can lead to poor results.
 On one hand, if the trajectory length is too short, exploration of the state space will be limited 
@@ -216,7 +223,7 @@ iterations to make the algorithm worthwhile.
 Tuning these parameters requires preliminary runs for the problem at hand and analysis of so-called \textit{trace statistics}, 
 which essentially measures the quality of the generated Markov chain. 
 
-In the next chapter, we will study algorithms that adaptively sets the trajectory length of HMC,
+In the next chapter, we will look at algorithms that adaptively sets the trajectory length of HMC,
 namely the No-U-Turn sampler combined with dual-averaging of the step size, which allows us to overcome these
 limitations and more effectively sample from the target distribution without the need for hand-tuning
 and analysis of trace statistics, or reliance on heuristics.

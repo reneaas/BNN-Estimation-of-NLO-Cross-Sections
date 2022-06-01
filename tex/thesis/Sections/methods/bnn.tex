@@ -1,85 +1,91 @@
+\section{Bayesian learning of Neural Networks using Monte Carlo Samplers}
+So far, we have discussed neural networks as a model class whilst ignoring the issue of what it really means to do Bayesian learning of neural networks, 
+in other words, what it means to \textit{train} BNNs. We have left it somewhat unclear what this means and as it turns out, its meaning can be quite different depending on how Bayesian inference is performed. In this section we will clarify precisely what it means to train BNN using MCMC samplers such as HMC and NUTS. We shall then discuss practical aspects of the training which we shall put to practice in chapter \ref{chap:numerical_experiments}.
 
-\section{Bayesian Framework for Neural Networks}
+\subsection{What \textit{is} Bayesian learning of Neural Networks?}
+The way Bayesian learning of neural networks manifest itself depends on the way in which we do Bayesian inference of the probabilistic model. 
+We are concerned with inference of model parameters from the posterior using MCMC methods and will therefore obtain samples where each such sample
+consist of the weights of an entire neural network. More precisely, if we gather $N$ samples with a chosen sampler, we will obtain $N$ entire neural networks
+all sampled from the posterior to explain the observed data. Thus, what we mean by a \textit{trained} BNN in this sense is that we have
+sampled a set of NNs that collectively represent the BNN. 
 
-We can specialize the equations used in Bayesian inference for neural networks in the context of regression.
-The predictive distribution $P(y|x, \theta)$ seeks to model a function $f : \mathbb{R}^p \to \mathbb{R}^d$ that for a given $x \in \mathbb{R}^p$ produces an output $y \in \mathbb{R}^d$. In the infinite data limit, the distribution should be a Dirac delta function. For finite datasets, however, we instead seek a distribution of outputs given the input features.
-
-Consider a set of observations $D = \{(x^{(1)}, y^{(1)}), ..., (x^{(n)}, y^{(n)})\}$, where $x^{(i)} \in \mathbb{R}^p$ are the input features and $y^{(i)} \in \mathbb{R}^d$ are the targets. The equation for the predictive distribution of $y^*$ given an input $x^*$ changes to
-\begin{equation}
-  P(y^*|x^*, D) = \int P(y^*|x^*, \theta)P(\theta|D)\dd \theta.
-\end{equation}
-Assuming that the the observations in $D$ are drawn independently, the likelihood function can be expressed as
-\begin{equation}
-  P(D|\theta) = \prod_{i=1}^n P(y^{(i)}|x^{(i)}, \theta).
-\end{equation}
-In the context of regression, the likelihood for a given observation $(x,y)$ is commonly chosen to be
-\begin{comment}
-  \begin{equation}
-    P(y|x, \theta) \propto \exp\left(-\frac{(y - f(x; \theta))^2}{2\sigma^2}\right),
-  \end{equation}
-\end{comment}
-\begin{equation}\label{eq:nn_likelihood}
-  P(y|x, \theta) \propto \exp\left(-\frac{\lambda}{2}\norm{y - f(x;\theta)}_2^2\right).
-\end{equation}
-where $f(x; \theta)$ is the output of the neural network and $\lambda$ is a hyperparameter typically chosen to be identical for all inputs $(x, y)$ during training. The likelihood found eq.~\eqref{eq:nn_likelihood} is equivalent to using $L^2$-norm as a loss function with regularization strength $\lambda$ when framed as a minimization problem, which we will see shortly.
-
-In practice, however, we instead sample a set of network parameters $\{\theta_1, ..., \theta_n\}$ from the posterior distribution
-\begin{equation}
-  P(\theta|D) \propto P(D|\theta)P(\theta),
-\end{equation}
-from which we can produce a set of predictions $\{\hat{y}_1,\ldots \hat{y}_n\}$ from the neural network model 
-\begin{equation}
-  \hat{y}_i = f(x, \theta_i).
-\end{equation}
-Given this set of predictions, we can compute the sample mean
-\begin{equation}
-  \hat{y}_\text{MLE} = \frac{1}{n}\sum_i f(x, \theta_i),
-\end{equation}
-which is an approximation to the \textit{maximum likelihood estimate} (MLE). Furthermore, an estimate of the error is provided by the sample \textit{covariance}
-\begin{equation}\label{eq:covariance}
-  \text{Cov}(\hat{y}) = \frac{1}{n-1}\sum_i (\hat{y}^{(i)} - \hat{y}_\text{MLE})(\hat{y}^{(i)} - \hat{y}_\text{MLE})^T.
-\end{equation}
-The diagonal terms of eq.~\eqref{eq:covariance} yields the sample \textit{variance} of the components of $\{\hat{y}^{(i)}\}_{i=1}^n$.
+As we discussed at the end of chapter \ref{chap:bayesian_ml}, we are mainly interested in the predictive distribution $p(y|x, W, b)$ of an output $y$ given an input $x$. Or we need to compute expectations of target functions dependent on the model parameters. The predictive distribution is approximated by constructing an empirical distribution by feeding $x$ through all $N$ sampled neural networks to obtain $N$ predictions using eq. eq.~\eqref{eq:predictive_dist_approx}. The expectation of a target function, on the other hand, is approximated using the MCMC estimator in eq.~\eqref{eq:mcmc_estimator} using all $N$ networks to evaluate the target function.
 
 
-\section{Bayesian learning using HMC}
-To learn from the data $D$ using HMC, we need to define a potential energy function $V(q)$ 
-and a kinetic energy function $K(p)$. In the case of a neural network, the potential energy can be specified in the generic form
-\begin{equation}\label{eq:generic_potential_energy}
-  V(W, b) = - \log Z - \sum_{\ell}\log P(W^\ell) - \sum_{\ell}\log P(b^\ell) - \sum_i \log P(y^{(i)}| x^{(i)}, W, b).
-\end{equation}
-where $W$ and $b$ collectively denotes all the kernels and biases of the model, respectively.
-We thus need to specify a prior for kernels $W^\ell$ and the biases $b^\ell$, as well as a likelihood given an input $(x, y)$.
-The priors are typically chosen to be Gaussian,
+\subsection{The Potential Energy Function of Neural Networks}
+
+We now turn to the Bayesian formulation of the neural network model for use with the samplers used in this thesis. Assume that we have picked an architecture for a neural network and wish to train it in the Bayesian sense.
+For both HMC and NUTS, we need only specify a potential energy function for our model. The samplers
+take care of the rest. Assume we are dealing with a dataset $D = \{(x^{(i)}, y^{(i)})\}_{i=1}^N$ where all $N$ points are independent and identically distributed.
+Equation~\eqref{eq:potential_energy_bayesian} instructs us to specify a prior for the weights of the network, and a likelihood function that depends on the target and the model output, in order
+to fully specify the potential energy function.
+Common practice is to choose priors that are either Gaussian or Laplacian. We will operate with Gaussian priors, i.e 
 \begin{equation}\label{eq:model_priors}
-  P(W^\ell) \propto \exp\left(-\frac{\lambda_W}{2}\norm{W^\ell}_2^2\right), \qquad P(b^\ell) \propto \exp\left(-\frac{\lambda_b}{2}\norm{b^\ell}_2^2\right).
+  P(W^\ell) \propto \exp\left(-\frac{\lambda_W}{2}\norm{W^\ell}_2^2\right) \qq{and} \qquad P(b^\ell) \propto \exp\left(-\frac{\lambda_b}{2}\norm{b^\ell}_2^2\right).
 \end{equation}
-The likelihood for regressions tasks was defined in eq.~\eqref{eq:nn_likelihood}. Combining this and eq.~\eqref{eq:model_priors},
-we can write down an explicit expression for the potential energy as
-\begin{equation}\label{eq:special_potential_energy}
-  V(W, b) = -\log Z + \frac{\lambda_W}{2} \sum_{\ell} \norm{W^\ell}_2^2 + \frac{\lambda_b}{2}\sum_{\ell} \norm{b^\ell}_2^2 + \frac{\lambda}{2}\sum_{i} \norm{y^{(i)} - f(x^{(i)}; W, b)}_2^2,  
-\end{equation}
-given a set of datapoints $D = \{x^{(i)}, y^{(i)}\}_{i=1}^n$.
-Here $Z$ denotes the normalization constant of the distribution $P \propto \exp(-V(W, b))$, 
-but is of no importance for the sampling procedure because it either vanishes when the gradient of $V$ is computed,
-or when we compute the energy difference between the initial state $(W, b)$ and the proposed state $(W^*, b^*)$.
-Finally, we need to specify a distribution for the kinetic energy. Since we interpret the Hamiltonian as the negative log likelihood
-of the target distribution, we have implicitly defined the distribution as Gaussian
+We will not worry too much about the choice of priors as the term in the potential energy function that corresponds to the likelihood will be much larger in practice. The Gaussian priors serve roughly the same purpose as $L^2$-regularization does in classical ML.
+
+The likelihood for regression from eq.~\eqref{eq:likelihood_fn} formulated in terms of a neural network $\hat{f}(x^{(i)};W, b)$ is
 \begin{equation}
-  P(p) \propto \prod_\ell \exp\left(-\frac{(p^\ell)^T (M^\ell)^{-1} p^{\ell}}{2}\right),
+  p(D|\theta) = \exp \left(-\frac{1}{2\sigma^2}\sum_{i=1}^N\norm{y^{(i)} - \hat{f}(x^{(i)};W, b)}_2^2\right).
+\end{equation} 
+This is not the only valid choice for a likelihood function but it is the common choice since it can be identified with Euclidean $L^2$-norm and
+has ``neat'' mathematical properties.
+
+Combining the priors and the likelihood with eq.~\eqref{eq:loss_function_of_posterior} yields the potential energy function
+\begin{equation}\label{eq:special_potential_energy}
+  \mathcal{L} = \frac{1}{2\sigma^2}\sum_{i=1}^N \norm{y^{(i)} - f(x^{(i)}; W, b)}_2^2 + \frac{\lambda_W}{2} \sum_{\ell=1}^L \norm{W^\ell}_2^2 + \frac{\lambda_b}{2}\sum_{\ell=1}^L \norm{b^\ell}_2^2,  
 \end{equation}
-where $M^\ell$ is the diagonal mass matrix of layer $\ell$ with its mass elements corresponding to each individual momentum and $p^\ell$
-denotes the generalized momenta of layers $\ell$.
+up to a constant. As we discussed in chapter \ref{chap:hmc}, the potential energy function also happens to be the typical loss function with $L^2$-regularization used in the classical ML which is why we denote it as $\mathcal{L}$. At this point, we have set up all the machinery we need to train BNNs. Our next topic of discourse is the practice of doing so.
+
+\subsection{Practical Training of Bayesian Neural Networks}
+
+Training BNNs in practice requires us to specify a fairly large number of hyperparameters to obtain a set models. These are 
+\begin{enumerate}
+  \item \textbf{Neural network architecture}. We need to specify its number of layers, number of nodes and activation function per layer. 
+  Once the BNN is trained, we store this information along with the model for future usage. The stored weights themselves will encode how many layers and nodes the model has but the activation functions must be stored in addition.
+  \item \textbf{Number of results}. We must specify how many neural networks we want to sample and store. Because the weights must be stored in its entirety, we are forced to worry about the amount of disk space that is required to do so. For a fixed allocated disk space, we can obviously store a larger set of samples if the model is simple. As complexity increases, the number of samples we can store will necessarily decrease.
+  \item \textbf{Number of burn-in steps}. We must decide how long we want to run the MCMC chain before we start storing results. If disk space was no object, this step would be considered entirely optional as we could simply store every single sample and make a thorough analysis of the chain's quality to determine when proper mixing is obtained. In practice, with TensorFlow's framework, we can make a predetermined set of burn-in steps to avoid unnecessary RAM usage.
+  \item \textbf{Amount of thinning}. Since successive samples most likely will be correlated, we can specify how how many samples we simply skip once we start gathering samples, i.e after the burn-in period. Again, we could ignore this and do this manually with the chain but doing so becomes a question of amount of available VRAM, RAM and disk space. 
+  \item \textbf{Hyperparameters specific to the samplers}. The samplers themselves carry their own hyperparameters. In the case of HMC, we must specify a fixed number of Leapfrog steps $L$. If we use the NUTS sampler, we must specify the maximum tree depth. Moreover, we must determine how much of the computing resources we allocate to adapting the step size used in the Leapfrog integrator.
+  \item \textbf{Amount of pretraining}. An attempt to accelerate convergence of the MCMC chain can be achieved by pretraining the neural network using minimization methods with the backpropagation algorithm to bring the weights closer to a minima of the potential energy function (i.e the loss function used in classical ML). Then the point estimate obtained at the end of the training is used as a starting point for the MCMC chain.
+\end{enumerate}
+
+\subsection{Training Algorithm of Bayesian Neural Networks}
+In this section we shall turn our attention to an actual training algorithm for BNNs. We assume we pick a sampler $S$ that represents either HMC or NUTS and a specified permuation of the hyperparameters discussed in the last section. In practice we can summarize a training algorithm as follows.
+\begin{enumerate}
+  \item Initialize the weights of the model from the specified priors, i.e
+  \begin{equation}
+    W^\ell \sim p(W^\ell) \qq{and} b^\ell \sim p(b^\ell) \qq{for} \ell=1,\ldots, L.
+  \end{equation}
+  \item Minimize the potential energy function $\mathcal{L}$ with respect to the weights of the model using an optimizer of your choice to obtain a point estimate for use a the initial state of the Markov chain.
+  \item Initialize the Markov chain for a finite set of burn-in steps to achieve mixing using $S$. A proportion of these burn-in steps are used for step size adaptation.
+  \item Gather samples by applying $S$ repeatly, replacing the current weights of the model by the once returned by $S$.  
+\end{enumerate}
 
 
-With the ingredients introduced hitherto, we can proceed to sample from a network with an arbitrary network architecture.
-The procedure is a follows. 
+\begin{comment}
+  
+With the ingredients discussed hitherto, it is time to consider practical training of BNNs.
+We can divide this process in two parts. First, we must choose the architecture of the model, which is tantamount to picking model class. This decision is similar in nature to the training of regular neural networks to obtain point estimates. Second, we must consider the sampling process of the model. There are several considerations to make here such as disk space, length of mixing, amount of thinning and so on.
+
+\subsection{Sampling of Bayesian Neural Networks}
+We may divide this procedure into several subcategories:
+\begin{enumerate}
+  \item Choosing sampler $S$.
+  \item Amount of mixing. We must choose the number of burn-in steps to run the sampling process before we actually start gathering sampled NNs.
+  \item Amount of thinning. Number of samples to skip per stored sample. 
+  \item Number of NNs to sample. Since the way we do Bayesian learning of NNs here actually require us a set of full NNs and store them to disk, we must decide how many samples we want to gather.
+\end{enumerate}
+
 
 \begin{enumerate}
-  \item Initialize the weights of the network sampled from the priors.
-  \item Train the network using the backpropagation algorithm to reach an initial network state in the high probability region of the posterior.
-  This is done to reduce the number of burn-in steps needed for the the Markov chain to reach the stationary distribution.
-  \item Perform a small number of burn-in steps. This step may be redundant as the network is minimized using eq.~\eqref{eq:special_potential_energy},
-  which will place us in a high probability region once the loss is minimized. 
-  \item Sample a set of neural network parameters from the posterior distribution.
+  \item Initialize the weights of the network sampled from the priors. 
+  \item An \textit{optional step}: train the network using a minimization algorithm with $\mathcal{L}$ as loss to reach an initial network state in the high probability \textit{density} region of the posterior.
+  This is done to reduce the number of burn-in steps needed for the the Markov chain to reach the stationary distribution. However, for sufficiently high-dimensional parameter spaces this 
+  may lead to adverse effects since the typical set may not be close to any mode of the posterior.
+  \item Perform a finite number of burn-in steps to facilitate mixing by application of $S$ repeatedly.
+  \item Sample a set of neural network parameters from the posterior distribution by use of $S$ repeatedly.
 \end{enumerate}
+
+\end{comment}

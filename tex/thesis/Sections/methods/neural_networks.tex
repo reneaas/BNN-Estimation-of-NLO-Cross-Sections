@@ -3,27 +3,28 @@ In this chapter, we will finally discuss the main topic of this thesis, \textit{
 We will start off introducing the mathematical formalism of neural networks. 
 We will then discuss the \textit{backpropagation} algorithm, which is the standard
 algorithm used to compute the gradient of the model with respect to a specified loss. 
-We will then finalize the chapter with how Bayesian learning of neural networks work. We will stay general and assume a set of inputs $x \in \mathbb{R}^p$ and corresponding targets $y \in \mathbb{R}^d$. 
+We will then finalize the chapter with how Bayesian learning of neural networks work. 
+Fortunately, most of the groundwork is already laid, so we need only a mathematical description of the model and a Bayesian interpretation of it. 
+We will stay general and assume a set of inputs $x \in \mathbb{R}^p$ and corresponding targets $y \in \mathbb{R}^d$. 
 These serve as the training data on which the neural network is trained.
-We will adopt the terminalogy used by the TensorFlow framework \cite{tf} to help make the
+We will adopt the terminology used by the TensorFlow framework \cite{tf} to help make the
 transition from mathematics to code easier. 
 
 \subsection{Basic Mathematical Structure}
-A neural network is most generally defined as a non-linear function $f : \mathbb{R}^p \to \mathbb{R}^d$.
-This non-linear function is built-up as follows:
+A neural network is most generally defined as a non-linear function $f : \mathbb{R}^p \to \mathbb{R}^d$ built up as follows.
 \begin{itemize}
     \item A set of $L$ layers. Consider the $\ell$'th layer. It consists of $n_\ell$ nodes all of which has a one-to-one correspondence to a real number. 
-    The conventional representation is through a real-valued vector $a^\ell \in \mathbb{R}^{n_\ell}$, where $a^\ell$ is colloquially called the \textit{activation} of layer $\ell$.
+    The conventional representation is with a real-valued vector $a^\ell \in \mathbb{R}^{n_\ell}$ called the \textit{activation} of layer $\ell$.
     \item For convenience, the layer with $\ell = 1$ is often called the \textit{input layer} and the layer with $\ell = L$ is
-    called the \textit{output layer}, and the layers in between for $\ell = 2, ..., L-1$ are called the \textit{hidden layers}. Although this distinction is merely conceptual and does not change the mathematics one bit, it provides useful categories for discussion later on.
+    referred to as the \textit{output layer}. The layers in between for $\ell = 2, ..., L-1$ are called the \textit{hidden layers}. Although this distinction is merely conceptual and does not change the mathematics one bit, it provides useful categories for discussion later on.
     \item Each layer $\ell$ is supplied with a (possibly) non-linear function $\sigma_\ell : \mathbb{R}^{n_{\ell - 1}} \to \mathbb{R}^{n_\ell}$. In other words, it defines a mapping $a^{\ell-1} \mapsto a^\ell$. The complete neural network function can thus be expressed as
     \begin{equation}
         f(x) = \left(\sigma_L \circ \sigma_{L-1} \circ \cdots \circ \sigma_\ell \circ \cdots \circ \sigma_2 \circ \sigma_1\right)(x).
     \end{equation}
-    \item To each layer, we assign a \textit{kernel} $W^\ell \in \mathbb{R}^{{n_\ell} \times {n_{\ell - 1}}}$ and a \textit{bias} $b^\ell \in \mathbb{R}^{n_\ell}$. Together, these parameters are called the $weights$ of a layer. 
-    \item The complete set of neural network parameters $(W,b) = \{(W^\ell, b^\ell)\}_{\ell=1}^L$ are called the weights of the network. They serve as the \textit{learnable} or \textit{trainable} parameters of the model.
+    \item To each layer, we assign a \textit{kernel} $W^\ell \in \mathbb{R}^{{n_\ell} \times {n_{\ell - 1}}}$ and a \textit{bias} $b^\ell \in \mathbb{R}^{n_\ell}$. Together, these parameters are called the $weights$ of layer $\ell$. 
+    \item The complete set of neural network parameters $(W,b) \equiv \{(W^\ell, b^\ell)\}_{\ell=1}^L$ are called the weights of the network. They serve as the \textit{learnable} or \textit{trainable} parameters of the model.
     \item Finally, we introduce the \textit{logits} $z^\ell \in \mathbb{R}^{n_\ell}$ of layer $\ell$.
-    \item The permutation of chosen number of layers, number of nodes per layer and activation functions are collectively called the \textit{architecture} of the neural network. 
+    \item The permutation of number of layers, number of nodes per layer and activation functions are collectively called the \textit{architecture} of the neural network. 
 \end{itemize}
 The activation in layer $\ell$ is computed through the recursive equation:
 \begin{equation}\label{eq:nn_forward_pass}
@@ -32,8 +33,8 @@ The activation in layer $\ell$ is computed through the recursive equation:
 A special case of eq.~\eqref{eq:nn_forward_pass} applies to $\ell = 1$ where $a^0 = x \in \mathbb{R}^p$ is assumed. 
 
 \subsection{Backpropagation}
-The standard approach to train a neural network is by minimization of some loss function by employing the backpropagation algorithm \cite{backprop} to compute its gradient recursively. The algorithm boils down to four equations defining a recursive algorithm that approximates the gradient with respect to the parameters of the model.
-Consider $\mathcal{L}$ as the loss function, quanitifying the error between the target and the model output.
+The standard approach to train a neural network is by minimization of some loss function by employing the backpropagation algorithm \cite{backprop} to compute its gradient with respect to its trainable parameters recursively. The algorithm boils down to four equations.
+Consider $\mathcal{L}$ as the loss function.
 The first of the four equations quantifes the error in the output layer.
 \begin{equation}\label{eq:backprop1}
     \Delta_j^L = \pdv{\mathcal{L}}{z_j^L}.
@@ -53,7 +54,8 @@ For the biases, the gradients are
 
 With these four equations, we can fit the neural network using minimization techniques such as stochastic gradient descent or more complex methods such as ADAM (pages 13-19 in \cite{ml_for_physicists}). 
 Although not the focus of this thesis, we might use these methods in conjunction with HMC to speed up convergence to the stationary distribution. Furthermore, the computation of gradients in combination with
-HMC or NUTS is achieved with the backpropagation algorithm using \textit{automatic differentiation}.
+HMC or NUTS is achieved with the backpropagation algorithm.
+\begin{comment}
 
 \subsection{Loss Function for Regression}
 In this thesis, we are concerned with regression tasks. The activation function of the final layer $\sigma_L$ is then just the identity function. The typical loss function chosen to solve regression tasks is the $L_2$-norm, which for a single output can be written as 
@@ -64,6 +66,8 @@ where $\hat{y}$ denotes the model output and $y$ the ground-truth. Now, the mode
 \begin{equation}
     \Delta_j^L = \pdv{\mathcal{L}}{z_j^L} = a_j^L - y_j.
 \end{equation} 
+
+\end{comment}
 
 We are now equipped to write down the backpropagation for a single datapoint. It's built up of a \textit{forward pass} which takes an input $x$ and applies the recursive eq.~\eqref{eq:nn_forward_pass} which produces a model prediction $\hat{y} = a^L$. The second part of the algorithm 
 is the \textit{backward pass} which based on the prediction $\hat{y}$ and the target $y$, computes the gradients of the loss function $\mathcal{L}$ with respect to the model parameters. The forward pass of the neural network
@@ -99,7 +103,6 @@ is summarized algorithm \ref{algo:forward_pass}.
         \State $\Delta_j^\ell \leftarrow \left(\sum_k \Delta_k^{\ell+1}W_{kj}^{\ell+1}\right) \sigma'(z_j^\ell)$
         \State $\pdv*{\mathcal{L}}{b_j^\ell} \leftarrow \Delta_j^\ell$
         \State $\pdv*{\mathcal{L}}{W_{jk}^\ell} \leftarrow \Delta_j^\ell a_k^{\ell-1}$
-        \State update $b_j^\ell$ and $W_{jk}^\ell$
         \EndFor
         \EndFor
         \EndProcedure
@@ -110,23 +113,65 @@ is summarized algorithm \ref{algo:forward_pass}.
 provided by TensorFlow to compute the gradients.
 
 \subsection{Regularization in Neural Networks}
-Neural networks often end up with a large number of parameters, which makes them prone to \textit{overfit} training data.
-This means that the trained parameters of the model is adjusted to capture trends in the training data which may not represent
-the underlying process the model tries to learn. The consequence is that it \textit{generalizes} poorly to new unseen data, i.e its predictions are poor. A typical strategy to avoid this problem, is to introduce some form of \textit{regularization}. A common choice is $L^2$-\textit{regularization}, which for a neural network tacks on two additional sums to the loss function as follows:
+As discussed in chapter \ref{chap:bayesian_ml}, models with a large number of parameters are prone to overfit
+training data and generalize poorly as a consequence. Thus one typically tack on an $L^2$-regularization term to the loss $\mathcal{L}_0$. 
+Assuming that $\mathcal{L}_0$ is the RSS in eq.~\eqref{eq:rss}, the form of the full loss function for a neural network model becomes
 \begin{equation}
     \mathcal{L} = \frac{1}{2}\sum_i \norm{\hat{y}^{(i)} - y^{(i)}}_2^2 + \frac{\lambda_W}{2}\sum_\ell \norm{W^\ell}_2^2 + \frac{\lambda_b}{2}\sum_\ell \norm{b^\ell}_2^2,
 \end{equation}
-where $\lambda_W$ and $\lambda_b$ are regularization strengths for the kernels and biases respectively. The $L^2$-norm $\norm{\cdot}_2$ is the standard Euclidean norm in the case of a vector. For a matrix, we mean the following. Consider a matrix $A \in \mathbb{R}^{m \times n}$. The matrix norm $\norm{\cdot}_2$ is then given by \textit{Fröbenius norm}
+where $\lambda_W$ and $\lambda_b$ are regularization strengths for the kernels and biases respectively. The $L^2$-norm $\norm{\cdot}_2$ is the standard Euclidean norm in the case of a vector. For a matrix, we mean the following. Let $A \in \mathbb{R}^{m \times n}$. The matrix norm $\norm{\cdot}_2$ is then given by \textit{Fröbenius norm}
 \begin{equation}
     \norm{A}_2 = \sqrt{\sum_{i=1}^m \sum_{j=1}^n \abs{A_{ij}}^2}.
-\end{equation}
-$L^2$-regularization is sometimes called $L^2$-penalty because it penalizes assignment of large values to the model parameters. Its effect is thus shrinkage of the parameter space where accessible minima may reside. 
+\end{equation} 
+
+\begin{comment}
+\section{Activation Functions (NEW)}
+There are many common activation functions with various strengths used in modern neural networks. We shall briefly mention a few ones
+for completeness.
+
+\begin{table}[h]
+    \centering
+    \begin{tabular}{llll}
+        \hline
+        \multicolumn{1}{l}{Name} & \multicolumn{1}{l}{Function} & \multicolumn{1}{l}{Derivative} & \multicolumn{1}{l}{Figure} \\ 
+        \hline
+        Sigmoid & $\sigma(x)=\frac{1}{1+e^{-x}}$ & $\sigma'(x)=\sigma(1-\sigma)$  &  
+        \begin{tikzpicture}[baseline={(0,0.2)}]
+         \draw (-1,0) -- (1,0);
+         \draw (0,0) -- (0,1);
+         \draw plot[domain=-1:1,variable=\x] ({\x},{1/(1+exp(-4*\x))});
+        \end{tikzpicture}\\
+        \\
+        tanh & $\sigma(x)=\frac{e^x-e^{-x}}{e^z+e^{-z}} $ & $\sigma'(x)=1-\sigma^2$   
+        &  \begin{tikzpicture}[baseline={(0,0)}]
+         \draw (-1,0) -- (1,0);
+         \draw (0,-1) -- (0,1);
+         \draw plot[domain=-1:1,variable=\x] ({\x},{tanh(3*\x)});
+        \end{tikzpicture} \\
+        ReLU & $\sigma(x) =\begin{cases}
+        0 & ~\text{if}~ x<0 \\ 
+        x & ~\text{if}~x \geq 0.
+        \end{cases}$ & $\sigma'(x)=\begin{cases}
+        0 & ~\text{if}~ x<0 \\ 
+        1 & ~\text{if}~x > 0.
+        \end{cases} $ & 
+        \begin{tikzpicture}[baseline={(0,0.5)}]
+         \draw (-1,0) -- (1,0);
+         \draw (0,0) -- (0,1);
+         \draw plot[domain=-1:1,variable=\x] ({\x},{ifthenelse(\x<0,0,\x)});
+        \end{tikzpicture}\\                      
+    \end{tabular}
+    \caption{Non-linear activation functions.}
+    \label{tab:activationfct}
+    \end{table}
+
+\end{comment}
 
 \section{Activation Functions}
-There are many common activation functions with various strengths used in modern neural networks. We will discuss a few common ones
-with an emphasis on the ones used in this thesis.
+There are many common activation functions with various strengths used in modern neural networks. We shall briefly mention a few ones
+for completeness.
 
-\subsection{Sigmoid}
+\subsection{Sigmoid and Tanh}
 The sigmoid activation function is given by 
 \begin{equation}\label{eq:sigmoid}
     \sigma(x) = \frac{1}{1 + \exp(-x)}.
@@ -134,8 +179,9 @@ The sigmoid activation function is given by
 It was a very common choice in neural networks early, likely due to its simple derivative. It has a significant drawback, however.
 Looking at eq.~\eqref{eq:sigmoid}, we can easily deduce that $\sigma(\pm \infty) = 0$, and since its derivative is of the form $\sigma'(x) = \sigma(1-\sigma)$,
 the gradient computed during backpropagation vanishes if the input to the activation function as $\abs{x} \to \infty$. This significantly
-hampers the progress during optimization. A popular alternative to the sigmoid function is $\tanh(x)$. This function too, however,
-suffers from the same vanishing gradient problem.
+hampers the progress during optimization. A popular alternative to the sigmoid function is $\tanh(x)$. This function is very similar to sigmoid in the sense that its derivative vanishes
+for inputs of large magnitude and so may suffer from the same issues as sigmoid does.
+
 
 \subsection{ReLU}
 To overcome the vanishing gradient problem, an activation function called the Rectifying Linear Unit (ReLU) became widely adopted, which is given by
