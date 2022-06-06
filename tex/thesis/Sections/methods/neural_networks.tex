@@ -179,7 +179,11 @@ The sigmoid activation function is given by
 It was a very common choice in neural networks early, likely due to its simple derivative. It has a significant drawback, however.
 Looking at eq.~\eqref{eq:sigmoid}, we can easily deduce that $\sigma(\pm \infty) = 0$, and since its derivative is of the form $\sigma'(x) = \sigma(1-\sigma)$,
 the gradient computed during backpropagation vanishes if the input to the activation function as $\abs{x} \to \infty$. This significantly
-hampers the progress during optimization. A popular alternative to the sigmoid function is $\tanh(x)$. This function is very similar to sigmoid in the sense that its derivative vanishes
+hampers the progress during optimization. A popular alternative to the sigmoid function is the hyperbolic tangent given by 
+\begin{equation}
+    \tanh(x) = \frac{e^{2x} - 1}{e^{2x} + 1}.
+\end{equation}
+This function is very similar to sigmoid in the sense that its derivative vanishes
 for inputs of large magnitude and so may suffer from the same issues as sigmoid does.
 
 

@@ -7,9 +7,12 @@ The way Bayesian learning of neural networks manifest itself depends on the way 
 We are concerned with inference of model parameters from the posterior using MCMC methods and will therefore obtain samples where each such sample
 consist of the weights of an entire neural network. More precisely, if we gather $N$ samples with a chosen sampler, we will obtain $N$ entire neural networks
 all sampled from the posterior to explain the observed data. Thus, what we mean by a \textit{trained} BNN in this sense is that we have
-sampled a set of NNs that collectively represent the BNN. 
+sampled a set of neural networks that collectively represent the BNN. 
 
-As we discussed at the end of chapter \ref{chap:bayesian_ml}, we are mainly interested in the predictive distribution $p(y|x, W, b)$ of an output $y$ given an input $x$. Or we need to compute expectations of target functions dependent on the model parameters. The predictive distribution is approximated by constructing an empirical distribution by feeding $x$ through all $N$ sampled neural networks to obtain $N$ predictions using eq. eq.~\eqref{eq:predictive_dist_approx}. The expectation of a target function, on the other hand, is approximated using the MCMC estimator in eq.~\eqref{eq:mcmc_estimator} using all $N$ networks to evaluate the target function.
+As we discussed at the end of chapter \ref{chap:bayesian_ml}, 
+we are mainly interested in the predictive distribution $p(y|x, W, b)$ of an output $y$ given an input $x$. We can approximate this distribution by constructing an empirical distribution by feeding $x$ through all $N$ sampled neural networks to obtain $N$ predicted targets $\hat{y}$ using eq. eq.~\eqref{eq:predictive_dist_approx}.
+The second quantity of interest is expectations of target functions dependent on the model parameters. 
+We can approximate any such expectation with an MCMC estimator as in eq.~\eqref{eq:mcmc_estimator} using all $N$ networks to evaluate the target function.
 
 
 \subsection{The Potential Energy Function of Neural Networks}
@@ -52,15 +55,15 @@ Training BNNs in practice requires us to specify a fairly large number of hyperp
 \end{enumerate}
 
 \subsection{Training Algorithm of Bayesian Neural Networks}
-In this section we shall turn our attention to an actual training algorithm for BNNs. We assume we pick a sampler $S$ that represents either HMC or NUTS and a specified permuation of the hyperparameters discussed in the last section. In practice we can summarize a training algorithm as follows.
+In this section we shall turn our attention to an actual training algorithm for BNNs. Assume we pick a sampler $S$ that represents either HMC or NUTS and a specified permuation of the hyperparameters discussed in the last section. In practice we can summarize a training algorithm as follows.
 \begin{enumerate}
   \item Initialize the weights of the model from the specified priors, i.e
   \begin{equation}
     W^\ell \sim p(W^\ell) \qq{and} b^\ell \sim p(b^\ell) \qq{for} \ell=1,\ldots, L.
   \end{equation}
-  \item Minimize the potential energy function $\mathcal{L}$ with respect to the weights of the model using an optimizer of your choice to obtain a point estimate for use a the initial state of the Markov chain.
-  \item Initialize the Markov chain for a finite set of burn-in steps to achieve mixing using $S$. A proportion of these burn-in steps are used for step size adaptation.
-  \item Gather samples by applying $S$ repeatly, replacing the current weights of the model by the once returned by $S$.  
+  \item Minimize the potential energy function $\mathcal{L}$ with respect to the weights of the model using an optimizer of your choice to obtain a point estimate for use as the initial state of the Markov chain.
+  \item Initialize the Markov chain for a finite set of burn-in steps to achieve mixing using $S$. A proportion of the initial burn-in steps are used for step size adaptation, while the remaining are used for mixing.
+  \item Gather samples by applying $S$ repeatly, replacing the current weights of the model by the ones returned by $S$.  
 \end{enumerate}
 
 

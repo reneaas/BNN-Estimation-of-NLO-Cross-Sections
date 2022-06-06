@@ -146,7 +146,7 @@ A particularly neat feature of the acceptance probability in eq.~\eqref{eq:gener
     \begin{algorithm}[H]
       \caption{Metropolis-Hastings}\label{algo:general_metropolis}
       \begin{algorithmic}
-        \Function{METROPOLIS-HASTINGS}{$\theta$}
+        \Function{{\tt MetropolisHastings}}{$\theta$}
         \State Sample $\theta' \sim q(\theta'|\theta)$
         \State $\displaystyle{a(\theta'|\theta) \leftarrow \min \left(1, \frac{q(\theta|\theta')\pi(\theta')}{q(\theta'|\theta)\pi (\theta)}\right)}$
         \State Sample $u \sim \text{Uniform}(0,1)$.
@@ -213,7 +213,7 @@ sampled according to eq.~\eqref{eq:gibbs_sampling}.
   \begin{algorithm}[H]
     \caption{Gibbs sampling}\label{algo:gibbs}
     \begin{algorithmic}
-      \Function{GIBBS}{$\theta^{(t)}$}
+      \Function{{\tt Gibbs}}{$\theta^{(t)}$}
         \For{$i=1,\ldots, d$}
           \State Sample $\theta_i^{(t+1)} \sim P(\theta_i|\theta_{1}^{(t+1)}, \ldots \theta_{i-1}^{(t+1)}, \theta_{i+1}^{(t)}, \ldots, \theta_{m}^{(t)}).$
         \EndFor \\

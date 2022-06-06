@@ -57,7 +57,7 @@ Its approximation to $(q(t+\epsilon), q(t + \epsilon))$ is then computed as form
 	\begin{algorithm}[H]
 		\caption{Leapfrog Integration}\label{algo:leapfrog}
 		\begin{algorithmic}
-      \Function{Leapfrog}{$V, q, p, \epsilon$} 
+      \Function{{\tt Leapfrog}}{$V, q, p, \epsilon$} 
       \For{$i=1,\ldots, d$}
         \State $p_i' \gets p_i - \displaystyle{\frac{\epsilon}{2}\pdv{V(q)}{q_i}}$
         \State $q_i' \gets q_i + \displaystyle{\frac{\epsilon}{m_i}p_i'}$
@@ -74,7 +74,7 @@ When used in HMC, it is common to set all masses $m_i = 1$ from which we can for
 	\begin{algorithm}[H]
 		\caption{Vectorized Leapfrog Integration}\label{algo:vec_leapfrog}
 		\begin{algorithmic}
-      \Function{VectorizedLeapfrog}{$V, q, p, \epsilon$} 
+      \Function{{\tt VectorizedLeapfrog}}{$V, q, p, \epsilon$} 
       \State $p' \gets p - \displaystyle{\frac{\epsilon}{2}}\nabla_q V(q)$
       \State $q' \gets q + \epsilon p'$
       \State $p' \gets p' - \displaystyle{\frac{\epsilon}{2}}\nabla_q V(q')$
@@ -94,7 +94,7 @@ as we summarized in algorithm~\ref{algo:general_metropolis}.
 The fundamental assumption we make is that the target distribution can be expressed in terms of a
 canonical distribution over coordinate space
 \begin{equation}\label{eq:canonical_coordinate}
-  \pi(q) \propto \exp\left(-V(q)\right),
+  \pi(q) \propto \exp\left\{-V(q)\right\},
 \end{equation}
 where $q$ represents the model parameters $\theta$. We will stick to this convention to avoid confusion and 
 utilize the formulation of Hamiltonian dynamics discussed hitherto. Once we want to apply it in a Bayesian ML context,
@@ -113,7 +113,7 @@ The momenta are sampled from some distribution of our own choice. We can proceed
 with the potential energy function and express the momentum distribution in terms of a canonical distribution
 over momentum space
 \begin{equation}
-  \pi(p) \propto \exp\left(-K(p)\right),
+  \pi(p) \propto \exp\left\{-K(p)\right\},
 \end{equation}
 such that
 \begin{equation}
@@ -126,7 +126,7 @@ the one found in classical physics
 \end{equation}
 from which the canonical distribution is inferred to be
 \begin{equation}\label{eq:canonical_p}
-  \pi(p) \propto \exp\left(-\sum_{i=1}^d \frac{p_i^2}{2m_i}\right) = \prod_{i=1}^d \exp\left(-\frac{p_i^2}{2m_i}\right).
+  \pi(p) \propto \exp\left\{-\sum_{i=1}^d \frac{p_i^2}{2m_i}\right\} = \prod_{i=1}^d \exp\left\{-\frac{p_i^2}{2m_i}\right\}.
 \end{equation}
 Hence, with the kinetic energy from eq.~\eqref{eq:K_classical_physics}, we 
 sample each momentum independently from a Gaussian distribution with zero mean and variance $\sigma_i^2 = m_i$.
@@ -134,7 +134,7 @@ sample each momentum independently from a Gaussian distribution with zero mean a
 Now that we understand how we specify the potential energy for a given target distribution and
 the kinetic energy of the auxilliary momenta, we can formulate the full canonical distribution over phase-space as
 \begin{equation}\label{eq:full_canonical}
-  \pi(q, p) = \pi(q)\pi(p) \propto \exp\left(-V(q)\right)\exp\left(-K(p)\right) = \exp\left(-H(q, p)\right).
+  \pi(q, p) = \pi(q)\pi(p) \propto \exp\left\{-V(q)\right\}\exp\left\{-K(p)\right\} = \exp\left\{-H(q, p)\right\}.
 \end{equation}
 We are naturally just interested in generating a new coordinate $q'$. Using Hamilton's equations
 with the Hamiltonian implied by eq.~\eqref{eq:full_canonical}, we can simulate the fictitious Hamiltonian
@@ -144,7 +144,7 @@ is then obtained by the projection map $(q', p') \mapsto q'$.
 As stated in the beginning of this section, we may regard the details outlined here as an elaborate explanation of the proposal distribution $q(\theta'|\theta)$. The final keypoint to consider is how we can make it symmetric so
 that we only need to evaluate $\pi(q', p')$ at the Metropolis step using eq.~\eqref{eq:symmetric_acceptance_prob}. It can be shown that we only need two additional steps. We must randomly choose to sample forwards or backwards in time. The second step is the negate the momenta at the end of the generation of the state, $p \mapsto -p$. The acceptance probability can then be computed as
 \begin{equation}
-  a = \min \left(1, \frac{\pi(q', p')}{\pi(q, p)}\right) = \min \left(1, \exp\left\{-\left(H(q',p') - H(q, p)\right)\right\}\right).
+  a = \min \left(1, \frac{\pi(q', p')}{\pi(q, p)}\right) = \min \left(1, \exp\left\{-\left[H(q',p') - H(q, p)\right]\right\}\right).
 \end{equation}
 But this should always be evaluated to $a = 1$ if $H$ is indeed conserved. But the catch is that the dynamics is only approximated using the Leapfrog integrator. The best the integrator can do is conserve $H$ on average, with its value oscillating about the initial value.
 
@@ -170,14 +170,14 @@ The HMC scheme is summarized in algorithm \ref{algo:hmc}.
 	\begin{algorithm}[H]
 		\caption{Hamiltonian Monte Carlo}\label{algo:hmc}
 		\begin{algorithmic}
-      \Function{HMCstep}{$q, H, L, \epsilon$}
+      \Function{{\tt HMCstep}}{$q, H, L, \epsilon$}
       \State Sample $p \sim \mathcal{N}(0, \text{diag}(m_1, \ldots, m_d))$ \Comment{Sample auxilliary momenta}
       \State Sample $v \sim \text{Uniform}(\{-1, 1\})$. \Comment{Randomly choose direction in time.}
       \State $(q', p') \leftarrow (q, p)$    \Comment{Initialize the initial state.}
       \For{$l = 1, ..., L$} \Comment{Simulate Hamiltonian system for $L$ Leapfrog steps.}
-        \State $(q', p') \leftarrow$ LEAPFROG$(q', p', v\epsilon)$ 
+        \State $(q', p') \leftarrow$ {\tt Leapfrog}$(q', p', v\epsilon)$ 
       \EndFor
-      \State $a = \min \left(1, \exp\left[-\left(H(q',p') - H(q, p)\right)\right]\right)$ \Comment{Compute acceptance probability}
+      \State $a = \min \left(1, \exp\left\{-\left[H(q',p') - H(q, p)\right]\right\}\right)$ \Comment{Compute acceptance probability}
       \State Sample $u \sim U(0,1)$ \Comment{Uniform distribution on $(0,1)$.}
       \If {$a \geq u$} \Comment{Perform Metropolis-Hastings correction}
         \State $q \gets q'$ \Comment{Accept proposed state.}
@@ -195,7 +195,7 @@ We seek to use HMC in a Bayesian ML application. It is therefore important to
 discuss a general way to construct the potential energy function in such applications.
 First, recall from chapter \ref{chap:bayesian_ml} in eq.~\eqref{eq:posterior_function_of_loss} that the posterior could in general be written as
 \begin{equation}
-  p(\theta|D) \propto \exp\left(-\mathcal{L}(\theta)\right),
+  p(\theta|D) \propto \exp\left\{-\mathcal{L}(\theta)\right\},
 \end{equation}
 where $\mathcal{L}$ was some loss function in the classical ML sense.
 However, we do not need the evidence term and simply sample from the target distribution $\pi(\theta) = p(D|\theta)p(\theta)$ instead.

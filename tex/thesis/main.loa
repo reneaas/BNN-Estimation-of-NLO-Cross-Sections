@@ -3,7 +3,9 @@
 \contentsline {algorithm}{\numberline {4.1}{\ignorespaces Leapfrog Integration\relax }}{18}{figure.caption.9}%
 \contentsline {algorithm}{\numberline {4.2}{\ignorespaces Vectorized Leapfrog Integration\relax }}{19}{figure.caption.10}%
 \contentsline {algorithm}{\numberline {4.3}{\ignorespaces Hamiltonian Monte Carlo\relax }}{21}{figure.caption.11}%
-\contentsline {algorithm}{\numberline {5.1}{\ignorespaces BuildTree function\relax }}{26}{figure.caption.12}%
-\contentsline {algorithm}{\numberline {5.2}{\ignorespaces Naive NUTS sampler\relax }}{26}{figure.caption.13}%
-\contentsline {algorithm}{\numberline {6.1}{\ignorespaces Backpropagation: Forward pass\relax }}{31}{figure.caption.14}%
-\contentsline {algorithm}{\numberline {6.2}{\ignorespaces Backpropagation: Backward pass\relax }}{31}{figure.caption.15}%
+\contentsline {algorithm}{\numberline {5.1}{\ignorespaces Helper function used in the Naive NUTS implementation\relax }}{26}{figure.caption.12}%
+\contentsline {algorithm}{\numberline {5.2}{\ignorespaces The naive NUTS sampler\relax }}{27}{figure.caption.13}%
+\contentsline {algorithm}{\numberline {5.3}{\ignorespaces Helper function used in the efficient NUTS implementation\relax }}{28}{figure.caption.14}%
+\contentsline {algorithm}{\numberline {5.4}{\ignorespaces The efficient NUTS sampler\relax }}{29}{figure.caption.15}%
+\contentsline {algorithm}{\numberline {6.1}{\ignorespaces Backpropagation: Forward pass\relax }}{32}{figure.caption.16}%
+\contentsline {algorithm}{\numberline {6.2}{\ignorespaces Backpropagation: Backward pass\relax }}{33}{figure.caption.17}%
