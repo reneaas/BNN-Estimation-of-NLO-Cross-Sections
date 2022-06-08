@@ -165,3 +165,42 @@ or deep balanced binary trees due to repeatedly calling {\tt BuildTree} without 
 So far, we have seen how we can adapt the number of Leapfrog steps $L$ used in HMC with the NUTS sampler but we have yet to explore 
 how we can adapt the step size $\epsilon$. After all, we sought to adapt the trajectory length $\epsilon L$ itself. The adaptation scheme discussed in this section is a slightly modified version of the dual averaging scheme presented by Nesterov. The modifications, the specifics of which we will clarify later on, is better suited for MCMC problems while the methods presented in Nesterov's paper is designed for stochastic convex optimization problems.  
 
+\subsection{Adapting a General Parameter Using a Dual Averaging Scheme}
+Assume $H_t$ is a statistic that measures the some behaviour of an MCMC algorithm at iteration $t \geq 1$. Define its expectation with respect to a tunable parameter $x \in \mathbb{R}$ as
+\begin{equation}
+    h(x) = \mathbb{E}_t[H_t|x] \equiv \lim_{T \to \infty} \frac{1}{T}\sum_{t=1}^T \mathbb{E}[H_t|x].
+\end{equation}
+Assuming that $h$ is a nondecreasing function of $x$, the update
+\begin{equation}
+    x_{t+1} \gets x_t - \eta_t H_t,
+\end{equation}
+ensures that $h(x_t) \to 0$ as long as the step size $\eta_t$ satisfies the conditions
+\begin{equation}\label{eq:step_size_schedule}
+    \sum_t \eta_t = \infty \qq{and} \sum_t \eta_t^2 < \infty.
+\end{equation}
+To satisfy the conditions in eq.~\eqref{eq:step_size_schedule}, we can set the step size schedule as
+\begin{equation}
+    \eta_t = t^{-k} \qq{for} k \in (1/2, 1].
+\end{equation}
+In practice, we want $x_t$ to ensure that $h(x_t)$ is close to zero towards the end of the warm-up phase of the MCMC chain and freeze the value of $x$ during the phase we gather samples from the chain. However, the optimal value of $x$ may be widely different in the convergence phase and the exploration phase. We thus want our updates to give weight towards the end of the warm-up phase.
+
+The objective is to find a value of $x$ such that $h(x) = 0$. To this end, we apply the updates
+\begin{equation}\label{eq:update_rule}
+    \begin{split}
+        x_{t+1} & \gets \mu - \frac{\sqrt{t}}{\gamma}\frac{1}{t + t_0}\sum_{i=1}^t H_i, \\
+        \bar{x}_{t+1} & \gets \eta_t x_{t+1} + (1 - \eta_t)\bar{x}_t,
+    \end{split}
+\end{equation}
+with $\bar{x}_1 = x_1$. Here $\mu$ is a free parameter that $x_t$ is chosen to converge to, $\gamma > 0$ is a free parameter that controls the rate at which $x$ converges to $\mu$ and $t_0 \geq 0$ is introduced to stabilize the initial iterations of the updates. The difference from Nestorov's scheme the introduction of $t_0$. 
+
+\subsection{Setting the Step Size in Hamiltonian Monte Carlo}
+In Hamiltonian Monte Carlo, we want to avoid a value for $\epsilon$ that is too small which would waste computational resources, or one that is too large which lead to low acceptance probabilities. We can avoid this by tuning $\epsilon$ to yield an average acceptance probability of some value chosen target $\delta$. Under some strong conditions, it can be shown that the ideal value is $\delta \approx 0.65$ \cite{neal2011} but empirically any value $\delta \in (0.6, 0.9)$ works fine. To use the update rule in eq.~\eqref{eq:update_rule} to tune $\epsilon$ with $\delta$ as target can be achieved by introduction of
+\begin{equation}\label{eq:HMC_statistic}
+    H_t^\text{HMC} = \min \left\{1, \frac{\pi(q', p')}{\pi(q, p)}\right\},
+\end{equation}
+where $(q', p')$ the proposed state and $(q, p)$ is the inital point used by {\tt HMCstep} as in algorithm \ref{algo:hmc}.
+The observant reader will note that eq.~\eqref{eq:HMC_statistic} is simply the acceptance probability used during the Metropolis correction in {\tt HMCstep} with eq.~\eqref{eq:full_canonical} as the target distribution. The updates are then perfomed with
+\begin{equation}
+    H_t = \delta - H_t^\text{HMC} \qq{and} x = \log \epsilon,
+\end{equation}
+which will ensure that $h(\epsilon)$ converges to $\delta$.

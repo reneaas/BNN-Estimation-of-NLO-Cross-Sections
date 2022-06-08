@@ -6,4 +6,24 @@ and why this is a necessary solution.
 The Standard Model of particle physics (SM) is a successful fundamental theory that describes fundamental particles and their interactions.
 Despite its success, however, it has a few limitations on its own which has led physicists to propose extentions to the model to explain physics that SM cannot. One such family of extensions is called \textit{supersymmetry}. 
 
+\section{Tmp}
+\begin{itemize}
+    \item $n_i$: Målte events (kollisjoner) som oppfyller et sett (kalt signalregion) med kriterier (``cuts'').
+    \item $b_i$: Bakgrunnen. Estimert SM bidrag for samme signal region.
+    \item $s_i$: BSM estimert bidrag for signalregionen med et sett med parameterverdier for en ny BSM modell (i.e SUSY). Den er regnet ut ved 
+    \begin{equation}
+        s_i = \sigma \epsilon_i A_i \mathcal{L},
+    \end{equation}
+    der $\sigma$ er tverrsnittet som måler sannsynligheten for at en ``ny'' prosess skjer, $\epsilon_i$ er detektor effektivitet, $A_i$ er akseptans 
+    og $\mathcal{L}$ er integrert luminositet over data brukt i søket. 
+    \item Statistisk analyse gjøres med å regne ut Poisson likelihood 
+    \begin{equation}
+        \mathcal{L}(s, b, n) = \frac{e^{-(s + b)}(s + b)^n}{n!}.
+    \end{equation} 
+    og en test statistikk
+    \begin{equation}
+        q = -2\ln \frac{\mathcal{L}(s, b, n)}{\mathcal{L}(s=0, b, n)}.
+    \end{equation}
+\end{itemize}
+
 

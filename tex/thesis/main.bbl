@@ -73,6 +73,12 @@ Y.~Nesterov, \emph{Primal-dual subgradient methods for convex problems},
   \href{http://dx.doi.org/10.1007/s10107-007-0149-x}{\emph{Mathematical
   Programming} {\bf 120} (Aug, 2009) 221--259}.
 
+\bibitem{neal2011}
+S.~Brooks, A.~Gelman, G.~Jones and X.-L. Meng, eds., \emph{Handbook of Markov
+  Chain Monte Carlo}.
+\newblock Chapman and Hall/{CRC}, may, 2011,
+  \href{http://dx.doi.org/10.1201/b10905}{10.1201/b10905}.
+
 \bibitem{tf}
 M.~Abadi, A.~Agarwal, P.~Barham, E.~Brevdo, Z.~Chen, C.~Citro et~al.,
   \emph{{TensorFlow}: Large-scale machine learning on heterogeneous systems},
