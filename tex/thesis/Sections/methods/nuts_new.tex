@@ -200,7 +200,50 @@ In Hamiltonian Monte Carlo, we want to avoid a value for $\epsilon$ that is too 
 \end{equation}
 where $(q', p')$ the proposed state and $(q, p)$ is the inital point used by {\tt HMCstep} as in algorithm \ref{algo:hmc}.
 The observant reader will note that eq.~\eqref{eq:HMC_statistic} is simply the acceptance probability used during the Metropolis correction in {\tt HMCstep} with eq.~\eqref{eq:full_canonical} as the target distribution. The updates are then perfomed with
-\begin{equation}
+\begin{equation}\label{eq:HMC_statistic2}
     H_t = \delta - H_t^\text{HMC} \qq{and} x = \log \epsilon,
 \end{equation}
 which will ensure that $h(\epsilon)$ converges to $\delta$.
+
+\subsection{Adapting the Step Size with the No-U-Turn Sampler}
+The No-U-Turn sampler does not have a single Metropolis correction step as in HMC but an alternative statistic that delivers roughly the same interpretation can be computed. The statistic defined for this sampler is
+\begin{equation}\label{eq:NUTS_statistic}
+    H_t^\text{NUTS} = \frac{1}{\abs{\mathcal{B}_t^\text{final}}} \sum_{(q', p') \in \mathcal{B}_t^\text{final}} \min \left\{1, \frac{\pi(q', p')}{\pi(q, p)}\right\},
+\end{equation}
+where $\mathcal{B}_t^\text{final}$ is the set of all states $(q', p')$ during the final doubling at iteration $t$ and $(q, p)$ is the initial state. This is in sense average acceptance probability standard HMC would compute given the states produced during the final doubling. In the same spirit as eq.~\eqref{eq:HMC_statistic2}, we set
+\begin{equation}\label{eq:NUTS_statistic2}
+    H_t = \delta - H_t^\text{NUTS} \qq{and} x = \log \epsilon.
+\end{equation}
+
+\subsection{Generalizing the Tuning Algorithm}
+We have seen that we must define a statistic $H_t$ and a tunable parameter $x$, which turns out to differ slightly in the case of HMC and NUTS. Producing a general algorithm for a given sampler $S$ (which can be either HMC or NUTS in this thesis) thus amounts to augmenting {\tt HMCstep} to compute and return the statistic in eq.~\eqref{eq:HMC_statistic}, and similarly augment {\tt NUTSstep} to return the value of eq~\eqref{eq:NUTS_statistic} at each iteration. Let us colletively denote the statistic as $H_t^S$ representing the statistic pertaining to the sampler $S$. Then at each iteration $t$, we compute
+\begin{equation}
+    H_t = \delta - H_t^S,
+\end{equation} 
+with $x = \log \epsilon$ as the tunable parameter. Once a finite number $T$ of adaptation steps are performed, we can invert the equation to obtain an estimate of the optimal step size as
+\begin{equation}
+    \epsilon_\text{opt} = \log^{-1}(\bar{x}_T).
+\end{equation} 
+We have summarized a function {\tt DualAveragingStepSizeAdaptation} which will work with samplers in algorithm \ref{algo:dual_step_size_adaptation}.
+
+\begin{figure}[H]
+	\begin{algorithm}[H]
+	\caption{Dual Averaging Step Size Adaptation}\label{algo:dual_step_size_adaptation}
+	\begin{algorithmic}
+        \Function{{\tt DualAveragingStepSizeAdaptation}}{$H_t^S, \delta, t, t_0, \bar{x}_t, k$}
+            \State $H_t \gets \delta - H_t^S$
+            \If{$t = 0$}
+                \State $h \gets H_t$
+                \State $x_{1} \gets \mu$
+                \State $\bar{x}_{1} \gets x_1$
+            \Else
+                \State $h \gets (t-1)h + H_t$ \Comment{Aggregate the average statistic}
+                \State $x_{t+1} \gets \mu - \frac{\sqrt{t}}{\gamma(t + t_0)}th$ \Comment{First part of update rule in eq.~\eqref{eq:update_rule}}
+                \State $\eta_t \gets t^{-k}$
+                \State $\bar{x}_{t+1} \gets \eta_t x_{t+1} + (1 - \eta_t)\bar{x}_t$ \Comment{Second part of update rule in eq.~\eqref{eq:update_rule}}
+            \EndIf
+            \State \Return $\bar{x}_{t+1}, H_t, h$
+        \EndFunction
+	\end{algorithmic}
+	\end{algorithm}
+\end{figure}
