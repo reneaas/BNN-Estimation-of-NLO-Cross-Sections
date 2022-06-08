@@ -52,6 +52,7 @@ Up until this point, we have not yet described precisely how the states in $\mat
 nor why and when to stop its generation. As we briefly described in the introduction to this chapter, 
 NUTS computes trajectories in phase-space until the trajectory starts to double back on itself. First running one Leapfrog step,
 then two Leapfrog steps, then four Leapfrog steps and so on. Each such step is run either forwards or backwards in ficticious time, chosen at random.
+If the directions in forwards, it starts from the state at the front of the total generated trajectory. If the direction is backwards in time, it starts from the state corresponding to the tail of the trajectory.
 The successive state produced by the Leapfrog integrator at each such step is collected and stored. This generates a collection of states which we represent with $\mathcal{B}$. 
 
 We can regard the process as building a balanced binary tree where each node correspond to a state traced out by the Leapfrog integrator. The initial node is defined to represent the tree at height $j = 0$. Given a balanced binary tree at height $j$, we use the last endpoint from the last simulation to run $2^j$ Leapfrog steps in the direction of $v_j ~ \sim \text{Uniform}(\{-1, 1\})$, where $v_j = 1$ represents forwards in time and $v_j = -1$ represents backwards in time.
@@ -111,8 +112,8 @@ or deep balanced binary trees due to repeatedly calling {\tt BuildTree} without 
             \If{$j=0$} \Comment{Initial state of the balanced binary tree. Base case.}
 
                 \State $(q', p') \leftarrow {\tt Leapfrog}(q, p, v\epsilon)$.
-                \State $\mathcal{C}' \leftarrow \{(q', p')\} \qq{if} u \leq \exp{-H(q', p')} \qq{else} \mathcal{C} \leftarrow \emptyset$.
-                \State $s' \leftarrow \mathbb{I}[H(q, p) + \log u \leq E_\text{max}]$ \Comment{Stopping criterion of eq.\eqref{eq:stopping_criterion1}.}
+                \State $\mathcal{C}' \leftarrow \{(q', p')\} \qq{if} u \leq \exp{-H(q', p')} \qq{else} \mathcal{C}' \leftarrow \emptyset$.
+                \State $s' \leftarrow \mathbb{I}[H(q, p) + \log u \leq E_\text{max}]$ \Comment{Stopping criterion of eq.~\eqref{eq:stopping_criterion1}.}
                 \State \Return $q', p', q', p', \mathcal{C}', s'$. 
             \Else \Comment{Recursion case where $j > 0$. Builds left or right subtrees.}
                 \State $q^-, p^-, q^+, p^+, \mathcal{C}', s' \leftarrow {\tt BuildTree}(q, p, u, v, j - 1, \epsilon)$
@@ -201,19 +202,21 @@ and $\mathcal{C}_\text{new}$ represents the set of elements added to $\mathcal{C
     It also accounts for the case where the new set is empty.
 \end{comment}
 The transition kernel can be interpreted to describe a probability of a transition from a state in $\mathcal{C}_\text{old}$ to a randomly chosen state in $\mathcal{C}_\text{new}$.
-The move is accepted with probability $\abs{\mathcal{C}_\text{new}} / \abs{\mathcal{C}_\text{old}}$. 
+The move is accepted with probability $\abs{\mathcal{C}_\text{new}} / \abs{\mathcal{C}_\text{old}}$. Moreover, the transition kernel can be applied
+for each new subtree that is generated which promote transitions further away from the initial state in parameter space, leading to larger leaps of transition.
 
 The transition kernel still require us to sample uniformly from the candidate set. But this can be achieved without storing the entire set in memory. Consider a subtree and denote the set of all nodes it contains as $\mathcal{C}_\text{subtree} \subseteq \mathcal{C}$. 
+Then
 \begin{equation}
     p(q, p|\mathcal{C}) = \frac{1}{\abs{\mathcal{C}}} = \frac{\abs{\mathcal{C}_\text{subtree}}}{\abs{\mathcal{C}}} \frac{1}{\abs{\mathcal{C}_\text{subtree}}} 
     = p((q, p) \in \mathcal{C}_\text{subtree}|\mathcal{C})P(q,p |(q,p) \in \mathcal{C}_\text{subtree}, \mathcal{C}),
 \end{equation}
 meaning the uniform probability over the entire set $\mathcal{C}$ can be expressed as the product of the probability of selecting a node that belongs to the subtree times the probability of sampling $(q, p)$ randomly from the states in that subtree. This observation can be practically applied to reduce the memory footprint as follows. 
-Let us consider an old candidate set $\mathcal{C}_\text{old}$ height $j$. 
-Let us consider a new candidate set $\mathcal{C}_\text{new}$. 
-Each subtree of height $j > 0$, contains two smaller subtrees of height $j - 1$. For each smaller subtree, sample a pair $(q, p)$ from $1 / \abs{\mathcal{C}_\text{subtree}}$ to rerepsent each smaller subtree. We select one of these pairs and give it a weight proportional to how many elements of $\mathcal{C}$ that reside in that subtree. This procedure is repeated from $j = 1$ all the way up to the subtree that represent $\mathcal{C}$.
 
-It can be shown that the storage requirement can be reduced to the order $\mathcal{O}(j)$
+Consider a candidate set $\mathcal{C}$ representing a tree of height $J$. Any subtree of height $j > 0$ is built up of two smaller subtrees of height $j - 1$.  
+For each smaller subtree, sample a pair $(q, p)$ from $1 / \abs{\mathcal{C}_\text{subtree}}$ to represent each smaller subtree. We select one of these pairs and give it a weight proportional to how many elements of $\mathcal{C}$ that reside in that subtree. This procedure can be performed repeated from $j = 1$ all the way up to the subtree that represent $\mathcal{C}$, meaning there is no need to store the entire tree corresponding to the candidate set. Since we select a single state $(q, p)$ per subtree, the storage requirement goes as $\mathcal{O}(j)$ instead of $\mathcal{O}(2^j)$. 
+
+The improvements discussed in this section is summarized in a new version of the helper function {\tt BuildTree} in algorithm \ref{algo:build_tree_efficient}. The more efficient version of NUTS is listed as a function named {\tt EfficientNUTSstep} in algorithm \ref{algo:efficient_nuts}.
 
 \begin{comment}
     The factorization of the uniform probability over $\mathcal{C}'$ implies that it can be written as a product of the probability of choosing a leaf from the subtree and the probability
