@@ -1,6 +1,6 @@
 \section{Bayesian learning of Neural Networks using Monte Carlo Samplers}
 So far, we have discussed neural networks as a model class whilst ignoring the issue of what it really means to do Bayesian learning of neural networks, 
-in other words, what it means to \textit{train} BNNs. We have left it somewhat unclear what this means and as it turns out, its meaning can be quite different depending on how Bayesian inference is performed. In this section we will clarify precisely what it means to train BNN using MCMC samplers such as HMC and NUTS. We shall then discuss practical aspects of the training which we shall put to practice in chapter \ref{chap:numerical_experiments}.
+in other words, what it means to \textit{train} BNNs. We have intentionally left it somewhat ambigious what this really means because as it turns out, its meaning can be quite different depending on how Bayesian inference is performed. In this section we will clarify precisely what it means to train BNN using MCMC samplers such as HMC and NUTS. We shall then discuss practical aspects of the training which we shall put to practice in chapter \ref{chap:numerical_experiments}.
 
 \subsection{What \textit{is} Bayesian learning of Neural Networks?}
 The way Bayesian learning of neural networks manifest itself depends on the way in which we do Bayesian inference of the probabilistic model. 
@@ -10,7 +10,7 @@ all sampled from the posterior to explain the observed data. Thus, what we mean 
 sampled a set of neural networks that collectively represent the BNN. 
 
 As we discussed at the end of chapter \ref{chap:bayesian_ml}, 
-we are mainly interested in the predictive distribution $p(y|x, W, b)$ of an output $y$ given an input $x$. We can approximate this distribution by constructing an empirical distribution by feeding $x$ through all $N$ sampled neural networks to obtain $N$ predicted targets $\hat{y}$ using eq. eq.~\eqref{eq:predictive_dist_approx}.
+we are mainly interested in the predictive distribution $p(y|x, W, b)$ of an output $y$ given an input $x$. We can approximate this distribution by constructing an empirical distribution by feeding $x$ through all $N$ sampled neural networks to obtain $N$ predicted targets $\hat{y}$ using eq.~\eqref{eq:predictive_dist_approx}.
 The second quantity of interest is expectations of target functions dependent on the model parameters. 
 We can approximate any such expectation with an MCMC estimator as in eq.~\eqref{eq:mcmc_estimator} using all $N$ networks to evaluate the target function.
 
@@ -22,7 +22,7 @@ For both HMC and NUTS, we need only specify a potential energy function for our 
 take care of the rest. Assume we are dealing with a dataset $D = \{(x^{(i)}, y^{(i)})\}_{i=1}^N$ where all $N$ points are independent and identically distributed.
 Equation~\eqref{eq:potential_energy_bayesian} instructs us to specify a prior for the weights of the network, and a likelihood function that depends on the target and the model output, in order
 to fully specify the potential energy function.
-Common practice is to choose priors that are either Gaussian or Laplacian. We will operate with Gaussian priors, i.e 
+Common practice is to choose priors that are either Gaussian or Laplacian. We will operate with Gaussian priors, i.e.
 \begin{equation}\label{eq:model_priors}
   P(W^\ell) \propto \exp\left(-\frac{\lambda_W}{2}\norm{W^\ell}_2^2\right) \qq{and} \qquad P(b^\ell) \propto \exp\left(-\frac{\lambda_b}{2}\norm{b^\ell}_2^2\right).
 \end{equation}
@@ -30,10 +30,10 @@ We will not worry too much about the choice of priors as the term in the potenti
 
 The likelihood for regression from eq.~\eqref{eq:likelihood_fn} formulated in terms of a neural network $\hat{f}(x^{(i)};W, b)$ is
 \begin{equation}
-  p(D|\theta) = \exp \left(-\frac{1}{2\sigma^2}\sum_{i=1}^N\norm{y^{(i)} - \hat{f}(x^{(i)};W, b)}_2^2\right).
+  p(D|W, b) = \exp \left(-\frac{1}{2\sigma^2}\sum_{i=1}^N\norm{y^{(i)} - \hat{f}(x^{(i)};W, b)}_2^2\right).
 \end{equation} 
-This is not the only valid choice for a likelihood function but it is the common choice since it can be identified with Euclidean $L^2$-norm and
-has ``neat'' mathematical properties.
+This is not the only valid choice for a likelihood function but it is the common choice since it can be identified with the Euclidean $L^2$-norm and
+itself ``neat'' mathematical properties.
 
 Combining the priors and the likelihood with eq.~\eqref{eq:loss_function_of_posterior} yields the potential energy function
 \begin{equation}\label{eq:special_potential_energy}
@@ -43,27 +43,27 @@ up to a constant. As we discussed in chapter \ref{chap:hmc}, the potential energ
 
 \subsection{Practical Training of Bayesian Neural Networks}
 
-Training BNNs in practice requires us to specify a fairly large number of hyperparameters to obtain a set models. These are 
+Training BNNs in practice requires us to specify a fairly large number of hyperparameters to obtain a set of models. These are 
 \begin{enumerate}
   \item \textbf{Neural network architecture}. We need to specify its number of layers, number of nodes and activation function per layer. 
   Once the BNN is trained, we store this information along with the model for future usage. The stored weights themselves will encode how many layers and nodes the model has but the activation functions must be stored in addition.
   \item \textbf{Number of results}. We must specify how many neural networks we want to sample and store. Because the weights must be stored in its entirety, we are forced to worry about the amount of disk space that is required to do so. For a fixed allocated disk space, we can obviously store a larger set of samples if the model is simple. As complexity increases, the number of samples we can store will necessarily decrease.
-  \item \textbf{Number of burn-in steps}. We must decide how long we want to run the MCMC chain before we start storing results. If disk space was no object, this step would be considered entirely optional as we could simply store every single sample and make a thorough analysis of the chain's quality to determine when proper mixing is obtained. In practice, with TensorFlow's framework, we can make a predetermined set of burn-in steps to avoid unnecessary RAM usage.
-  \item \textbf{Amount of thinning}. Since successive samples most likely will be correlated, we can specify how how many samples we simply skip once we start gathering samples, i.e after the burn-in period. Again, we could ignore this and do this manually with the chain but doing so becomes a question of amount of available VRAM, RAM and disk space. 
+  \item \textbf{Number of burn-in steps}. We must decide how long we want to run the MCMC chain before we start storing results. If amount of disk space was no obstacle, this step would be considered entirely optional as we could simply store every single sample and make a thorough analysis of the chain's quality to determine when proper mixing is obtained. In practice, with TensorFlow's framework, we can make a predetermined set of burn-in steps to avoid unnecessary RAM usage.
+  \item \textbf{Amount of thinning}. Since successive samples most likely will be correlated, we can specify how many samples we simply skip once we start gathering samples, i.e. after the burn-in period. Again, we could ignore this and do this manually with the chain but doing so becomes a question of amount of available VRAM, RAM and disk space. 
   \item \textbf{Hyperparameters specific to the samplers}. The samplers themselves carry their own hyperparameters. In the case of HMC, we must specify a fixed number of Leapfrog steps $L$. If we use the NUTS sampler, we must specify the maximum tree depth. Moreover, we must determine how much of the computing resources we allocate to adapting the step size used in the Leapfrog integrator.
-  \item \textbf{Amount of pretraining}. An attempt to accelerate convergence of the MCMC chain can be achieved by pretraining the neural network using minimization methods with the backpropagation algorithm to bring the weights closer to a minima of the potential energy function (i.e the loss function used in classical ML). Then the point estimate obtained at the end of the training is used as a starting point for the MCMC chain.
+  \item \textbf{Amount of pretraining}. An attempt to accelerate convergence of the MCMC chain can be achieved by pretraining the neural network using minimization methods with the backpropagation algorithm to bring the weights closer to a minima of the potential energy function (i.e. the loss function used in classical ML). Then the point estimate obtained at the end of the training is used as a starting point for the MCMC chain.
 \end{enumerate}
 
 \subsection{Training Algorithm of Bayesian Neural Networks}
 In this section we shall turn our attention to an actual training algorithm for BNNs. Assume we pick a sampler $S$ that represents either HMC or NUTS and a specified permuation of the hyperparameters discussed in the last section. In practice we can summarize a training algorithm as follows.
 \begin{enumerate}
-  \item Initialize the weights of the model from the specified priors, i.e
+  \item Initialize the weights of the model from the specified priors, i.e.
   \begin{equation}
     W^\ell \sim p(W^\ell) \qq{and} b^\ell \sim p(b^\ell) \qq{for} \ell=1,\ldots, L.
   \end{equation}
   \item Minimize the potential energy function $\mathcal{L}$ with respect to the weights of the model using an optimizer of your choice to obtain a point estimate for use as the initial state of the Markov chain.
   \item Initialize the Markov chain for a finite set of burn-in steps to achieve mixing using $S$. A proportion of the initial burn-in steps are used for step size adaptation, while the remaining are used for mixing.
-  \item Gather samples by applying $S$ repeatly, replacing the current weights of the model by the ones returned by $S$.  
+  \item Gather samples by applying $S$ repeatedly, replacing the current weights of the model by the ones returned by $S$.  
 \end{enumerate}
 
 

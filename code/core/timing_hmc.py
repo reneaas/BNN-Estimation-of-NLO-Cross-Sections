@@ -17,7 +17,7 @@ from utils.trace_functions import trace_fn_adaptive_hmc, trace_fn_adaptive_nuts
 
 def main(config):
     separator = "_"
-    path = "models/"
+    path = "cpu_models/"
     tmp = separator.join([
         "kernel", 
         str(config.get("kernel")), 

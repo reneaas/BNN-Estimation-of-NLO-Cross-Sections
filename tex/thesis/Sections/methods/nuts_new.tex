@@ -1,13 +1,13 @@
 Hamiltonian Monte Carlo is considered a state-of-the-art sampler that produces successive samples with low correlation
 that may lie far apart in sample space, 
 but suffers the need for manual tuning of the trajectory length $\epsilon L$. 
-In this chapter, we will explore improvements that adaptively adjust the trajectory length. This is achieved by means of adapting both the number of Leapfrog steps $L$ using a improved sampler called the \textit{No-U-Turn} (NUTS) sampler, and an adaptive scheme for setting the step size $\epsilon$ using a \textit{dual averaging} algorithm. We will closely follow the treatment in the original paper \cite{nuts} but adapt the notation to fit with the previous chapter.
+In this chapter, we will explore improvements that adaptively adjust the trajectory length. This is achieved by means of adapting both the number of Leapfrog steps $L$ using a improved sampler called the \textit{No-U-Turn} (NUTS) sampler, and an adaptive scheme for setting the step size $\epsilon$ using a \textit{dual averaging} algorithm. We will closely follow the treatment in the original paper \cite{nuts} but adapt the notation to be consistent with the rest of this thesis.
 
 We will start off with a discussion on how to adapt the number of Leapfrog steps using NUTS. At a high-level, NUTS starts from an initial state $(q, p)$ and simulates the Hamiltonian dynamics of the system. This is
-done in the following way. Leapfrog steps are performed either forwards or backwards in time, first with a single Leapfrog step, then two Leapfrog steps, then followed by four Leapfrog steps and so on. This reiteration of the simulation is performed until the the path traced out starts to double back towards the initial point. The states traced out can be regarded as a \textit{balanced binary tree} where
-each node represents a phase-space state produced by the Leapfrog integrator during the simulation. The proposal state is sampled at random from these nodes to be fed through a Metropolis correction step. 
+done in the following way. Leapfrog steps are performed either forwards or backwards in time, first with a single Leapfrog step, then two Leapfrog steps, then followed by four Leapfrog steps and so on. This reiteration of the simulation is performed until the the path traced out starts to double back towards itself. The states traced out can be regarded as a \textit{balanced binary tree} where
+each node represents a phase-space state produced by the Leapfrog integrator during the simulation. The next state of the Markov chain is sampled at random from these nodes.  
 
-We will finalize the chapter with the dual averaging scheme for adaptively setting the step size using with the Leapfrog integrator. The algorithm is a modified version of a dual averaging scheme presented by Nesterov in \cite{Nesterov2009}.
+We will end the chapter with the dual averaging scheme for adaptively setting the step size using with the Leapfrog integrator. The algorithm is a modified version of a dual averaging scheme presented by Nesterov in \cite{Nesterov2009}.
 
 
 
@@ -35,14 +35,15 @@ which is the target distribution we use in standard HMC.
 Let $\mathcal{B}$ be the set of all states traced out by the Leapfrog integrator used in HMC. Let $\mathcal{C} \subseteq \mathcal{B}$ be 
 the \textit{candidate set} of all candidate states $(q, p)$ from $\mathcal{B}$ that obey detailed balance. The candidate set is deterministically constructed from $\mathcal{B}$ by introducing a conditional distribution $p(\mathcal{B}, \mathcal{C}|q, p, u, \epsilon)$ with the following conditions imposed:
 \begin{enumerate}
-    \item All elements of $\mathcal{C}$ are volume perserving. This effectively translates to $p((q, p)|(q, p) \in \mathcal{C}) \propto p(q, p)$.
-    \item The current state must be included in $\mathcal{C}$, i.e $p\left((q, p) \in \mathcal{C}|q, p, u, \epsilon\right) = 1$.
+    \item All elements of $\mathcal{C}$ are volume perserving. It can be shown that this effectively translates to $p((q, p)|(q, p) \in \mathcal{C}) \propto p(q, p) = \exp\{-H(q, p)\}$.
+    \item The current state must be included in $\mathcal{C}$, i.e $p\left((q, p) \in \mathcal{C}|q, p, u, \epsilon\right) = 1$. Hence, we allow Markov transitions from the current state back to the initial state (which in HMC would be interpreted as a rejection of the proposed state).
     \item Any state $(q', p') \in \mathcal{C}$, must be in the slice defined by $u$. 
     Mathmetically, this is expressed as $$p\left(u\leq \exp{-H(q, p)}\bigg|(q', p') \in \mathcal{C}\right) = 1.$$
     \item If $(q, p) \in \mathcal{C}$ and $(q', p') \in \mathcal{C}$, then for any $\mathcal{B}$ we impose 
     $p(\mathcal{B}, \mathcal{C}|q, p, u, \epsilon) = p(\mathcal{B}, \mathcal{C}|q', p', u, \epsilon)$.
     Thus any point in $\mathcal{C}$ is equally likely, expressing a uniform distribution over the candidate set.
 \end{enumerate}
+Note that even though we speak of a conditional distribution $p(\mathcal{B}, \mathcal{C}|q, p, u, \epsilon)$ is it strictly not necessary to explicitly construct it. Instead, we can simply apply the conditions above directly in code and achieve the same goal.
 
 
 \subsection{Generation of States and the Stopping Criterion}
@@ -50,20 +51,20 @@ Up until this point, we have not yet described precisely how the states in $\mat
 nor why and when to stop its generation. As we briefly described in the introduction to this chapter, 
 NUTS computes trajectories in phase-space until the trajectory starts to double back on itself. First running one Leapfrog step,
 then two Leapfrog steps, then four Leapfrog steps and so on. Each such step is run either forwards or backwards in ficticious time, chosen at random.
-If the directions in forwards, it starts from the state at the front of the total generated trajectory. If the direction is backwards in time, it starts from the state corresponding to the tail of the trajectory.
+If the direction in forwards, it starts from the state at the \textit{head} of the total generated trajectory. If the direction is backwards in time, it starts from the state corresponding to the \text{tail} of the trajectory.
 The successive state produced by the Leapfrog integrator at each such step is collected and stored. This generates a collection of states which we represent with $\mathcal{B}$. 
 
-We can regard the process as building a balanced binary tree where each node correspond to a state traced out by the Leapfrog integrator. The initial node is defined to represent the tree at height $j = 0$. Given a balanced binary tree at height $j$, we use the last endpoint from the last simulation to run $2^j$ Leapfrog steps in the direction of $v_j ~ \sim \text{Uniform}(\{-1, 1\})$, where $v_j = 1$ represents forwards in time and $v_j = -1$ represents backwards in time.
+We can regard the process as building a balanced binary tree where each node correspond to a state traced out by the Leapfrog integrator. The initial node is defined to represent the tree at height $j = 0$. Given a balanced binary tree at height $j$, we run $2^j$ Leapfrog steps in the direction of $v_j ~ \sim \text{Uniform}(\{-1, 1\})$, where $v_j = 1$ represents forwards in time and $v_j = -1$ represents backwards in time, starting from the the head or tail of the trajectory, respectively.
 If $v_j = 1$, the old tree of height $j$ becomes the left half of the new tree and the $2^j$ states traced out by the Leapfrog integrator becomes the right half of the new tree of height $j + 1$. If $v_j = -1$, the old tree becomes the right half and the new tree becomes the left half. 
 
-We cannot continue this generation process forever, of course. At some point we must stop building $\mathcal{B}$ and select all candidates states that will collectively define $\mathcal{C}$. The stopping criterions employed by the algorithm are
+Continuing this generation process forever is not feasible from a computational perspective, of course. At some point we must stop building $\mathcal{B}$ and select all candidates states that will collectively define $\mathcal{C}$. The stopping criterions employed by the algorithm are
 \begin{enumerate}
     \item \textbf{Too large simulation error}. The slice variable $u$ that was introduced as an augmentation of the HMC model requires $u \leq \exp\{-H(q,p)\}$ at any point during the simulation. The Leapfrog integrator can introduce some numerical error which leads to a violation of this relation. The No-U-Turn sampler loosens this requirement a bit to avoid an inefficient algorithm. Instead, it halts the simulation if
     \begin{equation}\label{eq:stopping_criterion1}
         H(q, p) + \log u < \Delta_\text{max},
     \end{equation} 
-    for some tolerance $\Delta_\text{max}$. The authors of the original paper recommend this to be set to $\Delta_\text{max} = 1000$. This is not a concern as states that violate the slice condition will not be included in $\mathcal{C}$ regardless.
-    \item \textbf{The ``No-U-Turn'' criterion}. If at any point during the simulation, the trajectory starts to move towards points the integrator has already visited, the simulation is terminated. We can measure this by considering an initial point $q$ and a point $q'$ computed through integration. The change in their squared distance between the two points with respect to time is then proportional to
+    for some tolerance $\Delta_\text{max}$. The authors of the original paper recommend this to be set to $\Delta_\text{max} = 1000$. This is not a concern as states that violate the slice condition will not be included in $\mathcal{C}$ regardless. The ``loose'' requirement is instead set to avoid terminating the simulation prematurely as states produced at a later point may still obey the condition.
+    \item \textbf{The ``No-U-Turn'' criterion}. If at any point during the simulation, if the trajectory starts to move towards points the integrator has already visited, the simulation is terminated. We can quantify this by considering an initial point $q$ and a point $q'$ computed through integration. The change in their squared distance between the two points with respect to time is then proportional to
     \begin{equation}\label{eq:stopping_criterion2}
         \dv{t}\frac{\norm{q' - q}_2^2}{2} = (q' - q)^T \dv{t}  (q' - q) = (q' - q)^Tp',
     \end{equation}
@@ -77,22 +78,21 @@ We cannot continue this generation process forever, of course. At some point we 
 
 \subsection{Selecting Candidate Points}
 Now that we know how to generate the states of $\mathcal{B}$, we turn our attention to how we select the candidate states that builds up $\mathcal{C}$. 
-We need not write down an explicit expression for $p(\mathcal{B}, \mathcal{C}|q, p, u, \epsilon)$ since we can select the points in a way that reflects the four conditions discussed earlier. The first condition is automatically satisfied because the Leapfrog integrator is volume preserving. The second condition is satisfied as long as we include the initial state as part of $\mathcal{C}$. Condition three is satisfied as long as we only include states $(q', p')$ that satisfy $u \leq \exp\{-H(q', p')\}$, that is, we only include points that lie in the slice defined by $u$. The fourth condition required that $p(\mathcal{B}, \mathcal{C}|q, p, u, \epsilon) = p(\mathcal{B}, \mathcal{C}|q', p', u, \epsilon)$. For any initial state $(q', p') \in \mathcal{B}$, there is at most one sequence of directions $\{v_j\}_{j=1}^J$ that can generate $\mathcal{B}$. Any state that cannot be used to recreate $\mathcal{B}$ must be excluded from $\mathcal{C}$ as these would violate detailed balance. This condition will be satisfied as long as any state that satisfy the stopping criterions in either eq.~\eqref{eq:stopping_criterion1} or eq.~\eqref{eq:stopping_criterion2} is excluded from $\mathcal{C}$. There are two cases which must be considered
+As we have already mentioned, we need not write down an explicit expression for $p(\mathcal{B}, \mathcal{C}|q, p, u, \epsilon)$ since we can select the points in a way that reflects the four conditions discussed earlier. The first condition is automatically satisfied because the Leapfrog integrator is volume preserving. The second condition is satisfied as long as we include the initial state as part of $\mathcal{C}$. Condition three is satisfied as long as we only include states $(q', p')$ that satisfy $u \leq \exp\{-H(q', p')\}$, that is, we only include points that lie in the slice defined by $u$. The fourth condition required that $p(\mathcal{B}, \mathcal{C}|q, p, u, \epsilon) = p(\mathcal{B}, \mathcal{C}|q', p', u, \epsilon)$. For any initial state $(q', p') \in \mathcal{B}$, there is at most one sequence of directions $\{v_j\}_{j=1}^J$ that can generate $\mathcal{B}$. Any state that cannot be used to recreate $\mathcal{B}$ must be excluded from $\mathcal{C}$ as these would violate detailed balance. This condition will be satisfied as long as any state that satisfy the stopping criterions in either eq.~\eqref{eq:stopping_criterion1} or eq.~\eqref{eq:stopping_criterion2} is excluded from $\mathcal{C}$. There are two cases which must be considered
 \begin{enumerate}
-    \item Equation \eqref{eq:stopping_criterion1} was satisfied by a state or eq.~\eqref{eq:stopping_criterion2} was satisfied by a subtree during the final doubling step. In this case, any element of $\mathcal{B}$ that was added during the final doubling must be excluded from $\mathcal{C}$. This is because using any such state as an initial state to build $\mathcal{B}$ is impossible because one of the stopping criterions will be met before one can fully rebuild the tree.
+    \item Equation \eqref{eq:stopping_criterion1} was satisfied by a state or eq.~\eqref{eq:stopping_criterion2} was satisfied by a subtree during the final doubling step. In this case, any element of $\mathcal{B}$ that was added during the final doubling must be excluded from $\mathcal{C}$. This is because using any such state as an initial state to build $\mathcal{B}$ is impossible because one of the stopping criterions will be met before one can fully rebuild the tree (which by definition violates detailed balance).
     \item The doubling procedure is stopped because eq.~\eqref{eq:stopping_criterion2} is satisfied by the leftmost and rightmost nodes of the full tree. In this case, no exclusion is necessary because from any such node in the tree, we can find a unique sequence of directions in time for any state in the tree from which we can recreate the entire tree before the stopping criterion is met.
 \end{enumerate}
 So now we know how to select the candidate set from which we sample the final proposal state. 
 
 \subsection{Efficiently Implementing the No-U-Turn Sampler}
-The details discussed so far imply that we must store $2^j$ position and momentum states for a tree of height $j$ in memory. For sufficiently complex models or deep enough trees, the required memory footprint might be infeasible. We can overcome this limitation by noting that for any subtree $\mathcal{C} \subseteq \mathcal{C}$, we can express the uniform probability over $\mathcal{C}$ as 
-Then
-\begin{equation}
+The details discussed so far imply that we must store $2^j$ position and momentum states for a tree of height $j$ in memory. For sufficiently complex models or deep enough trees, the required memory footprint might be infeasible. We can overcome this limitation by noting that for any subtree $\mathcal{C}_\text{subtree} \subseteq \mathcal{C}$, we can express the uniform probability over $\mathcal{C}$ as 
+\begin{equation}\label{eq:nuts_observation}
     p(q, p|\mathcal{C}) = \frac{1}{\abs{\mathcal{C}}} = \frac{\abs{\mathcal{C}_\text{subtree}}}{\abs{\mathcal{C}}} \frac{1}{\abs{\mathcal{C}_\text{subtree}}} 
     = p((q, p) \in \mathcal{C}_\text{subtree}|\mathcal{C})P(q,p |(q,p) \in \mathcal{C}_\text{subtree}, \mathcal{C}),
 \end{equation}
 meaning it can be expressed as the product of the probability of selecting a node that belongs to the subtree times the probability of sampling $(q, p)$ randomly from the states in that subtree. This observation can be practically applied to reduce the memory footprint as follows. Consider a candidate set $\mathcal{C}$ representing a tree of height $J$. Any subtree of height $j > 0$ is built up of two smaller subtrees of height $j - 1$.  
-For each smaller subtree, sample a pair $(q, p)$ from $1 / \abs{\mathcal{C}_\text{subtree}}$ to represent each smaller subtree. We select one of these pairs and give it a weight proportional to how many elements of $\mathcal{C}$ that reside in that subtree. This procedure can be performed repeated from $j = 1$ all the way up to the subtree that represent $\mathcal{C}$, meaning there is no need to store the entire tree corresponding to the candidate set. Since we select a single state $(q, p)$ per subtree, the storage requirement goes as $\mathcal{O}(j)$ instead of $\mathcal{O}(2^j)$.
+For each smaller subtree, sample a pair $(q, p)$ from $1 / \abs{\mathcal{C}_\text{subtree}}$ to represent each smaller subtree. We select one of these pairs and give it a weight proportional to how many elements of $\mathcal{C}$ that reside in that subtree. This procedure can be performed repeatedly from $j = 1$ all the way up to the subtree that represents $\mathcal{C}$, meaning there is no need to store the entire tree corresponding to the candidate set. Since we select a single state $(q, p)$ per subtree, the storage requirement goes as $\mathcal{O}(j)$ instead of $\mathcal{O}(2^j)$.
 
 The algorithm is summarized by two components. A helper function {\tt BuildTree} which is used to implicitly build the tree corresponding to the candidate set $\mathcal{C}$. It returns the leftmost node $(q^-, p^-)$ and rightmost node $(q^+, p^+)$ of the subtree it builds along with the state $q'$ representing the subtree, with a weight $n'$ and an indicator variable $s'$ that tracks if a stopping criterion is met ($s' = 0$) or not ($s' = 1$). It is based on recursion to avoid explicitly storing this information and is readily easy to implement directly into a programming language such as Python. The second component is a one-step function similar to {\tt HMCstep} in algorithm \ref{algo:hmc} which performs a single step with the NUTS sampler and produces a new sample $q$ in the Markov chain it is used to generate. The function {\tt NUTSstep} is listed in algorithm \ref{algo:nuts}.
 
@@ -156,8 +156,8 @@ The algorithm is summarized by two components. A helper function {\tt BuildTree}
 Let us discuss the computational cost of this algorithm. The algorithm demands $2^j - 1$ evaluations of $H(q, p)$ and its gradient. Moreover, an additional set of
 operations to determine if a stopping criterion is reached, which is of the order $\mathcal{O}(2^j)$. As argued earlier, though, the computational cost is comparable to standard HMC
 per leapfrog step
-when the model is sufficiently complex or the dataset large. However, in its current form it requires storage of $2^j$ positions and momenta, which for increasingly complex models,
-or deep balanced binary trees due to repeatedly calling {\tt BuildTree} without any stopping criterion being met, may results in an intractibly large storage requirement. In the next section we shall explore a more efficient solution that reduces the memory footprint of the algorithm.
+when the model is sufficiently complex or the dataset large.
+Moreover, we have discussed a way to reduce the storage footprint from $\mathcal{O}(2^j)$ to $\mathcal{O}(j)$ by applying the observation in eq.~\eqref{eq:nuts_observation}. This will typically be viable for complex models as well. Thus, in practice, the computational cost of NUTS is comparable with HMC for an equivalent number of Leapfrog steps.
 
 
 
@@ -170,8 +170,10 @@ Assume $H_t$ is a statistic that measures the some behaviour of an MCMC algorith
 \begin{equation}
     h(x) = \mathbb{E}_t[H_t|x] \equiv \lim_{T \to \infty} \frac{1}{T}\sum_{t=1}^T \mathbb{E}[H_t|x].
 \end{equation}
-The optimal value of $x$ may be widely different in the convergence phase and the exploration phase. We thus want our updates to give weight towards the end of the warm-up phase.
-In other words, we seek a value of $x$ such that $h(x)$ is close to zero towards the end of the warm-up phase of the MCMC chain and freeze the value of $x$ during the phase we gather samples from the chain. To this end, we apply a modified version of Nestrov's dual averaging updates given by
+It can be shown that the optimal value of $x$ will force $h(x) \to 0$.
+The optimal value of $x$ may be widely different in the convergence phase and the exploration phase of the Markov chain. We thus want our updates to give weight towards the end of the warm-up phase for the following reason.
+The value of $x$ should be properly tuned for the part of the Markov chain we seek to sample from, and therefore its value should not be particularly dependent on its initial value used for generation of the Markov chain.
+In other words, we seek a value of $x$ such that $h(x)$ is close to zero towards the end of the ``warm-up'' phase of the MCMC chain and freeze the value of $x$ during the phase we gather samples from the chain. To this end, we apply a modified version of Nestrov's dual averaging updates given by
 \begin{equation}\label{eq:update_rule}
     \begin{split}
         x_{t+1} & \gets \mu - \frac{\sqrt{t}}{\gamma}\frac{1}{t + t_0}\sum_{i=1}^t H_i, \\
@@ -191,44 +193,46 @@ which can achieved by setting
 \end{equation}
 
 \subsection{Setting the Step Size in Hamiltonian Monte Carlo}
-In Hamiltonian Monte Carlo, we want to avoid a value for $\epsilon$ that is too small which would waste computational resources, or one that is too large which lead to low acceptance probabilities. We can avoid this by tuning $\epsilon$ to yield an average acceptance probability of some value chosen target $\delta$. Under some strong conditions, it can be shown that the ideal value is $\delta \approx 0.65$ \cite{neal2011} but empirically any value $\delta \in (0.6, 0.9)$ works fine. To use the update rule in eq.~\eqref{eq:update_rule} to tune $\epsilon$ with $\delta$ as target can be achieved by introduction of
+In Hamiltonian Monte Carlo, we want to avoid a value for $\epsilon$ that is too small which would waste computational resources, or one that is too large which may lead to low acceptance probabilities. We can avoid this by tuning $\epsilon$ to yield an average acceptance probability of some chosen target $\delta$. Under some strong conditions, it can be shown that the ideal value is $\delta \approx 0.65$ \cite{neal2011} but empirically any value $\delta \in (0.6, 0.9)$ works fine. To use the update rule in eq.~\eqref{eq:update_rule} to tune $\epsilon$ with $\delta$ as target can be achieved by introduction of
 \begin{equation}\label{eq:HMC_statistic}
-    H_t^\text{HMC} = \min \left\{1, \frac{\pi(q', p')}{\pi(q, p)}\right\},
+    \alpha_t^\text{HMC} = \min \left\{1, \frac{\pi(q', p')}{\pi(q, p)}\right\},
 \end{equation}
 where $(q', p')$ the proposed state and $(q, p)$ is the inital point used by {\tt HMCstep} as in algorithm \ref{algo:hmc}.
 The observant reader will note that eq.~\eqref{eq:HMC_statistic} is simply the acceptance probability used during the Metropolis correction in {\tt HMCstep} with eq.~\eqref{eq:full_canonical} as the target distribution. The updates are then perfomed with
 \begin{equation}\label{eq:HMC_statistic2}
-    H_t = \delta - H_t^\text{HMC} \qq{and} x = \log \epsilon,
+    H_t = \delta - \alpha_t^\text{HMC} \qq{and} x = \log \epsilon,
 \end{equation}
-which will ensure that $h(\epsilon)$ converges to $\delta$.
+which will ensure that $h(x)$ converges to $\delta$.
 
 \subsection{Adapting the Step Size with the No-U-Turn Sampler}
 The No-U-Turn sampler does not have a single Metropolis correction step as in HMC but an alternative statistic that delivers roughly the same interpretation can be computed. The statistic defined for this sampler is
 \begin{equation}\label{eq:NUTS_statistic}
-    H_t^\text{NUTS} = \frac{1}{\abs{\mathcal{B}_t^\text{final}}} \sum_{(q', p') \in \mathcal{B}_t^\text{final}} \min \left\{1, \frac{\pi(q', p')}{\pi(q, p)}\right\},
+    \alpha_t^\text{NUTS} = \frac{1}{\abs{\mathcal{B}_t^\text{final}}} \sum_{(q', p') \in \mathcal{B}_t^\text{final}} \min \left\{1, \frac{\pi(q', p')}{\pi(q, p)}\right\},
 \end{equation}
 where $\mathcal{B}_t^\text{final}$ is the set of all states $(q', p')$ during the final doubling at iteration $t$ and $(q, p)$ is the initial state. This is in sense average acceptance probability standard HMC would compute given the states produced during the final doubling. In the same spirit as eq.~\eqref{eq:HMC_statistic2}, we set
 \begin{equation}\label{eq:NUTS_statistic2}
-    H_t = \delta - H_t^\text{NUTS} \qq{and} x = \log \epsilon.
+    H_t = \delta - \alpha_t^\text{NUTS} \qq{and} x = \log \epsilon.
 \end{equation}
 
 \subsection{Generalizing the Tuning Algorithm}
-We have seen that we must define a statistic $H_t$ and a tunable parameter $x$, which turns out to differ slightly in the case of HMC and NUTS. Producing a general algorithm for a given sampler $S$ (which can be either HMC or NUTS in this thesis) thus amounts to augmenting {\tt HMCstep} to compute and return the statistic in eq.~\eqref{eq:HMC_statistic}, and similarly augment {\tt NUTSstep} to return the value of eq~\eqref{eq:NUTS_statistic} at each iteration. Let us colletively denote the statistic as $H_t^S$ representing the statistic pertaining to the sampler $S$. Then at each iteration $t$, we compute
+We have seen that we must define a statistic $H_t$ and a tunable parameter $x$, which turns out to differ slightly in the case of HMC and NUTS. Producing a general algorithm for a given sampler $S$ (which can be either HMC or NUTS in this thesis) thus amounts to augmenting {\tt HMCstep} to compute and return the statistic in eq.~\eqref{eq:HMC_statistic}, and similarly augment {\tt NUTSstep} to return the value of eq~\eqref{eq:NUTS_statistic} at each iteration. Let us colletively denote the statistic as $\alpha_t^S$ representing the statistic pertaining to the sampler $S$. Then at each iteration $t$, we compute
 \begin{equation}
-    H_t = \delta - H_t^S,
+    H_t = \delta - \alpha_t^S,
 \end{equation} 
 with $x = \log \epsilon$ as the tunable parameter. Once a finite number $T$ of adaptation steps are performed, we can invert the equation to obtain an estimate of the optimal step size as
 \begin{equation}
-    \epsilon_\text{opt} = \log^{-1}(\bar{x}_T).
+    \epsilon_\text{opt} = \log^{-1}(\bar{x}_T),
 \end{equation} 
+which is freezed and used during the generation of the remainder of the Markov chain.
+
 We have summarized a function {\tt DualAveragingStepSizeAdaptation} which will work with both samplers in algorithm \ref{algo:dual_step_size_adaptation}. To simplify matters, we have introduced the variable $\xi_t = \sum_{i = 1}^t H_i$ which is used to track the sum of the statistics $H_t$.
 
 \begin{figure}[H]
 	\begin{algorithm}[H]
 	\caption{Dual Averaging Step Size Adaptation}\label{algo:dual_step_size_adaptation}
 	\begin{algorithmic}
-        \Function{{\tt DualAveragingStepSizeAdaptation}}{$H_t^S, \delta, t, \bar{x}_t, \xi_{t-1}, k, t_0, \gamma$}
-            \State $H_t \gets \delta - H_t^S$
+        \Function{{\tt DualAveragingStepSizeAdaptation}}{$\alpha_t^S, \delta, t, \bar{x}_t, \xi_{t-1}, k, t_0, \gamma$}
+            \State $H_t \gets \delta - \alpha_t^S$
             \State $\eta_t \gets t^{-k}$
             \If{$t = 1$}
                 \State $\xi_t \gets H_t$

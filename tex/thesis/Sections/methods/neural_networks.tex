@@ -3,7 +3,7 @@ In this chapter, we will finally discuss the main topic of this thesis, \textit{
 We will start off introducing the mathematical formalism of neural networks. 
 We will then discuss the \textit{backpropagation} algorithm, which is the standard
 algorithm used to compute the gradient of the model with respect to a specified loss. 
-We will then finalize the chapter with how Bayesian learning of neural networks work. 
+We will then end the chapter with how Bayesian learning of neural networks work. 
 Fortunately, most of the groundwork is already laid, so we need only a mathematical description of the model and a Bayesian interpretation of it. 
 We will stay general and assume a set of inputs $x \in \mathbb{R}^p$ and corresponding targets $y \in \mathbb{R}^d$. 
 These serve as the training data on which the neural network is trained.
@@ -35,10 +35,16 @@ A special case of eq.~\eqref{eq:nn_forward_pass} applies to $\ell = 1$ where $a^
 \subsection{Backpropagation}
 The standard approach to train a neural network is by minimization of some loss function by employing the backpropagation algorithm \cite{backprop} to compute its gradient with respect to its trainable parameters recursively. The algorithm boils down to four equations.
 Consider $\mathcal{L}$ as the loss function.
-The first of the four equations quantifes the error in the output layer.
+The first of the four equations quantifes the change in the error with respect to the logits $z_j^L$ in the output layer,
 \begin{equation}\label{eq:backprop1}
-    \Delta_j^L = \pdv{\mathcal{L}}{z_j^L}.
+    \Delta_j^L = \pdv{\mathcal{L}}{z_j^L},
 \end{equation}
+but for convenience we will simply regard this as the ``error'' in the output layer (and use the same term for $\Delta_j^\ell$). For example, in the case where $\mathcal{L} = \text{RSS}$, we get
+\begin{equation}
+    \Delta_j^L = \pdv{\mathcal{L}}{z_j^L} = a_j^L - y_j,
+\end{equation}
+for a single datapoint $y$,
+so the use of the term is largely appropriate. Fundamentally, they denote the gradient of the error with respect to the quantities defined with respect to the neural network model.
 The second equation allows us to compute the error at layer $\ell$ given we know the error at layer $\ell+1$,
 \begin{equation}\label{eq:backprop2}
     \Delta_j^\ell = \left(\sum_k \Delta_k^{\ell+1}W_{kj}^{\ell+1}\right)\sigma_\ell'(z_j^\ell).
@@ -54,7 +60,7 @@ For the biases, the gradients are
 
 With these four equations, we can fit the neural network using minimization techniques such as stochastic gradient descent or more complex methods such as ADAM (pages 13-19 in \cite{ml_for_physicists}). 
 Although not the focus of this thesis, we might use these methods in conjunction with HMC to speed up convergence to the stationary distribution. Furthermore, the computation of gradients in combination with
-HMC or NUTS is achieved with the backpropagation algorithm.
+HMC or NUTS is achieved with the backpropagation algorithm as we know from chapter \ref{chap:hmc} where $\mathcal{L}$ coincides with the potential energy function whose gradient is necessary to employ these samplers.
 \begin{comment}
 
 \subsection{Loss Function for Regression}
@@ -70,7 +76,7 @@ where $\hat{y}$ denotes the model output and $y$ the ground-truth. Now, the mode
 \end{comment}
 
 We are now equipped to write down the backpropagation for a single datapoint. It's built up of a \textit{forward pass} which takes an input $x$ and applies the recursive eq.~\eqref{eq:nn_forward_pass} which produces a model prediction $\hat{y} = a^L$. The second part of the algorithm 
-is the \textit{backward pass} which based on the prediction $\hat{y}$ and the target $y$, computes the gradients of the loss function $\mathcal{L}$ with respect to the model parameters. The forward pass of the neural network
+is the \textit{backward pass} which based on the prediction $\hat{y}$ and the target $y$, computes the gradient of the loss function $\mathcal{L}$ with respect to the model parameters. The forward pass of the neural network
 is summarized algorithm \ref{algo:forward_pass}.
 \begin{figure}[H]
     \begin{algorithm}[H]
@@ -109,12 +115,12 @@ is summarized algorithm \ref{algo:forward_pass}.
         \end{algorithmic}
     \end{algorithm}
 \end{figure}
-\noindent Note that for in all practical implementations in this thesis, we utilize \textit{automatic differentiation}
+\noindent Note that in all practical implementations in this thesis, we utilize \textit{automatic differentiation}
 provided by TensorFlow to compute the gradients.
 
 \subsection{Regularization in Neural Networks}
 As discussed in chapter \ref{chap:bayesian_ml}, models with a large number of parameters are prone to overfit
-training data and generalize poorly as a consequence. Thus one typically tack on an $L^2$-regularization term to the loss $\mathcal{L}_0$. 
+training data and generalize poorly as a consequence. Thus one typically tacks on an $L^2$-regularization term to the loss $\mathcal{L}_0$. 
 Assuming that $\mathcal{L}_0$ is the RSS in eq.~\eqref{eq:rss}, the form of the full loss function for a neural network model becomes
 \begin{equation}
     \mathcal{L} = \frac{1}{2}\sum_i \norm{\hat{y}^{(i)} - y^{(i)}}_2^2 + \frac{\lambda_W}{2}\sum_\ell \norm{W^\ell}_2^2 + \frac{\lambda_b}{2}\sum_\ell \norm{b^\ell}_2^2,
@@ -168,7 +174,7 @@ for completeness.
 \end{comment}
 
 \section{Activation Functions}
-There are many common activation functions with various strengths used in modern neural networks. We shall briefly mention a few ones
+There are many common activation functions $\sigma$ with various strengths and weaknesses used in modern neural networks. We shall briefly mention a few
 for completeness.
 
 \subsection{Sigmoid and Tanh}
@@ -176,10 +182,12 @@ The sigmoid activation function is given by
 \begin{equation}\label{eq:sigmoid}
     \sigma(x) = \frac{1}{1 + \exp(-x)}.
 \end{equation}
-It was a very common choice in neural networks early, likely due to its simple derivative. It has a significant drawback, however.
-Looking at eq.~\eqref{eq:sigmoid}, we can easily deduce that $\sigma(\pm \infty) = 0$, and since its derivative is of the form $\sigma'(x) = \sigma(1-\sigma)$,
-the gradient computed during backpropagation vanishes if the input to the activation function as $\abs{x} \to \infty$. This significantly
-hampers the progress during optimization. A popular alternative to the sigmoid function is the hyperbolic tangent given by 
+It was a very common choice in neural networks early on, likely due to its simple derivative. It has a significant drawback, however.
+Looking at eq.~\eqref{eq:sigmoid}, we can easily deduce that $\sigma( \infty) = 1$ and $\sigma(-\infty) = 0$, and since its derivative is of the form $\sigma'(x) = \sigma(x)(1-\sigma(x))$,
+the gradient computed with backpropagation vanishes if $\abs{x} \to \infty$. This significantly
+hampers the progress during optimization. 
+
+A popular alternative to the sigmoid function is the hyperbolic tangent given by 
 \begin{equation}
     \tanh(x) = \frac{e^{2x} - 1}{e^{2x} + 1}.
 \end{equation}
@@ -199,7 +207,7 @@ To overcome the vanishing gradient problem, an activation function called the Re
 Recently, an activation function to replace ReLU was proposed in \cite{swish} known as \textit{swish} or SiLU which was shown to outperform ReLU in deep neural networks on
 a number of challengig datasets. The activation function is given by
 \begin{equation}
-    \sigma(x) = x\cdot \text{sigmoid}(x).
+    \sigma(x) = x\cdot \text{sigmoid}(x) = \frac{x}{1 + \exp(-x)}.
 \end{equation}
 
 

@@ -16,9 +16,11 @@ num_samples = (
     + std_config.get("num_burnin_steps")
 )
 
-def plot_data(x, y, xlabel, ylabel, log_scale=True, xbase=2, ybase=10):
-    x = x.to_numpy()
-    y = y.to_numpy()
+def plot_data(x, y, xlabel, ylabel, log_scale=True, xbase=None, ybase=None):
+    if not isinstance(x, np.ndarray):
+        x = x.to_numpy()
+    if not isinstance(y, np.ndarray):
+        y = y.to_numpy()
     idx = np.argsort(x, axis=0)
     x = x[idx]
     y = y[idx]
@@ -28,8 +30,10 @@ def plot_data(x, y, xlabel, ylabel, log_scale=True, xbase=2, ybase=10):
     plt.xlabel(xlabel)
     plt.ylabel(ylabel)
     if log_scale:
-        plt.xscale("log", base=xbase)
-        plt.yscale("log", base=ybase)
+        if xbase is not None:
+            plt.xscale("log", base=xbase)
+        if ybase is not None:
+            plt.yscale("log", base=ybase)
     plt.show()
 
 def load_results():
@@ -48,11 +52,15 @@ def time_vs_leapfrogsteps_hmc():
     df = df[df["num_burnin_steps"] == 1000]
     x = df["num_leapfrog_steps"]
     y = df["timeused"] / num_samples
+    # y = y.to_numpy()
+    # y /= y[0]
     plot_data(
         x=x, 
         y=y, 
         xlabel="Number of Leapfrog steps",
-        ylabel="Seconds per Sample"
+        ylabel="Seconds per Sample",
+        xbase=2,
+        ybase=None,
     )
     print(x, y)
     total_time = y * num_samples
@@ -87,6 +95,7 @@ def leapfrog_steps_vs_parameters_nuts():
         df = df[df[key] == std_config.get(key)]
     x = df["num_params"]
     y = df["num_leapfrog_steps"]
+    y /= y[0]
     plot_data(
         x=x,
         y=y,
@@ -94,7 +103,7 @@ def leapfrog_steps_vs_parameters_nuts():
         ylabel="Avg. Number of Leapfrog Steps",
         log_scale=True,
         xbase=2,
-        ybase=10,
+        ybase=None,
     )
 
     
