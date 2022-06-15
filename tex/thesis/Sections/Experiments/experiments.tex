@@ -37,6 +37,58 @@ for some true function $f(x)$ and a random noise $\delta \sim \mathcal{N}(0, 1)$
 
 
 \section{Results}\label{sec:results}
+\subsection{Computational Performance}
+
+\subsubsection{CPU versus GPU Performance}
+In figure \ref{fig:relative_performance}, we demonstrate the significant speedup that can be achieved
+with GPU accelerated sampling when using {\tt TensorFlow Probability} and its implementation of samplers. Here we have used HMC and a fixed $L = 512$ Leapfrog steps.
+The speedup itself is due to the utilization of XLA (Accelerated Linear Algebra) which is a highly optimized
+linear algebra execution engine \cite{xla}. The time measurements per sample was in the order of magnitude of seconds for the most complex models
+tested. An important aspect for practical utilization of BNNs will be ease of training and accelerated sampling with NUTS or HMC, which is automatically achieved if the system can detect an NVIDIA GPU. Moreover, the full training time can be estimated by a few preliminary runs where execution time per sample is measured. This analysis is slightly more difficult when using NUTS. One can however set a maximum tree depth generated with {\tt BuildTree} which is also the case with the implementation employed by {\tt TensorFlow Probability}. As we argued in chapter \ref{chap:no_u_turn_sampler}, the additional computational cost added by NUTS per Leapfrog step is neglible given a sufficiently complex model and/or large dataset.
+Thus one can simply perform the measurements using the implementation of HMC and estimate an upper-bound on the computational time defined by the setting of the maximum tree depth.
+
+\begin{figure}
+    \centering
+    \includegraphics[scale=1]{figures/cpu_vs_gpu/cpu_vs_gpu_performance.pdf}
+    \caption{The figure shows the relative measured execution time used per sample using $L = 512$ Leapfrog steps,
+    as a function of number of parameters. The CPU measurements are done using an 8-core M1 CPU (Apple Silicon). The GPU measurements
+    are made with an NVIDIA Tesla P100 GPU.
+    }
+    \label{fig:relative_performance}
+\end{figure}
+
+\subsubsection{Prediction Time}
+As we discussed in the introduction, the execution time's order of magnitude when using {\tt Prospino} is the order of hours. For BNN to be a viable alternative, it must at least significantly reduce the time to compute predictions. In figure \ref{fig:prediction_time}, we 
+show the average execution time to compute predictions. For each model, we have sampled 1000 random points and measured the execution time of computing a prediction. The models used are the ones listed in table \ref{tab:deep_models}. Both the sample mean of the predictions and the sample error is computed during the measurement. The measurements were performed on an M1 Apple Silicon CPU using {\tt perf\_counter} from the module {\tt time} provided by the standard library of Python. The order of magnitude is in milliseconds which is a significant speedup over the ones that can be achived with {\tt Prospino}. The BNNs can thus provide a significant reduction in time to predict cross sections but it remains to be seen if the predictions themselves are reliable enough to serve as a viable substitute for {\tt Prospino} calculations which is what we will turn our attention to next.
+
+\begin{figure}
+    \centering
+    \includegraphics[scale=1]{figures/prediction_time/prediction_time.pdf}
+    \caption{The figure shows the average prediction time to compute a prediction given a single input $x$ using the models in table \ref{tab:deep_models}. The average time used is measured in ms and is averaged over 1000 randomly sampled points. The measured time includes computation of the sample mean and sample error.
+    }
+    \label{fig:prediction_time}
+\end{figure}
+
+\subsection{Posterior Distribution of Weights}
+An important problem to consider is if we can even justify the use of Monte Carlo samplers to sample from the exact posterior instead of using the approximation employed by variational inference with a parameterized surrogate posterior which is the most ubiquitous method of training BNNs in the literature. The surrogate distribution is usually a factorized normal distribution of the form
+\begin{equation}
+    q \propto \prod_{i, j, \ell} \mathcal{N}(\mu_{ij}^\ell, (\sigma_{ij}^\ell)^2),
+\end{equation}
+meaning for each parameter in the model, we assume its posterior distribution can be written as an independent Gaussian distribution with a mean $\mu_{jk}^\ell$ and a standard deviation $\sigma_{ij}^\ell$. The method sports some fairly obvious advantages like the fact that one can perform \textit{online training}, i.e. continue training once new data becomes available starting from an earlier \textit{checkpoint} by using $q$ obtained during earlier training as the prior. The way we have trained BNNs in this thesis does not permit this form of training because we cannot formulate a prior based on the empirical distribution we have sampled. Thus we cannot use the weights of the model that we have already sampled to continue training. We must start over entirely and discard the empirical distribution we obtained with the prior dataset. 
+
+It has been widely discussed that BNN posteriors are typically found to be multi-modal \cite{google_bnn_posteriors}. We demonstrate this observation in figure \ref{fig:}
+
+
+\begin{figure}
+    \centering
+    \includegraphics[scale=0.5]{figures/posterior_distribution/posterior_weights1.pdf}
+    \includegraphics[scale=0.5]{figures/posterior_distribution/posterior_weights2.pdf}
+    \caption{The figure shows the projection of the empirical distribution onto the planes spanned by $(W_{2,4}^1, W_{2,5}^1)$ on the left and onto the plane spanned by $(W_{3,7}^1, W_{3, 6}^1)$ on the right, using the samples from model 2 in table \ref{tab:deep_models}. The distributions are approximated using kernel density estimation. 
+    }
+    \label{fig:standardized_residual}
+\end{figure}
+
+
 \subsection{Benchmarks of Hyperparameters}\label{subsec:benchmarks}
 \subsubsection{Baseline Model}
 \subsubsection{Pretraining}
@@ -90,3 +142,4 @@ for some true function $f(x)$ and a random noise $\delta \sim \mathcal{N}(0, 1)$
     }
     \label{fig:standardized_residual}
 \end{figure}
+

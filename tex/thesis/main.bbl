@@ -95,4 +95,12 @@ P.~Ramachandran, B.~Zoph and Q.~V. Le, \emph{Searching for activation
   functions}, {\emph{CoRR} {\bf abs/1710.05941} (2017) },
   [\href{http://arxiv.org/abs/1710.05941}{{\tt 1710.05941}}].
 
+\bibitem{xla}
+A.~Sabne, \emph{Xla : Compiling machine learning for peak performance},  2020.
+
+\bibitem{google_bnn_posteriors}
+P.~Izmailov, S.~Vikram, M.~D. Hoffman and A.~G. Wilson, \emph{What are bayesian
+  neural network posteriors really like?}, {\emph{CoRR} {\bf abs/2104.14421}
+  (2021) }, [\href{http://arxiv.org/abs/2104.14421}{{\tt 2104.14421}}].
+
 \end{thebibliography}\endgroup

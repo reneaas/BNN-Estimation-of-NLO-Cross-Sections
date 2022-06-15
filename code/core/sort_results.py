@@ -8,7 +8,6 @@ import pandas as pd
 import json
 
 def get_data(root_dir: str):
-    # pattern = r"(\[.+?\]|[0-9]+[.]?[0-9]*|\w+)"
     pattern = r"(\[.+?\]|\d+\.?\d*|\w+)"
     data = []
     with os.scandir(root_dir) as iter:
@@ -23,32 +22,51 @@ def get_data(root_dir: str):
     return data
 
 
+def main():
+    root_dir = "./cpu_results"
+    data = get_data(root_dir=root_dir)
+    # print(data)
+    merged_dict = {key: [] for key in data[-1].keys()}
+    for d in data:
+        data
+    for d in data:
+        for key in merged_dict:
+            merged_dict[key].append(d.get(key))
+    # print(merged_dict)
+    
+    df = pd.DataFrame(merged_dict)
+    print(df)
+    fname = "./cpu_results/cpu_results_merged.pkl"
+    df.to_pickle(fname)
+
+
+
 # root_dir = "./results"
 # data = get_data(root_dir=root_dir)
 # with open("./results/all_results.json", "w") as outfile:
 #     json.dump(data, outfile)
 
 # fname = "./results/all_results.json"
-fname = "./results/all_results_formatted.json"
-with open(fname, "r") as infile:
-    data = json.load(infile)
-print(data[-1])
+# fname = "./results/all_results_formatted.json"
+# with open(fname, "r") as infile:
+#     data = json.load(infile)
+# print(data[-1])
 
-merged_dict = {key: [] for key in data[-1].keys()}
-for d in data:
-    for key in merged_dict:
-        merged_dict[key].append(d.get(key))
+# merged_dict = {key: [] for key in data[-1].keys()}
+# for d in data:
+#     for key in merged_dict:
+#         merged_dict[key].append(d.get(key))
     
-for key in merged_dict:
-    print(len(merged_dict.get(key)))
+# for key in merged_dict:
+#     print(len(merged_dict.get(key)))
 
-fname = "./results/results_merged.json"
-with open(fname, "w") as outfile:
-    json.dump(merged_dict, outfile)
+# fname = "./results/results_merged.json"
+# with open(fname, "w") as outfile:
+#     json.dump(merged_dict, outfile)
 
-df = pd.DataFrame(merged_dict)
-print(df)
-df.to_pickle(fname.replace(".json", ".pkl"))
+# df = pd.DataFrame(merged_dict)
+# print(df)
+# df.to_pickle(fname.replace(".json", ".pkl"))
 
 
 
@@ -79,3 +97,5 @@ df.to_pickle(fname.replace(".json", ".pkl"))
 
 
 
+if __name__ == "__main__":
+    main()

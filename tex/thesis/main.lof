@@ -1,0 +1,14 @@
+\babel@toc {UKenglish}{}
+\addvspace {10\p@ }
+\addvspace {10\p@ }
+\addvspace {10\p@ }
+\addvspace {10\p@ }
+\addvspace {10\p@ }
+\addvspace {10\p@ }
+\addvspace {10\p@ }
+\contentsline {figure}{\numberline {7.1}{\ignorespaces The figure shows the relative measured execution time used per sample using $L = 512$ Leapfrog steps, as a function of number of parameters. The CPU measurements are done using an 8-core M1 CPU (Apple Silicon). The GPU measurements are made with an NVIDIA Tesla P100 GPU. \relax }}{39}{figure.caption.19}%
+\contentsline {figure}{\numberline {7.2}{\ignorespaces The figure shows the average prediction time to compute a prediction given a single input $x$ using the models in table \ref {tab:deep_models}. The average time used is measured in ms and is averaged over 1000 randomly sampled points. The measured time includes computation of the sample mean and sample error. \relax }}{40}{figure.caption.20}%
+\contentsline {figure}{\numberline {7.3}{\ignorespaces The figure shows the projection of the empirical distribution onto the planes spanned by $(W_{2,4}^1, W_{2,5}^1)$ on the left and onto the plane spanned by $(W_{3,7}^1, W_{3, 6}^1)$ on the right, using the samples from model 2 in table \ref {tab:deep_models}. The distributions are approximated using kernel density estimation. \relax }}{41}{figure.caption.21}%
+\contentsline {figure}{\numberline {7.4}{\ignorespaces The figure shows histograms of the standardized residuals computed for different BNNs. The normal distribution is drawn as dotted line. \relax }}{43}{figure.caption.24}%
+\addvspace {10\p@ }
+\addvspace {10\p@ }
