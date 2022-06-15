@@ -16,21 +16,6 @@ from utils.trace_functions import trace_fn_adaptive_hmc, trace_fn_adaptive_nuts
 
 
 def main(config):
-    separator = "_"
-    path = "cpu_models/"
-    tmp = separator.join([
-        "kernel", 
-        str(config.get("kernel")), 
-        "results", 
-        str(config.get("num_results")),
-        "burnin",
-        str(config.get("num_burnin_steps")),
-        "epochs",
-        str(config.get("num_epochs")),
-        "leapfrogsteps",
-        str(config.get("num_leapfrog_steps")),
-    ])
-    fname = path + tmp + ".npz"
     target_dir = "./targets"
     feat_dir = "./features"
     dl = SLHALoader(
@@ -87,9 +72,6 @@ def main(config):
         )
     
 
-
-
-
     kernel = tfp.mcmc.DualAveragingStepSizeAdaptation(
         inner_kernel=inner_kernel,
         num_adaptation_steps=int(0.8 * config.get("num_burnin_steps")),
@@ -102,7 +84,7 @@ def main(config):
         num_results=config.get("num_results"),
         num_burnin_steps=config.get("num_burnin_steps"),
         num_steps_between_results=config.get("num_steps_between_results"),
-        fname=fname,
+        fname=None,
         trace_fn=trace_fn,
     )
     end = time.perf_counter()
@@ -120,13 +102,25 @@ def main(config):
     if isinstance(inner_kernel, tfp.mcmc.NoUTurnSampler):
         config["num_leapfrog_steps"] = tf.reduce_mean(trace["leapfrogs_taken"]).numpy()
     
-
-    path = "./results/"
+    separator = "_"
+    path = "./cpu_results/"
+    tmp = separator.join([
+        "kernel", 
+        str(config.get("kernel")), 
+        "results", 
+        str(config.get("num_results")),
+        "burnin",
+        str(config.get("num_burnin_steps")),
+        "epochs",
+        str(config.get("num_epochs")),
+        "leapfrogsteps",
+        str(config.get("num_leapfrog_steps")),
+        "layers",
+        str(config.get("layers"))
+    ])
+    fname = path + tmp + ".txt"
     if not os.path.exists(path):
         os.makedirs(path)
-    fname = fname.replace(".npz", ".txt")
-    fname = fname.strip("models/")
-    fname = path + fname
     with open(fname, "w") as outfile:
         for key in config:
             outfile.write(f"{key}" + " ")
