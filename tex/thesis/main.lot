@@ -6,7 +6,7 @@
 \addvspace {10\p@ }
 \addvspace {10\p@ }
 \addvspace {10\p@ }
-\contentsline {table}{\numberline {7.1}{\ignorespaces The table shows the training configuration used to sample the models listed in table~\ref {tab:deep_models}. \relax }}{42}{table.caption.22}%
-\contentsline {table}{\numberline {7.2}{\ignorespaces The table shows the models used in this section. For each model, 1000 sampled networks are used to generate each result shown in this section. The architecture describe number of nodes per layer. For each hidden layer, the same activation function is used. The final layer uses an identity function. \relax }}{42}{table.caption.23}%
+\contentsline {table}{\numberline {7.1}{\ignorespaces The table shows the training configuration used to sample the models listed in table~\ref {tab:deep_models}. \relax }}{45}{table.caption.24}%
+\contentsline {table}{\numberline {7.2}{\ignorespaces The table shows the models used in this section. For each model, 1000 sampled networks are used to generate each result shown in this section. The number of nodes per layer is shown in the ``Layers'' column. For each hidden layer, we used $\tanh (x)$ as the activation function. The final layer uses an identity function. \relax }}{45}{table.caption.25}%
 \addvspace {10\p@ }
 \addvspace {10\p@ }

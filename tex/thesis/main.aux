@@ -272,43 +272,52 @@
 \newlabel{fig:prediction_time}{{7.2}{40}{The figure shows the average prediction time to compute a prediction given a single input $x$ using the models in table \ref {tab:deep_models}. The average time used is measured in ms and is averaged over 1000 randomly sampled points. The measured time includes computation of the sample mean and sample error. \relax }{figure.caption.20}{}}
 \newlabel{fig:prediction_time@cref}{{[figure][2][7]7.2}{[1][38][]40}}
 \citation{google_bnn_posteriors}
-\@writefile{lof}{\contentsline {figure}{\numberline {7.3}{\ignorespaces The figure shows the projection of the empirical distribution onto the planes spanned by $(W_{2,4}^1, W_{2,5}^1)$ on the left and onto the plane spanned by $(W_{3,7}^1, W_{3, 6}^1)$ on the right, using the samples from model 2 in table \ref  {tab:deep_models}. The distributions are approximated using kernel density estimation. \relax }}{41}{figure.caption.21}\protected@file@percent }
-\newlabel{fig:standardized_residual}{{7.3}{41}{The figure shows the projection of the empirical distribution onto the planes spanned by $(W_{2,4}^1, W_{2,5}^1)$ on the left and onto the plane spanned by $(W_{3,7}^1, W_{3, 6}^1)$ on the right, using the samples from model 2 in table \ref {tab:deep_models}. The distributions are approximated using kernel density estimation. \relax }{figure.caption.21}{}}
-\newlabel{fig:standardized_residual@cref}{{[figure][3][7]7.3}{[1][41][]41}}
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {7.3.1.3}Loading Times}{41}{subsubsection.7.3.1.3}\protected@file@percent }
 \@writefile{toc}{\contentsline {subsection}{\numberline {7.3.2}Posterior Distribution of Weights}{41}{subsection.7.3.2}\protected@file@percent }
+\newlabel{eq:surrogate_dist}{{7.4}{41}{Posterior Distribution of Weights}{equation.7.3.4}{}}
+\newlabel{eq:surrogate_dist@cref}{{[equation][4][7]7.4}{[1][41][]41}}
 \@writefile{toc}{\contentsline {subsection}{\numberline {7.3.3}Benchmarks of Hyperparameters}{41}{subsection.7.3.3}\protected@file@percent }
 \newlabel{subsec:benchmarks}{{7.3.3}{41}{Benchmarks of Hyperparameters}{subsection.7.3.3}{}}
 \newlabel{subsec:benchmarks@cref}{{[subsection][3][7,3]7.3.3}{[1][41][]41}}
-\@writefile{toc}{\contentsline {subsubsection}{\numberline {7.3.3.1}Baseline Model}{41}{subsubsection.7.3.3.1}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsubsection}{\numberline {7.3.3.2}Pretraining}{41}{subsubsection.7.3.3.2}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsubsection}{\numberline {7.3.3.3}Burn-in length}{41}{subsubsection.7.3.3.3}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsubsection}{\numberline {7.3.3.4}Number of model parameters}{42}{subsubsection.7.3.3.4}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {7.3.4}Neutralino-Neutralino Cross Sections}{42}{subsection.7.3.4}\protected@file@percent }
-\newlabel{subsec:neuralino_experiments}{{7.3.4}{42}{Neutralino-Neutralino Cross Sections}{subsection.7.3.4}{}}
-\newlabel{subsec:neuralino_experiments@cref}{{[subsection][4][7,3]7.3.4}{[1][41][]42}}
-\@writefile{lot}{\contentsline {table}{\numberline {7.1}{\ignorespaces  The table shows the training configuration used to sample the models listed in table~\ref  {tab:deep_models}. \relax }}{42}{table.caption.22}\protected@file@percent }
-\newlabel{tab:NN_mse_scores}{{7.1}{42}{The table shows the training configuration used to sample the models listed in table~\ref {tab:deep_models}. \relax }{table.caption.22}{}}
-\newlabel{tab:NN_mse_scores@cref}{{[table][1][7]7.1}{[1][41][]42}}
-\@writefile{lot}{\contentsline {table}{\numberline {7.2}{\ignorespaces  The table shows the models used in this section. For each model, 1000 sampled networks are used to generate each result shown in this section. The architecture describe number of nodes per layer. For each hidden layer, the same activation function is used. The final layer uses an identity function. \relax }}{42}{table.caption.23}\protected@file@percent }
-\newlabel{tab:deep_models}{{7.2}{42}{The table shows the models used in this section. For each model, 1000 sampled networks are used to generate each result shown in this section. The architecture describe number of nodes per layer. For each hidden layer, the same activation function is used. The final layer uses an identity function. \relax }{table.caption.23}{}}
-\newlabel{tab:deep_models@cref}{{[table][2][7]7.2}{[1][42][]42}}
-\@writefile{lof}{\contentsline {figure}{\numberline {7.4}{\ignorespaces The figure shows histograms of the standardized residuals computed for different BNNs. The normal distribution is drawn as dotted line. \relax }}{43}{figure.caption.24}\protected@file@percent }
-\newlabel{fig:standardized_residual}{{7.4}{43}{The figure shows histograms of the standardized residuals computed for different BNNs. The normal distribution is drawn as dotted line. \relax }{figure.caption.24}{}}
-\newlabel{fig:standardized_residual@cref}{{[figure][4][7]7.4}{[1][42][]43}}
-\@writefile{toc}{\contentsline {chapter}{\numberline {8}Discussion}{45}{chapter.8}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {7.3.3.1}The Effect of Number of Burn-in Steps}{41}{subsubsection.7.3.3.1}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {7.3.3.2}The Effect of Pretraining}{41}{subsubsection.7.3.3.2}\protected@file@percent }
+\@writefile{lof}{\contentsline {figure}{\numberline {7.3}{\ignorespaces  The figure shows the histograms of measured loading times in seconds using the models in table \ref  {tab:deep_models}. The measurements were performed using {\tt  time.perf\_counter} from Python using an M1 Apple Silicon system-on-chip. The time measurements consist of 1000 measurements for each model. \relax }}{42}{figure.caption.21}\protected@file@percent }
+\newlabel{fig:loading_times}{{7.3}{42}{The figure shows the histograms of measured loading times in seconds using the models in table \ref {tab:deep_models}. The measurements were performed using {\tt time.perf\_counter} from Python using an M1 Apple Silicon system-on-chip. The time measurements consist of 1000 measurements for each model. \relax }{figure.caption.21}{}}
+\newlabel{fig:loading_times@cref}{{[figure][3][7]7.3}{[1][41][]42}}
+\@writefile{lof}{\contentsline {figure}{\numberline {7.4}{\ignorespaces The figure shows the projection of the empirical distribution onto the planes spanned by $(W_{2,4}^1, W_{2,5}^1)$ on the left and onto the plane spanned by $(W_{3,7}^1, W_{3, 6}^1)$ on the right, using the samples from model 2 in table \ref  {tab:deep_models}. The distributions are approximated using kernel density estimation. \relax }}{43}{figure.caption.22}\protected@file@percent }
+\newlabel{fig:posterior_kernels}{{7.4}{43}{The figure shows the projection of the empirical distribution onto the planes spanned by $(W_{2,4}^1, W_{2,5}^1)$ on the left and onto the plane spanned by $(W_{3,7}^1, W_{3, 6}^1)$ on the right, using the samples from model 2 in table \ref {tab:deep_models}. The distributions are approximated using kernel density estimation. \relax }{figure.caption.22}{}}
+\newlabel{fig:posterior_kernels@cref}{{[figure][4][7]7.4}{[1][41][]43}}
+\@writefile{lof}{\contentsline {figure}{\numberline {7.5}{\ignorespaces The figure shows the measured time in seconds per sample using HMC as a function of Leapfrog steps $L$ using a model with 561 parameters. \relax }}{44}{figure.caption.23}\protected@file@percent }
+\newlabel{fig:time_vs_leapfrogsteps}{{7.5}{44}{The figure shows the measured time in seconds per sample using HMC as a function of Leapfrog steps $L$ using a model with 561 parameters. \relax }{figure.caption.23}{}}
+\newlabel{fig:time_vs_leapfrogsteps@cref}{{[figure][5][7]7.5}{[1][41][]44}}
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {7.3.3.3}The Effect of }{45}{subsubsection.7.3.3.3}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {7.3.3.4}Number of model parameters}{45}{subsubsection.7.3.3.4}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {7.3.4}Neutralino-Neutralino Cross Sections}{45}{subsection.7.3.4}\protected@file@percent }
+\newlabel{subsec:neuralino_experiments}{{7.3.4}{45}{Neutralino-Neutralino Cross Sections}{subsection.7.3.4}{}}
+\newlabel{subsec:neuralino_experiments@cref}{{[subsection][4][7,3]7.3.4}{[1][45][]45}}
+\@writefile{lot}{\contentsline {table}{\numberline {7.1}{\ignorespaces  The table shows the training configuration used to sample the models listed in table~\ref  {tab:deep_models}. \relax }}{45}{table.caption.24}\protected@file@percent }
+\newlabel{tab:NN_mse_scores}{{7.1}{45}{The table shows the training configuration used to sample the models listed in table~\ref {tab:deep_models}. \relax }{table.caption.24}{}}
+\newlabel{tab:NN_mse_scores@cref}{{[table][1][7]7.1}{[1][45][]45}}
+\@writefile{lot}{\contentsline {table}{\numberline {7.2}{\ignorespaces  The table shows the models used in this section. For each model, 1000 sampled networks are used to generate each result shown in this section. The number of nodes per layer is shown in the ``Layers'' column. For each hidden layer, we used $\tanh (x)$ as the activation function. The final layer uses an identity function. \relax }}{45}{table.caption.25}\protected@file@percent }
+\newlabel{tab:deep_models}{{7.2}{45}{The table shows the models used in this section. For each model, 1000 sampled networks are used to generate each result shown in this section. The number of nodes per layer is shown in the ``Layers'' column. For each hidden layer, we used $\tanh (x)$ as the activation function. The final layer uses an identity function. \relax }{table.caption.25}{}}
+\newlabel{tab:deep_models@cref}{{[table][2][7]7.2}{[1][45][]45}}
+\@writefile{lof}{\contentsline {figure}{\numberline {7.6}{\ignorespaces The figure shows histograms of the standardized residuals computed for different BNNs. The normal distribution is drawn as dotted line. \relax }}{46}{figure.caption.26}\protected@file@percent }
+\newlabel{fig:standardized_residual}{{7.6}{46}{The figure shows histograms of the standardized residuals computed for different BNNs. The normal distribution is drawn as dotted line. \relax }{figure.caption.26}{}}
+\newlabel{fig:standardized_residual@cref}{{[figure][6][7]7.6}{[1][45][]46}}
+\@writefile{toc}{\contentsline {chapter}{\numberline {8}Discussion}{47}{chapter.8}\protected@file@percent }
 \@writefile{lof}{\addvspace {10\p@ }}
 \@writefile{lot}{\addvspace {10\p@ }}
-\newlabel{chap:conclusion}{{8}{47}{Conclusion}{chapter*.25}{}}
-\newlabel{chap:conclusion@cref}{{[chapter][8][]8}{[1][47][]47}}
-\@writefile{toc}{\contentsline {chapter}{Conclusion}{48}{chapter*.25}\protected@file@percent }
-\@writefile{toc}{\contentsline {chapter}{Appendices}{49}{section*.26}\protected@file@percent }
+\newlabel{chap:conclusion}{{8}{49}{Conclusion}{chapter*.27}{}}
+\newlabel{chap:conclusion@cref}{{[chapter][8][]8}{[1][49][]49}}
+\@writefile{toc}{\contentsline {chapter}{Conclusion}{50}{chapter*.27}\protected@file@percent }
+\@writefile{toc}{\contentsline {chapter}{Appendices}{51}{section*.28}\protected@file@percent }
 \bibdata{bibliography.bib}
-\@writefile{toc}{\contentsline {chapter}{Appendix A}{51}{appendix*.27}\protected@file@percent }
+\@writefile{toc}{\contentsline {chapter}{Appendix A}{53}{appendix*.29}\protected@file@percent }
 \@writefile{lof}{\addvspace {10\p@ }}
 \@writefile{lot}{\addvspace {10\p@ }}
-\@writefile{toc}{\contentsline {section}{\numberline {A.1}Appendix 1 title }{51}{section.Alph0.1}\protected@file@percent }
-\newlabel{sec:appendix_1_label}{{A.1}{51}{Appendix 1 title}{section.Alph0.1}{}}
-\newlabel{sec:appendix_1_label@cref}{{[subappendix][1][2147483647,0]A.1}{[1][51][]51}}
+\@writefile{toc}{\contentsline {section}{\numberline {A.1}Appendix 1 title }{53}{section.Alph0.1}\protected@file@percent }
+\newlabel{sec:appendix_1_label}{{A.1}{53}{Appendix 1 title}{section.Alph0.1}{}}
+\newlabel{sec:appendix_1_label@cref}{{[subappendix][1][2147483647,0]A.1}{[1][53][]53}}
 \bibcite{ADAM}{{1}{}{{}}{{}}}
 \bibcite{bayes_theorem}{{2}{}{{}}{{}}}
 \bibcite{ml_for_physicists}{{3}{}{{}}{{}}}
@@ -329,4 +338,4 @@
 \bibcite{xla}{{18}{}{{}}{{}}}
 \bibcite{google_bnn_posteriors}{{19}{}{{}}{{}}}
 \providecommand\NAT@force@numbers{}\NAT@force@numbers
-\gdef \@abspage@last{71}
+\gdef \@abspage@last{73}

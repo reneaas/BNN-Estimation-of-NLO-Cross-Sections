@@ -131,6 +131,7 @@ def main():
     plt.scatter(data.get("num_params"), data.get("relative_time"), label="Datapoints", color="red")
     plt.xlabel("Number of parameters")
     plt.ylabel("Relative Time")
+    plt.xscale("log", base=2)
     plt.legend()
 
     path = "/Users/reneaas/Documents/skole/master/thesis/master_thesis/tex/thesis/figures/cpu_vs_gpu/"

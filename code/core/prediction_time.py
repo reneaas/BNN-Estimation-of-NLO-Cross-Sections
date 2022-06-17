@@ -4,10 +4,40 @@ import tensorflow as tf
 import tensorflow_probability as tfp
 import pandas as pd
 import time
+from tqdm import trange
 
 from bnn.bnn import BayesianNeuralNetwork
 from slha_loader.slha_loader import SLHALoader
 from utils.preprocessing import split_data
+import sys 
+
+
+def prediction_time_vs_num_points(models, log_max, step=4):
+    num_points = []
+    timeused = []
+    for i in trange(0, log_max, step, desc="Log_2(i): "):
+        tmp = measure_prediction_time(models, num_points=int(2 ** i), num_trials=100)
+        timeused.append(tmp)
+        num_points.append(int(2 ** i))
+    return num_points, timeused
+
+
+
+def measure_prediction_time(models, num_points, num_trials):
+    timeused = np.zeros(shape=(num_trials, len(models)))
+    for i in range(num_trials):
+        for j, bnn in enumerate(models):
+            x = np.random.normal(size=(num_points, 5))
+            x = tf.convert_to_tensor(x, dtype=tf.float32)
+            start = time.perf_counter()
+            y = bnn(x)
+            y_mean = tf.reduce_mean(y, axis=0)
+            y_std = tf.math.reduce_std(y, axis=0)
+            end = time.perf_counter()
+            timeused[i, j] = end - start
+    timeused = np.mean(timeused, axis=0)
+    return timeused
+
 
 
 
@@ -43,31 +73,28 @@ def main():
         bnn.load_model(fname=model_name)
     print(*models)
     print([[w.shape for w in bnn.weights] for bnn in models])
+    
 
 
-    num_trials = 10_000
-    timeused = np.zeros(shape=(num_trials, len(models)))
-    for i in range(num_trials):
-        for j, bnn in enumerate(models):
-            x = np.random.normal(size=(1, 5))
-            x = tf.convert_to_tensor(x, dtype=tf.float32)
-            start = time.perf_counter()
-            y = bnn(x)
-            y_mean = tf.reduce_mean(y, axis=0)
-            y_std = tf.math.reduce_std(y, axis=0)
-            end = time.perf_counter()
-            timeused[i, j] = end - start
-
-    timeused = np.mean(timeused, axis=0)
+    num_points, timeused = prediction_time_vs_num_points(models, log_max=13, step=4)
+    print(f"{num_points = }")
     print(f"{timeused = }")
 
+
+
+    # timeused = measure_prediction_time(models, num_points=1000, num_trials=10_0)
     model_names = [str(i + 1) for i in range(len(models))]
-    timeused = np.array(timeused)
-    plt.scatter(model_names, timeused * 1e3, color="red", label="Datapoints")
-    plt.plot(model_names, timeused * 1e3)
+    for points, time in zip(num_points, timeused):
+        plt.scatter(model_names, time * 1e3, label=f"{points} points")
+        plt.plot(model_names, time * 1e3)
+    # timeused = np.array(timeused)
+    # plt.scatter(model_names, timeused * 1e3, color="red", label="Datapoints")
+    # plt.plot(model_names, timeused * 1e3)
     plt.xlabel("Model")
-    plt.ylabel("Time used [ms]")
+    plt.ylabel("Execution Time [ms]")
+    plt.yscale("log", base=10)
     plt.legend()
+    # plt.show()
 
     path = "/Users/reneaas/Documents/skole/master/thesis/master_thesis/tex/thesis/figures/prediction_time/"
     fname = "prediction_time.pdf"

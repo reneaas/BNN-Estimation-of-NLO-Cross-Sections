@@ -2009,6 +2009,11 @@ INPUT /Users/reneaas/Documents/skole/master/thesis/master_thesis/tex/thesis/figu
 INPUT /Users/reneaas/Documents/skole/master/thesis/master_thesis/tex/thesis/figures/prediction_time/prediction_time.pdf
 INPUT /Users/reneaas/Documents/skole/master/thesis/master_thesis/tex/thesis/figures/prediction_time/prediction_time.pdf
 INPUT /Users/reneaas/Documents/skole/master/thesis/master_thesis/tex/thesis/figures/prediction_time/prediction_time.pdf
+INPUT /Users/reneaas/Documents/skole/master/thesis/master_thesis/tex/thesis/figures/computational_cost/loading_times.pdf
+INPUT /Users/reneaas/Documents/skole/master/thesis/master_thesis/tex/thesis/figures/computational_cost/loading_times.pdf
+INPUT /Users/reneaas/Documents/skole/master/thesis/master_thesis/tex/thesis/figures/computational_cost/loading_times.pdf
+INPUT /Users/reneaas/Documents/skole/master/thesis/master_thesis/tex/thesis/figures/computational_cost/loading_times.pdf
+INPUT /Users/reneaas/Documents/skole/master/thesis/master_thesis/tex/thesis/figures/computational_cost/loading_times.pdf
 INPUT /Users/reneaas/Documents/skole/master/thesis/master_thesis/tex/thesis/figures/posterior_distribution/posterior_weights1.pdf
 INPUT /Users/reneaas/Documents/skole/master/thesis/master_thesis/tex/thesis/figures/posterior_distribution/posterior_weights1.pdf
 INPUT /Users/reneaas/Documents/skole/master/thesis/master_thesis/tex/thesis/figures/posterior_distribution/posterior_weights1.pdf
@@ -2019,6 +2024,16 @@ INPUT /Users/reneaas/Documents/skole/master/thesis/master_thesis/tex/thesis/figu
 INPUT /Users/reneaas/Documents/skole/master/thesis/master_thesis/tex/thesis/figures/posterior_distribution/posterior_weights2.pdf
 INPUT /Users/reneaas/Documents/skole/master/thesis/master_thesis/tex/thesis/figures/posterior_distribution/posterior_weights2.pdf
 INPUT /Users/reneaas/Documents/skole/master/thesis/master_thesis/tex/thesis/figures/posterior_distribution/posterior_weights2.pdf
+INPUT /Users/reneaas/Documents/skole/master/thesis/master_thesis/tex/thesis/figures/computational_cost/time_vs_leapfrogsteps_hmc.pdf
+INPUT /Users/reneaas/Documents/skole/master/thesis/master_thesis/tex/thesis/figures/computational_cost/time_vs_leapfrogsteps_hmc.pdf
+INPUT /Users/reneaas/Documents/skole/master/thesis/master_thesis/tex/thesis/figures/computational_cost/time_vs_leapfrogsteps_hmc.pdf
+INPUT /Users/reneaas/Documents/skole/master/thesis/master_thesis/tex/thesis/figures/computational_cost/time_vs_leapfrogsteps_hmc.pdf
+INPUT /Users/reneaas/Documents/skole/master/thesis/master_thesis/tex/thesis/figures/computational_cost/time_vs_leapfrogsteps_hmc.pdf
+INPUT /Users/reneaas/Documents/skole/master/thesis/master_thesis/tex/thesis/figures/computational_cost/time_vs_params.pdf
+INPUT /Users/reneaas/Documents/skole/master/thesis/master_thesis/tex/thesis/figures/computational_cost/time_vs_params.pdf
+INPUT /Users/reneaas/Documents/skole/master/thesis/master_thesis/tex/thesis/figures/computational_cost/time_vs_params.pdf
+INPUT /Users/reneaas/Documents/skole/master/thesis/master_thesis/tex/thesis/figures/computational_cost/time_vs_params.pdf
+INPUT /Users/reneaas/Documents/skole/master/thesis/master_thesis/tex/thesis/figures/computational_cost/time_vs_params.pdf
 INPUT /Users/reneaas/Documents/skole/master/thesis/master_thesis/tex/thesis/figures/standardized_residuals/standardized_residual_simple_models.pdf
 INPUT /Users/reneaas/Documents/skole/master/thesis/master_thesis/tex/thesis/figures/standardized_residuals/standardized_residual_simple_models.pdf
 INPUT /Users/reneaas/Documents/skole/master/thesis/master_thesis/tex/thesis/figures/standardized_residuals/standardized_residual_simple_models.pdf
@@ -2055,9 +2070,9 @@ OUTPUT /Users/reneaas/Documents/skole/master/thesis/master_thesis/tex/thesis/mai
 INPUT /Users/reneaas/Documents/skole/master/thesis/master_thesis/tex/thesis/main.aux
 INPUT /Users/reneaas/Documents/skole/master/thesis/master_thesis/tex/thesis/main.out
 INPUT /Users/reneaas/Documents/skole/master/thesis/master_thesis/tex/thesis/main.out
-INPUT /usr/local/texlive/2021/texmf-dist/fonts/enc/dvips/lm/lm-rmtt.enc
 INPUT /usr/local/texlive/2021/texmf-dist/fonts/enc/dvips/lm/lm-rm.enc
 INPUT /usr/local/texlive/2021/texmf-dist/fonts/enc/dvips/lm/lm-mathit.enc
+INPUT /usr/local/texlive/2021/texmf-dist/fonts/enc/dvips/lm/lm-rmtt.enc
 INPUT /usr/local/texlive/2021/texmf-dist/fonts/enc/dvips/lm/lm-rmsc.enc
 INPUT /usr/local/texlive/2021/texmf-dist/fonts/enc/dvips/lm/lm-mathsy.enc
 INPUT /usr/local/texlive/2021/texmf-dist/fonts/enc/dvips/lm/lm-mathex.enc
@@ -2069,6 +2084,7 @@ INPUT /usr/local/texlive/2021/texmf-dist/fonts/type1/public/amsfonts/cm/cmmi7.pf
 INPUT /usr/local/texlive/2021/texmf-dist/fonts/type1/public/amsfonts/cm/cmr10.pfb
 INPUT /usr/local/texlive/2021/texmf-dist/fonts/type1/public/amsfonts/cm/cmr12.pfb
 INPUT /usr/local/texlive/2021/texmf-dist/fonts/type1/public/amsfonts/cm/cmr7.pfb
+INPUT /usr/local/texlive/2021/texmf-dist/fonts/type1/public/amsfonts/cm/cmss10.pfb
 INPUT /usr/local/texlive/2021/texmf-dist/fonts/type1/public/amsfonts/cm/cmss12.pfb
 INPUT /usr/local/texlive/2021/texmf-dist/fonts/type1/public/amsfonts/cm/cmsy10.pfb
 INPUT /usr/local/texlive/2021/texmf-dist/fonts/type1/public/amsfonts/cm/cmsy7.pfb

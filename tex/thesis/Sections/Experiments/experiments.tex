@@ -6,9 +6,9 @@
 We shall briefly discuss how the training data is transformed before training.
 The targets in the dataset of NLO cross sections can span several orders of magnitude. For practical training of BNNs, this would require
 model parameters that also span several orders of magnitude. The result will usually be overflow and thus unsucessful training of the models.
-Therefore, we have chosen to map the targets using the base-10 logarithm, i.e $y \mapsto \log_{10}(y)$. More generally, we could choose any base-$a$ logarithm. A practical consideration here is that once the model is trained, any prediction it produces must be transformed back using
-the inverse mapping. As we increase the value of $a$, the precision the model can predict decreases. Thus a small error in log-space 
-can result in a large error in what we may refer to as target space the larger the value of $a$ is. 
+Therefore, we have chosen to map the targets using the base-10 logarithm, i.e. $y \mapsto \log_{10}(y)$. More generally, we could choose any base-$a$ logarithm. A practical consideration here is that once the model is trained, any prediction it produces must be transformed back using
+the inverse mapping. As we increase the value of $a$, the precision the model's prediction decreases. Thus a small error in log-space 
+can result in a large error in what we may refer to as the target space, the larger the value of $a$ is. 
 
 
 \section{Performance Metrics}\label{seq:perf_metrics}
@@ -58,8 +58,11 @@ Thus one can simply perform the measurements using the implementation of HMC and
 \end{figure}
 
 \subsubsection{Prediction Time}
-As we discussed in the introduction, the execution time's order of magnitude when using {\tt Prospino} is the order of hours. For BNN to be a viable alternative, it must at least significantly reduce the time to compute predictions. In figure \ref{fig:prediction_time}, we 
-show the average execution time to compute predictions. For each model, we have sampled 1000 random points and measured the execution time of computing a prediction. The models used are the ones listed in table \ref{tab:deep_models}. Both the sample mean of the predictions and the sample error is computed during the measurement. The measurements were performed on an M1 Apple Silicon CPU using {\tt perf\_counter} from the module {\tt time} provided by the standard library of Python. The order of magnitude is in milliseconds which is a significant speedup over the ones that can be achived with {\tt Prospino}. The BNNs can thus provide a significant reduction in time to predict cross sections but it remains to be seen if the predictions themselves are reliable enough to serve as a viable substitute for {\tt Prospino} calculations which is what we will turn our attention to next.
+As we discussed in the introduction, the execution time's order of magnitude when using {\tt Prospino} is in the order of hours. 
+For prediction of cross sections using BNNs to provide a viable alternative to these calculations, it must at least significantly reduce the time to compute predictions. In figure \ref{fig:prediction_time}, we 
+show the average execution time to compute predictions using all models in table~\ref{tab:deep_models}.
+For each model, we randomly generated input points of correct dimension and computed predictions for up to 4096 input points simultaneously.
+The execution times appear proportional with the number of input points provided for each model. We can crudely infer by inspection that increasing the order of magnitude by one does the same for the execution time. Still, the order of magnitude for a single input point is at the order of a millisecond which is a significant speedup over {\tt Prospino} calculations. Both the sample mean of the predictions and the sample error is computed during the measurement. The measurements were performed on an M1 Apple Silicon CPU using {\tt perf\_counter} from the module {\tt time} provided by the standard library of Python.
 
 \begin{figure}
     \centering
@@ -69,30 +72,58 @@ show the average execution time to compute predictions. For each model, we have 
     \label{fig:prediction_time}
 \end{figure}
 
-\subsection{Posterior Distribution of Weights}
-An important problem to consider is if we can even justify the use of Monte Carlo samplers to sample from the exact posterior instead of using the approximation employed by variational inference with a parameterized surrogate posterior which is the most ubiquitous method of training BNNs in the literature. The surrogate distribution is usually a factorized normal distribution of the form
-\begin{equation}
-    q \propto \prod_{i, j, \ell} \mathcal{N}(\mu_{ij}^\ell, (\sigma_{ij}^\ell)^2),
-\end{equation}
-meaning for each parameter in the model, we assume its posterior distribution can be written as an independent Gaussian distribution with a mean $\mu_{jk}^\ell$ and a standard deviation $\sigma_{ij}^\ell$. The method sports some fairly obvious advantages like the fact that one can perform \textit{online training}, i.e. continue training once new data becomes available starting from an earlier \textit{checkpoint} by using $q$ obtained during earlier training as the prior. The way we have trained BNNs in this thesis does not permit this form of training because we cannot formulate a prior based on the empirical distribution we have sampled. Thus we cannot use the weights of the model that we have already sampled to continue training. We must start over entirely and discard the empirical distribution we obtained with the prior dataset. 
+\subsubsection{Loading Times}
+Even if we have demonstrated a substantial speedup for predictions using BNNs, we have thus far ignored the fact that empirical distribution representing the weights of the BNN is stored on disk which typically means an solid state drive (SSD) with modern computing hardware. The memory bandwidth between the SSD and the faster forms of memory such as RAM, cache and registers becomes a potential bottleneck for performance. Although cache and registers introduce fast memory transfer of stored data to the computing units of the CPU, they typically boast a fairly limited capacity. Thus loading in the entire BNN model might not be viable and we may observe that once we need to models with a large number of parameters, the loading times dominate the computational cost involved with computing predictions. This added computional cost stems from the transfer of data back and forth between the RAM, and the cache and registers. An additional problem is that if the BNN model is simply used for a single prediction at a time, it might simply be loaded a single time before it is dumped from working memory all together. In this case, the initial load may dominate the computational cost all together. 
 
-It has been widely discussed that BNN posteriors are typically found to be multi-modal \cite{google_bnn_posteriors}. We demonstrate this observation in figure \ref{fig:}
-
+In figure \ref{fig:loading_times} we show the resulted loading times measured using an M1 Apple Silicon system-on-chip and {\tt time.perf\_counter} from Python. The memory allocated to the BNN models were deallocated manually using the {\tt del} operator provided by Python to ensure that each load of the model of the model was from the SSD. The models loaded in are the ones listed in table \ref{tab:deep_models}. Given the order of magnitude of the loading times displayed in the figure is approximately the same order of magnitude as the execution time, we have demonstrated that BNNs can provide a serious substitute for {\tt Prospino} calculations from a purely computational perspective. It remains to be seen if the predictions themselves are reliable enough for this substitution to be adopted, which we will explore in later sections.
 
 \begin{figure}
     \centering
-    \includegraphics[scale=0.5]{figures/posterior_distribution/posterior_weights1.pdf}
-    \includegraphics[scale=0.5]{figures/posterior_distribution/posterior_weights2.pdf}
+    \includegraphics[scale=1]{figures/computational_cost/loading_times.pdf}
+    \caption{
+        The figure shows the histograms of measured loading times in seconds using the models in table \ref{tab:deep_models}. The measurements were performed using {\tt time.perf\_counter} from Python using an M1 Apple Silicon system-on-chip. The time measurements consist of 1000 measurements for each model.
+    }
+    \label{fig:loading_times}
+\end{figure}
+
+
+
+\subsection{Posterior Distribution of Weights}
+An important problem to consider is if we can even justify the use of Monte Carlo samplers to sample from the exact posterior instead of using the approximation employed by variational inference with a parameterized surrogate posterior which is the most ubiquitous method of training BNNs in the literature. The surrogate distribution is usually a factorized normal distribution of the form
+\begin{equation}\label{eq:surrogate_dist}
+    q \propto \prod_{i, j, \ell} \mathcal{N}(\mu_{ij}^\ell, (\sigma_{ij}^\ell)^2) \mathcal{N}(\mu_{j}^\ell, (\sigma_{j}^\ell)^2),
+\end{equation}
+meaning for each parameter in the model, we assume its posterior distribution can be written as an independent Gaussian distribution with a mean $\mu_{jk}^\ell$ and a standard deviation $\sigma_{ij}^\ell$ for the kernels, and $\mu_j^\ell$ and $\sigma_j^\ell$ for the biases. The method sports some fairly obvious advantages like the fact that one can perform \textit{online training}, i.e. continue training once new data becomes available starting from an earlier \textit{checkpoint} by using $q$ obtained during earlier training as the prior. The way we have trained BNNs in this thesis does not permit this form of training because we cannot formulate a prior based on the empirical distribution we have sampled. Thus we cannot use the weights of the model that we have already sampled to continue training. We must start over entirely and discard the empirical distribution we obtained with the prior dataset. 
+
+It has been widely discussed that BNN posteriors are typically found to be multi-modal \cite{google_bnn_posteriors}. We demonstrate this observation in figure \ref{fig:posterior_kernels}.
+We can observe that the projection onto the planes shown there indicate that the posterior distribution indeed is multimodal
+and unlikely to be approximated well with a parameterized surrogate distribution like the one in eq.~\eqref{eq:surrogate_dist}.
+
+\begin{figure}
+    \centering
+    \includegraphics[scale=0.7]{figures/posterior_distribution/posterior_weights1.pdf}
+    \includegraphics[scale=0.7]{figures/posterior_distribution/posterior_weights2.pdf}
     \caption{The figure shows the projection of the empirical distribution onto the planes spanned by $(W_{2,4}^1, W_{2,5}^1)$ on the left and onto the plane spanned by $(W_{3,7}^1, W_{3, 6}^1)$ on the right, using the samples from model 2 in table \ref{tab:deep_models}. The distributions are approximated using kernel density estimation. 
     }
-    \label{fig:standardized_residual}
+    \label{fig:posterior_kernels}
 \end{figure}
 
 
 \subsection{Benchmarks of Hyperparameters}\label{subsec:benchmarks}
-\subsubsection{Baseline Model}
-\subsubsection{Pretraining}
-\subsubsection{Burn-in length}
+\begin{figure}
+    \centering
+    \includegraphics[scale=0.7]{figures/computational_cost/time_vs_leapfrogsteps_hmc.pdf}
+    \includegraphics[scale=0.7]{figures/computational_cost/time_vs_params.pdf}
+    \caption{The figure shows the measured time in seconds per sample using HMC as a function of Leapfrog steps $L$ using a model with
+    561 parameters.
+    }
+    \label{fig:time_vs_leapfrogsteps}
+\end{figure}
+
+\subsubsection{The Effect of Number of Burn-in Steps}
+\subsubsection{The Effect of Pretraining}
+\subsubsection{The Effect of 
+}
 \subsubsection{Number of model parameters}
 
 \subsection{Neutralino-Neutralino Cross Sections}\label{subsec:neuralino_experiments}
@@ -117,7 +148,7 @@ It has been widely discussed that BNN posteriors are typically found to be multi
     \centering
 \begin{tabular}{c@{\hspace{1cm}}c@{\hspace{1cm}} c}
 \hline
-      Model number & Architechture & Number of parameters \\
+      Model number & Layers & Number of parameters \\
 \hline
     1 & 5-50-1 & 351\\
     2 & 5-50-50-1 & 2901\\
@@ -128,8 +159,8 @@ It has been widely discussed that BNN posteriors are typically found to be multi
 \end{tabular}
 \caption{
     The table shows the models used in this section. For each model, 1000 sampled networks are used to
-    generate each result shown in this section. The architecture describe number of nodes per layer.
-    For each hidden layer, the same activation function is used. The final layer uses an identity function.
+    generate each result shown in this section. The number of nodes per layer is shown in the ``Layers'' column.
+    For each hidden layer, we used $\tanh(x)$ as the activation function. The final layer uses an identity function.
 }
 \label{tab:deep_models}
 \end{table}

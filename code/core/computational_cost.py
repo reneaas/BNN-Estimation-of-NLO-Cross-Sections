@@ -16,7 +16,7 @@ num_samples = (
     + std_config.get("num_burnin_steps")
 )
 
-def plot_data(x, y, xlabel, ylabel, log_scale=True, xbase=None, ybase=None):
+def plot_data(x, y, xlabel, ylabel, log_scale=True, xbase=None, ybase=None, fname=None):
     if not isinstance(x, np.ndarray):
         x = x.to_numpy()
     if not isinstance(y, np.ndarray):
@@ -34,7 +34,10 @@ def plot_data(x, y, xlabel, ylabel, log_scale=True, xbase=None, ybase=None):
             plt.xscale("log", base=xbase)
         if ybase is not None:
             plt.yscale("log", base=ybase)
-    plt.show()
+    if fname is not None:
+        plt.savefig(fname)
+    else:
+        plt.show()
 
 def load_results():
     fname = "./results/results_merged.pkl"
@@ -54,36 +57,39 @@ def time_vs_leapfrogsteps_hmc():
     y = df["timeused"] / num_samples
     # y = y.to_numpy()
     # y /= y[0]
+    dir = "/Users/reneaas/Documents/skole/master/thesis/master_thesis/tex/thesis/figures/computational_cost/"
+    fname = "time_vs_leapfrogsteps_hmc.pdf"
     plot_data(
         x=x, 
         y=y, 
         xlabel="Number of Leapfrog steps",
-        ylabel="Seconds per Sample",
+        ylabel="Time per Sample [s]",
         xbase=2,
-        ybase=None,
+        ybase=2,
+        fname=dir + fname,
     )
-    print(x, y)
-    total_time = y * num_samples
-    print(total_time)
 
 def time_vs_parameters_hmc():
     df = load_results()
     for key in std_config:
         df = df[df[key] == std_config.get(key)]
-    kernel = "hmc"
-    df = df[df["kernel"] == kernel]
-    num_leapfrog_steps = 512 
-    df = df[df["num_leapfrog_steps"] == num_leapfrog_steps]
+    df = df[df["kernel"] == "hmc"]
+    df = df[df["num_leapfrog_steps"] == 512]
 
     x = df["num_params"]
-    y = df["timeused"]
-    print(df)
+    y = df["timeused"] / num_samples
+
+    dir = "/Users/reneaas/Documents/skole/master/thesis/master_thesis/tex/thesis/figures/computational_cost/"
+    fname = "time_vs_params.pdf"
     fig = plot_data(
         x=x,
         y=y,
         xlabel="Number of Parameters",
-        ylabel="Time used in seconds",
+        ylabel="Time Per Sample [s]",
         log_scale=True,
+        xbase=10,
+        ybase=10,
+        fname=dir + fname,
     )
 
 
@@ -113,12 +119,21 @@ def leapfrog_steps_vs_parameters_nuts():
 
 
 def main():
-    time_vs_leapfrogsteps_hmc()
+    # time_vs_leapfrogsteps_hmc()
     # time_vs_parameters_hmc()
     # leapfrog_steps_vs_parameters_nuts()
-
+    # df = load_results()
+    # df = df[
+    #     df["kernel"] == "hmc"
+    # ]
+    # print(
+    #     df[
+    #         df["num_params"] == 561
+    #     ]
+    # )
     # print(load_results())
     return None
+
     
 
 
