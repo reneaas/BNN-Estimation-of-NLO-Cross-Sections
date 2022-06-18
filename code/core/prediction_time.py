@@ -92,16 +92,16 @@ def main():
     # plt.plot(model_names, timeused * 1e3)
     plt.xlabel("Model")
     plt.ylabel("Execution Time [ms]")
-    plt.yscale("log", base=10)
+    # plt.yscale("log", base=10)
     plt.legend()
     # plt.show()
 
     path = "/Users/reneaas/Documents/skole/master/thesis/master_thesis/tex/thesis/figures/prediction_time/"
-    fname = "prediction_time.pdf"
+    fname = "prediction_time_gpu.pdf"
     plt.savefig(path + fname)
 
 if __name__ == "__main__":
-    with tf.device("/CPU:0"):
+    with tf.device("/GPU:0"):
         main()
 
 

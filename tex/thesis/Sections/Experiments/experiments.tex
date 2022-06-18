@@ -59,10 +59,12 @@ Thus one can simply perform the measurements using the implementation of HMC and
 
 \subsubsection{Prediction Time}
 As we discussed in the introduction, the execution time's order of magnitude when using {\tt Prospino} is in the order of hours. 
-For prediction of cross sections using BNNs to provide a viable alternative to these calculations, it must at least significantly reduce the time to compute predictions. In figure \ref{fig:prediction_time}, we 
+If BNNs are to serve as a viable alternative to these calculations, it must at least significantly reduce the time it takes to compute predictions. In figure \ref{fig:prediction_time}, we 
 show the average execution time to compute predictions using all models in table~\ref{tab:deep_models}.
 For each model, we randomly generated input points of correct dimension and computed predictions for up to 4096 input points simultaneously.
-The execution times appear proportional with the number of input points provided for each model. We can crudely infer by inspection that increasing the order of magnitude by one does the same for the execution time. Still, the order of magnitude for a single input point is at the order of a millisecond which is a significant speedup over {\tt Prospino} calculations. Both the sample mean of the predictions and the sample error is computed during the measurement. The measurements were performed on an M1 Apple Silicon CPU using {\tt perf\_counter} from the module {\tt time} provided by the standard library of Python.
+The execution times appear proportional to the number of input points provided for each model, which perhaps is not all that surprising. We can crudely infer by inspection that increasing the order of magnitude by one does the same for the execution time. Still, the order of magnitude for a single input point is at the order of a millisecond which is a significant speedup over {\tt Prospino} calculations. Both the sample mean of the predictions and the sample error is computed during the measurement. The measurements were performed on an M1 Apple Silicon CPU using {\tt perf\_counter} from the module {\tt time} provided by the standard library of Python.
+
+The performance degradation that the computations in figure \ref{fig:prediction_time} suffers is inherently due to the limited vectorization capability of the CPU's computing units when performing matrix multiplications in the forward pass of the individual neural network models. The computation itself is performed with all 1000 sampled networks simultaneously, and so one might hypothesize that more specialized computing units may be able to handle several input points while applying all sampled networks at the same time. As it turns out, GPUs are excel at executing matrix multiplication and even more fortunate, {\tt TensorFlow} has added support for the built-in GPU on Apple Silicon system-on-chips. In figure \ref{fig:prediction_time_gpu} we can see the execution times achieved using the GPU to perform the same computations as before. In this case the order magnitude remains more or less the same in all the tests. Thus, computing predictions on several points can benefit greatly if the execution is employed on a GPU. Note, however, that the measured execution time of ``model 1'' is slightly slower than for more points which likely is due to the overhead introduced by using the GPU for such a simple model. Care must thus be taken when considering what type of hardware the computations should be performed with.
 
 \begin{figure}
     \centering
@@ -70,6 +72,14 @@ The execution times appear proportional with the number of input points provided
     \caption{The figure shows the average prediction time to compute a prediction given a single input $x$ using the models in table \ref{tab:deep_models}. The average time used is measured in ms and is averaged over 1000 randomly sampled points. The measured time includes computation of the sample mean and sample error.
     }
     \label{fig:prediction_time}
+\end{figure}
+
+\begin{figure}
+    \centering
+    \includegraphics[scale=1]{figures/prediction_time/prediction_time_gpu.pdf}
+    \caption{The figure shows the average prediction time using the built-in GPU on an M1 Apple Silicon system-on-chip to compute a prediction given a single input $x$ using the models in table \ref{tab:deep_models}. The average time used is measured in ms and is averaged over 1000 randomly sampled points. The measured time includes computation of the sample mean and sample error. 
+    }
+    \label{fig:prediction_time_gpu}
 \end{figure}
 
 \subsubsection{Loading Times}
