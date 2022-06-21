@@ -95,8 +95,7 @@ def time_vs_parameters_hmc():
 
 def leapfrog_steps_vs_parameters_nuts():
     df = load_results()
-    kernel = "nuts"
-    df = df[df["kernel"] == kernel]
+    df = df[df["kernel"] == "nuts"]
     for key in std_config:
         df = df[df[key] == std_config.get(key)]
     x = df["num_params"]
@@ -119,9 +118,10 @@ def leapfrog_steps_vs_parameters_nuts():
 
 
 def main():
+
     # time_vs_leapfrogsteps_hmc()
     # time_vs_parameters_hmc()
-    # leapfrog_steps_vs_parameters_nuts()
+    leapfrog_steps_vs_parameters_nuts()
     # df = load_results()
     # df = df[
     #     df["kernel"] == "hmc"

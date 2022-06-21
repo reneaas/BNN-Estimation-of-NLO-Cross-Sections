@@ -26,7 +26,13 @@
 \@writefile{lof}{\addvspace {10\p@ }}
 \@writefile{lot}{\addvspace {10\p@ }}
 \@writefile{toc}{\contentsline {section}{\numberline {1.1}Computation of Beyond the Standard Model Cross Sections}{3}{section.1.1}\protected@file@percent }
-\@writefile{toc}{\contentsline {section}{\numberline {1.2}Tmp}{3}{section.1.2}\protected@file@percent }
+\newlabel{eq:total_events_decomp}{{1.2}{3}{Computation of Beyond the Standard Model Cross Sections}{equation.1.1.2}{}}
+\newlabel{eq:total_events_decomp@cref}{{[equation][2][1]1.2}{[1][3][]3}}
+\citation{prospino}
+\citation{xsec}
+\newlabel{eq:general_event_eq}{{1.3}{4}{Computation of Beyond the Standard Model Cross Sections}{equation.1.1.3}{}}
+\newlabel{eq:general_event_eq@cref}{{[equation][3][1]1.3}{[1][3][]4}}
+\@writefile{toc}{\contentsline {section}{\numberline {1.2}Bayesian Regression as a Substitute}{4}{section.1.2}\protected@file@percent }
 \@writefile{toc}{\contentsline {chapter}{\numberline {2}Bayesian Formulation of Machine Learning}{5}{chapter.2}\protected@file@percent }
 \@writefile{lof}{\addvspace {10\p@ }}
 \@writefile{lot}{\addvspace {10\p@ }}
@@ -242,103 +248,122 @@
 \newlabel{eq:special_potential_energy}{{6.16}{35}{The Potential Energy Function of Neural Networks}{equation.6.3.16}{}}
 \newlabel{eq:special_potential_energy@cref}{{[equation][16][6]6.16}{[1][35][]35}}
 \@writefile{toc}{\contentsline {subsection}{\numberline {6.3.3}Practical Training of Bayesian Neural Networks}{35}{subsection.6.3.3}\protected@file@percent }
+\newlabel{sec:practical_bnn}{{6.3.3}{35}{Practical Training of Bayesian Neural Networks}{subsection.6.3.3}{}}
+\newlabel{sec:practical_bnn@cref}{{[subsection][3][6,3]6.3.3}{[1][35][]35}}
 \@writefile{toc}{\contentsline {subsection}{\numberline {6.3.4}Training Algorithm of Bayesian Neural Networks}{36}{subsection.6.3.4}\protected@file@percent }
-\@writefile{toc}{\contentsline {chapter}{\numberline {7}Numerical Experiments}{37}{chapter.7}\protected@file@percent }
+\@writefile{toc}{\contentsline {chapter}{\numberline {7}Numerical Experiments}{39}{chapter.7}\protected@file@percent }
 \@writefile{lof}{\addvspace {10\p@ }}
 \@writefile{lot}{\addvspace {10\p@ }}
-\newlabel{chap:numerical_experiments}{{7}{37}{Numerical Experiments}{chapter.7}{}}
-\newlabel{chap:numerical_experiments@cref}{{[chapter][7][]7}{[1][37][]37}}
-\@writefile{toc}{\contentsline {section}{\numberline {7.1}The Dataset}{37}{section.7.1}\protected@file@percent }
-\newlabel{sec:dataset}{{7.1}{37}{The Dataset}{section.7.1}{}}
-\newlabel{sec:dataset@cref}{{[section][1][7]7.1}{[1][37][]37}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {7.1.1}Data Generation}{37}{subsection.7.1.1}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {7.1.2}Data Scaling and Transformations}{37}{subsection.7.1.2}\protected@file@percent }
-\@writefile{toc}{\contentsline {section}{\numberline {7.2}Performance Metrics}{37}{section.7.2}\protected@file@percent }
-\newlabel{seq:perf_metrics}{{7.2}{37}{Performance Metrics}{section.7.2}{}}
-\newlabel{seq:perf_metrics@cref}{{[section][2][7]7.2}{[1][37][]37}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {7.2.1}Relative Error}{37}{subsection.7.2.1}\protected@file@percent }
+\newlabel{chap:numerical_experiments}{{7}{39}{Numerical Experiments}{chapter.7}{}}
+\newlabel{chap:numerical_experiments@cref}{{[chapter][7][]7}{[1][39][]39}}
+\@writefile{toc}{\contentsline {section}{\numberline {7.1}The Dataset}{39}{section.7.1}\protected@file@percent }
+\newlabel{sec:dataset}{{7.1}{39}{The Dataset}{section.7.1}{}}
+\newlabel{sec:dataset@cref}{{[section][1][7]7.1}{[1][39][]39}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {7.1.1}Data Generation}{39}{subsection.7.1.1}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {7.1.2}Data Scaling and Transformations}{39}{subsection.7.1.2}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {7.1.3}Data Splitting}{39}{subsection.7.1.3}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {7.2}Methodology}{39}{section.7.2}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {7.2.1}Implementation}{40}{subsection.7.2.1}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {7.2.2}Selection of Models and Hyperparameters}{40}{subsection.7.2.2}\protected@file@percent }
+\@writefile{lot}{\contentsline {table}{\numberline {7.1}{\ignorespaces  The table shows the models used in this section. For each model, 1000 sampled networks were sampled to collectively represent each BNN model. We used 2500 warm-up steps (20\% burn-in and 80\% adaptation). We skipped 10 samples for each sampled network. We used 1000 pretraining epochs with a batch size of 32. The kernel used for each model was the NUTS kernel with a maximum of $L = 4096$ Leapfrog steps. The number of nodes per layer is shown in the ``Layers'' column. For each hidden layer, we used $\tanh (x)$ as the activation function. The final layer uses an identity function. \relax }}{40}{table.caption.19}\protected@file@percent }
+\newlabel{tab:deep_models}{{7.1}{40}{The table shows the models used in this section. For each model, 1000 sampled networks were sampled to collectively represent each BNN model. We used 2500 warm-up steps (20\% burn-in and 80\% adaptation). We skipped 10 samples for each sampled network. We used 1000 pretraining epochs with a batch size of 32. The kernel used for each model was the NUTS kernel with a maximum of $L = 4096$ Leapfrog steps. The number of nodes per layer is shown in the ``Layers'' column. For each hidden layer, we used $\tanh (x)$ as the activation function. The final layer uses an identity function. \relax }{table.caption.19}{}}
+\newlabel{tab:deep_models@cref}{{[table][1][7]7.1}{[1][40][]40}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {7.2.3}Performance Metrics}{40}{subsection.7.2.3}\protected@file@percent }
+\newlabel{sec:perf_metrics}{{7.2.3}{40}{Performance Metrics}{subsection.7.2.3}{}}
+\newlabel{sec:perf_metrics@cref}{{[subsection][3][7,2]7.2.3}{[1][40][]40}}
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {7.2.3.1}Relative Error}{40}{subsubsection.7.2.3.1}\protected@file@percent }
 \citation{xla}
-\@writefile{toc}{\contentsline {subsection}{\numberline {7.2.2}Standardized Residuals}{38}{subsection.7.2.2}\protected@file@percent }
-\@writefile{toc}{\contentsline {section}{\numberline {7.3}Results}{38}{section.7.3}\protected@file@percent }
-\newlabel{sec:results}{{7.3}{38}{Results}{section.7.3}{}}
-\newlabel{sec:results@cref}{{[section][3][7]7.3}{[1][38][]38}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {7.3.1}Computational Performance}{38}{subsection.7.3.1}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsubsection}{\numberline {7.3.1.1}CPU versus GPU Performance}{38}{subsubsection.7.3.1.1}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsubsection}{\numberline {7.3.1.2}Prediction Time}{38}{subsubsection.7.3.1.2}\protected@file@percent }
-\@writefile{lof}{\contentsline {figure}{\numberline {7.1}{\ignorespaces The figure shows the relative measured execution time used per sample using $L = 512$ Leapfrog steps, as a function of number of parameters. The CPU measurements are done using an 8-core M1 CPU (Apple Silicon). The GPU measurements are made with an NVIDIA Tesla P100 GPU. \relax }}{39}{figure.caption.19}\protected@file@percent }
-\newlabel{fig:relative_performance}{{7.1}{39}{The figure shows the relative measured execution time used per sample using $L = 512$ Leapfrog steps, as a function of number of parameters. The CPU measurements are done using an 8-core M1 CPU (Apple Silicon). The GPU measurements are made with an NVIDIA Tesla P100 GPU. \relax }{figure.caption.19}{}}
-\newlabel{fig:relative_performance@cref}{{[figure][1][7]7.1}{[1][38][]39}}
-\@writefile{lof}{\contentsline {figure}{\numberline {7.2}{\ignorespaces The figure shows the average prediction time to compute a prediction given a single input $x$ using the models in table \ref  {tab:deep_models}. The average time used is measured in ms and is averaged over 1000 randomly sampled points. The measured time includes computation of the sample mean and sample error. \relax }}{40}{figure.caption.20}\protected@file@percent }
-\newlabel{fig:prediction_time}{{7.2}{40}{The figure shows the average prediction time to compute a prediction given a single input $x$ using the models in table \ref {tab:deep_models}. The average time used is measured in ms and is averaged over 1000 randomly sampled points. The measured time includes computation of the sample mean and sample error. \relax }{figure.caption.20}{}}
-\newlabel{fig:prediction_time@cref}{{[figure][2][7]7.2}{[1][40][]40}}
-\@writefile{toc}{\contentsline {subsubsection}{\numberline {7.3.1.3}Loading Times}{40}{subsubsection.7.3.1.3}\protected@file@percent }
-\@writefile{lof}{\contentsline {figure}{\numberline {7.3}{\ignorespaces The figure shows the average prediction time using the built-in GPU on an M1 Apple Silicon system-on-chip to compute a prediction given a single input $x$ using the models in table \ref  {tab:deep_models}. The average time used is measured in ms and is averaged over 1000 randomly sampled points. The measured time includes computation of the sample mean and sample error. \relax }}{41}{figure.caption.21}\protected@file@percent }
-\newlabel{fig:prediction_time_gpu}{{7.3}{41}{The figure shows the average prediction time using the built-in GPU on an M1 Apple Silicon system-on-chip to compute a prediction given a single input $x$ using the models in table \ref {tab:deep_models}. The average time used is measured in ms and is averaged over 1000 randomly sampled points. The measured time includes computation of the sample mean and sample error. \relax }{figure.caption.21}{}}
-\newlabel{fig:prediction_time_gpu@cref}{{[figure][3][7]7.3}{[1][40][]41}}
-\@writefile{lof}{\contentsline {figure}{\numberline {7.4}{\ignorespaces  The figure shows the histograms of measured loading times in seconds using the models in table \ref  {tab:deep_models}. The measurements were performed using {\tt  time.perf\_counter} from Python using an M1 Apple Silicon system-on-chip. The time measurements consist of 1000 measurements for each model. \relax }}{42}{figure.caption.22}\protected@file@percent }
-\newlabel{fig:loading_times}{{7.4}{42}{The figure shows the histograms of measured loading times in seconds using the models in table \ref {tab:deep_models}. The measurements were performed using {\tt time.perf\_counter} from Python using an M1 Apple Silicon system-on-chip. The time measurements consist of 1000 measurements for each model. \relax }{figure.caption.22}{}}
-\newlabel{fig:loading_times@cref}{{[figure][4][7]7.4}{[1][42][]42}}
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {7.2.3.2}Standardized Residuals}{41}{subsubsection.7.2.3.2}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {7.3}Results}{41}{section.7.3}\protected@file@percent }
+\newlabel{sec:results}{{7.3}{41}{Results}{section.7.3}{}}
+\newlabel{sec:results@cref}{{[section][3][7]7.3}{[1][41][]41}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {7.3.1}Computational Performance}{41}{subsection.7.3.1}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {7.3.1.1}CPU v. GPU Performance}{41}{subsubsection.7.3.1.1}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {7.3.1.2}Prediction Time}{41}{subsubsection.7.3.1.2}\protected@file@percent }
+\@writefile{lof}{\contentsline {figure}{\numberline {7.1}{\ignorespaces The figure shows the relative measured execution time used per sample using $L = 512$ Leapfrog steps, as a function of number of parameters. The CPU measurements are done using an 8-core M1 CPU (Apple Silicon). The GPU measurements are made with an NVIDIA Tesla P100 GPU. \relax }}{42}{figure.caption.20}\protected@file@percent }
+\newlabel{fig:relative_performance}{{7.1}{42}{The figure shows the relative measured execution time used per sample using $L = 512$ Leapfrog steps, as a function of number of parameters. The CPU measurements are done using an 8-core M1 CPU (Apple Silicon). The GPU measurements are made with an NVIDIA Tesla P100 GPU. \relax }{figure.caption.20}{}}
+\newlabel{fig:relative_performance@cref}{{[figure][1][7]7.1}{[1][41][]42}}
+\@writefile{lof}{\contentsline {figure}{\numberline {7.2}{\ignorespaces The figure shows the average prediction time to compute a prediction given a single input $x$ using the models in table \ref  {tab:deep_models}. The average time used is measured in ms and is averaged over 1000 randomly sampled points. The measured time includes computation of the sample mean and sample error. \relax }}{43}{figure.caption.21}\protected@file@percent }
+\newlabel{fig:prediction_time}{{7.2}{43}{The figure shows the average prediction time to compute a prediction given a single input $x$ using the models in table \ref {tab:deep_models}. The average time used is measured in ms and is averaged over 1000 randomly sampled points. The measured time includes computation of the sample mean and sample error. \relax }{figure.caption.21}{}}
+\newlabel{fig:prediction_time@cref}{{[figure][2][7]7.2}{[1][43][]43}}
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {7.3.1.3}Loading Times}{43}{subsubsection.7.3.1.3}\protected@file@percent }
+\@writefile{lof}{\contentsline {figure}{\numberline {7.3}{\ignorespaces The figure shows the average prediction time using the built-in GPU on an M1 Apple Silicon system-on-chip to compute a prediction given a single input $x$ using the models in table \ref  {tab:deep_models}. The average time used is measured in ms and is averaged over 1000 randomly sampled points. The measured time includes computation of the sample mean and sample error. \relax }}{44}{figure.caption.22}\protected@file@percent }
+\newlabel{fig:prediction_time_gpu}{{7.3}{44}{The figure shows the average prediction time using the built-in GPU on an M1 Apple Silicon system-on-chip to compute a prediction given a single input $x$ using the models in table \ref {tab:deep_models}. The average time used is measured in ms and is averaged over 1000 randomly sampled points. The measured time includes computation of the sample mean and sample error. \relax }{figure.caption.22}{}}
+\newlabel{fig:prediction_time_gpu@cref}{{[figure][3][7]7.3}{[1][43][]44}}
+\@writefile{lof}{\contentsline {figure}{\numberline {7.4}{\ignorespaces  The figure shows the histograms of measured loading times in seconds using the models in table \ref  {tab:deep_models}. The measurements were performed using {\tt  time.perf\_counter} from Python using an M1 Apple Silicon system-on-chip. The time measurements consist of 1000 measurements for each model. \relax }}{45}{figure.caption.23}\protected@file@percent }
+\newlabel{fig:loading_times}{{7.4}{45}{The figure shows the histograms of measured loading times in seconds using the models in table \ref {tab:deep_models}. The measurements were performed using {\tt time.perf\_counter} from Python using an M1 Apple Silicon system-on-chip. The time measurements consist of 1000 measurements for each model. \relax }{figure.caption.23}{}}
+\newlabel{fig:loading_times@cref}{{[figure][4][7]7.4}{[1][45][]45}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {7.3.2}Posterior Distribution of Weights}{45}{subsection.7.3.2}\protected@file@percent }
 \citation{google_bnn_posteriors}
-\@writefile{toc}{\contentsline {subsection}{\numberline {7.3.2}Posterior Distribution of Weights}{43}{subsection.7.3.2}\protected@file@percent }
-\newlabel{eq:surrogate_dist}{{7.4}{43}{Posterior Distribution of Weights}{equation.7.3.4}{}}
-\newlabel{eq:surrogate_dist@cref}{{[equation][4][7]7.4}{[1][43][]43}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {7.3.3}Benchmarks of Hyperparameters}{43}{subsection.7.3.3}\protected@file@percent }
-\newlabel{subsec:benchmarks}{{7.3.3}{43}{Benchmarks of Hyperparameters}{subsection.7.3.3}{}}
-\newlabel{subsec:benchmarks@cref}{{[subsection][3][7,3]7.3.3}{[1][43][]43}}
-\@writefile{toc}{\contentsline {subsubsection}{\numberline {7.3.3.1}The Effect of Number of Burn-in Steps}{43}{subsubsection.7.3.3.1}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsubsection}{\numberline {7.3.3.2}The Effect of Pretraining}{43}{subsubsection.7.3.3.2}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsubsection}{\numberline {7.3.3.3}The Effect of }{43}{subsubsection.7.3.3.3}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsubsection}{\numberline {7.3.3.4}Number of model parameters}{43}{subsubsection.7.3.3.4}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {7.3.4}Neutralino-Neutralino Cross Sections}{43}{subsection.7.3.4}\protected@file@percent }
-\newlabel{subsec:neuralino_experiments}{{7.3.4}{43}{Neutralino-Neutralino Cross Sections}{subsection.7.3.4}{}}
-\newlabel{subsec:neuralino_experiments@cref}{{[subsection][4][7,3]7.3.4}{[1][43][]43}}
-\@writefile{lot}{\contentsline {table}{\numberline {7.1}{\ignorespaces  The table shows the training configuration used to sample the models listed in table~\ref  {tab:deep_models}. \relax }}{43}{table.caption.25}\protected@file@percent }
-\newlabel{tab:NN_mse_scores}{{7.1}{43}{The table shows the training configuration used to sample the models listed in table~\ref {tab:deep_models}. \relax }{table.caption.25}{}}
-\newlabel{tab:NN_mse_scores@cref}{{[table][1][7]7.1}{[1][43][]43}}
-\@writefile{lof}{\contentsline {figure}{\numberline {7.5}{\ignorespaces The figure shows the projection of the empirical distribution onto the planes spanned by $(W_{2,4}^1, W_{2,5}^1)$ on the left and onto the plane spanned by $(W_{3,7}^1, W_{3, 6}^1)$ on the right, using the samples from model 2 in table \ref  {tab:deep_models}. The distributions are approximated using kernel density estimation. \relax }}{44}{figure.caption.23}\protected@file@percent }
-\newlabel{fig:posterior_kernels}{{7.5}{44}{The figure shows the projection of the empirical distribution onto the planes spanned by $(W_{2,4}^1, W_{2,5}^1)$ on the left and onto the plane spanned by $(W_{3,7}^1, W_{3, 6}^1)$ on the right, using the samples from model 2 in table \ref {tab:deep_models}. The distributions are approximated using kernel density estimation. \relax }{figure.caption.23}{}}
-\newlabel{fig:posterior_kernels@cref}{{[figure][5][7]7.5}{[1][43][]44}}
-\@writefile{lof}{\contentsline {figure}{\numberline {7.6}{\ignorespaces The figure shows the measured time in seconds per sample using HMC as a function of Leapfrog steps $L$ using a model with 561 parameters. \relax }}{45}{figure.caption.24}\protected@file@percent }
-\newlabel{fig:time_vs_leapfrogsteps}{{7.6}{45}{The figure shows the measured time in seconds per sample using HMC as a function of Leapfrog steps $L$ using a model with 561 parameters. \relax }{figure.caption.24}{}}
-\newlabel{fig:time_vs_leapfrogsteps@cref}{{[figure][6][7]7.6}{[1][43][]45}}
-\@writefile{lof}{\contentsline {figure}{\numberline {7.7}{\ignorespaces The figure shows histograms of the standardized residuals computed for different BNNs. The normal distribution is drawn as dotted line. \relax }}{46}{figure.caption.27}\protected@file@percent }
-\newlabel{fig:standardized_residual}{{7.7}{46}{The figure shows histograms of the standardized residuals computed for different BNNs. The normal distribution is drawn as dotted line. \relax }{figure.caption.27}{}}
-\newlabel{fig:standardized_residual@cref}{{[figure][7][7]7.7}{[1][43][]46}}
-\@writefile{lot}{\contentsline {table}{\numberline {7.2}{\ignorespaces  The table shows the models used in this section. For each model, 1000 sampled networks are used to generate each result shown in this section. The number of nodes per layer is shown in the ``Layers'' column. For each hidden layer, we used $\tanh (x)$ as the activation function. The final layer uses an identity function. \relax }}{47}{table.caption.26}\protected@file@percent }
-\newlabel{tab:deep_models}{{7.2}{47}{The table shows the models used in this section. For each model, 1000 sampled networks are used to generate each result shown in this section. The number of nodes per layer is shown in the ``Layers'' column. For each hidden layer, we used $\tanh (x)$ as the activation function. The final layer uses an identity function. \relax }{table.caption.26}{}}
-\newlabel{tab:deep_models@cref}{{[table][2][7]7.2}{[1][43][]47}}
-\@writefile{toc}{\contentsline {chapter}{\numberline {8}Discussion}{49}{chapter.8}\protected@file@percent }
-\@writefile{lof}{\addvspace {10\p@ }}
-\@writefile{lot}{\addvspace {10\p@ }}
-\newlabel{chap:conclusion}{{8}{51}{Conclusion}{chapter*.28}{}}
-\newlabel{chap:conclusion@cref}{{[chapter][8][]8}{[1][51][]51}}
-\@writefile{toc}{\contentsline {chapter}{Conclusion}{52}{chapter*.28}\protected@file@percent }
-\@writefile{toc}{\contentsline {chapter}{Appendices}{53}{section*.29}\protected@file@percent }
+\citation{nuts}
+\newlabel{eq:surrogate_dist}{{7.4}{46}{Posterior Distribution of Weights}{equation.7.3.4}{}}
+\newlabel{eq:surrogate_dist@cref}{{[equation][4][7]7.4}{[1][45][]46}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {7.3.3}Benchmarks of Hyperparameters}{46}{subsection.7.3.3}\protected@file@percent }
+\newlabel{subsec:benchmarks}{{7.3.3}{46}{Benchmarks of Hyperparameters}{subsection.7.3.3}{}}
+\newlabel{subsec:benchmarks@cref}{{[subsection][3][7,3]7.3.3}{[1][46][]46}}
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {7.3.3.1}The Effect of Number of Burn-in Steps and Step Size Adaptation}{46}{subsubsection.7.3.3.1}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {7.3.3.2}The Effect of Pretraining}{46}{subsubsection.7.3.3.2}\protected@file@percent }
+\@writefile{lof}{\contentsline {figure}{\numberline {7.5}{\ignorespaces The figure shows the projection of the empirical distribution onto the planes spanned by $(W_{2,4}^1, W_{2,5}^1)$ on the left and onto the plane spanned by $(W_{3,7}^1, W_{3, 6}^1)$ on the right, using the samples from model 3 in table \ref  {tab:deep_models}. The distributions are approximated using kernel density estimation. \relax }}{47}{figure.caption.24}\protected@file@percent }
+\newlabel{fig:posterior_kernels}{{7.5}{47}{The figure shows the projection of the empirical distribution onto the planes spanned by $(W_{2,4}^1, W_{2,5}^1)$ on the left and onto the plane spanned by $(W_{3,7}^1, W_{3, 6}^1)$ on the right, using the samples from model 3 in table \ref {tab:deep_models}. The distributions are approximated using kernel density estimation. \relax }{figure.caption.24}{}}
+\newlabel{fig:posterior_kernels@cref}{{[figure][5][7]7.5}{[1][46][]47}}
+\@writefile{lof}{\contentsline {figure}{\numberline {7.6}{\ignorespaces The figure at the top shows the measured time in seconds per sample using HMC as a function of Leapfrog steps $L$ using a model with 561 parameters. The figure at the bottom shows the time in seconds per sample with the same sampler with a fixed number of Leapfrog steps $L = 512$ as a function of number of parameters in the BNN model. \relax }}{48}{figure.caption.25}\protected@file@percent }
+\newlabel{fig:time_vs_leapfrogsteps}{{7.6}{48}{The figure at the top shows the measured time in seconds per sample using HMC as a function of Leapfrog steps $L$ using a model with 561 parameters. The figure at the bottom shows the time in seconds per sample with the same sampler with a fixed number of Leapfrog steps $L = 512$ as a function of number of parameters in the BNN model. \relax }{figure.caption.25}{}}
+\newlabel{fig:time_vs_leapfrogsteps@cref}{{[figure][6][7]7.6}{[1][46][]48}}
+\@writefile{lof}{\contentsline {figure}{\numberline {7.7}{\ignorespaces The figure shows the standardized residuals computed on the testset. The model architechture used is a model with layers 5-20-20-1 with $\tanh (x)$ as the hidden activation function. In the top figure, we have used the HMC sampler with a fixed number of Leapfrog steps $L = 512$. In the bottom figure, we have used the NUTS sampler with a maximum tree depth of $12$ corresponding to a maximum of $L = 2^{12} = 4096$ Leapfrog steps. The remaining important hyperparameters were 2500 pretraining epochs with a batch size of 32 using the ADAM optimizer. In total a 1000 neural networks were sampled in each case with a thinning-amount of 10 steps between each sample. \relax }}{49}{figure.caption.26}\protected@file@percent }
+\newlabel{fig:standardized_residuals_vs_burn_in_steps}{{7.7}{49}{The figure shows the standardized residuals computed on the testset. The model architechture used is a model with layers 5-20-20-1 with $\tanh (x)$ as the hidden activation function. In the top figure, we have used the HMC sampler with a fixed number of Leapfrog steps $L = 512$. In the bottom figure, we have used the NUTS sampler with a maximum tree depth of $12$ corresponding to a maximum of $L = 2^{12} = 4096$ Leapfrog steps. The remaining important hyperparameters were 2500 pretraining epochs with a batch size of 32 using the ADAM optimizer. In total a 1000 neural networks were sampled in each case with a thinning-amount of 10 steps between each sample. \relax }{figure.caption.26}{}}
+\newlabel{fig:standardized_residuals_vs_burn_in_steps@cref}{{[figure][7][7]7.7}{[1][46][]49}}
+\@writefile{lof}{\contentsline {figure}{\numberline {7.8}{\ignorespaces The figure shows the average number of Leapfrog steps $L$ as a function of number of warm-up steps used by the NUTS sampler when sampling the models shown in the bottom of figure \ref  {fig:standardized_residuals_vs_burn_in_steps}. We have included a few more measurements to showcase how fluctuating the average number can be. \relax }}{50}{figure.caption.27}\protected@file@percent }
+\newlabel{fig:avg_leapfrog_steps_vs_burn_in}{{7.8}{50}{The figure shows the average number of Leapfrog steps $L$ as a function of number of warm-up steps used by the NUTS sampler when sampling the models shown in the bottom of figure \ref {fig:standardized_residuals_vs_burn_in_steps}. We have included a few more measurements to showcase how fluctuating the average number can be. \relax }{figure.caption.27}{}}
+\newlabel{fig:avg_leapfrog_steps_vs_burn_in@cref}{{[figure][8][7]7.8}{[1][46][]50}}
+\citation{ml_for_physicists}
+\@writefile{lof}{\contentsline {figure}{\numberline {7.9}{\ignorespaces The figure shows the standardized residuals of a model with the architecture 5-20-20-1 with $\tanh (x)$ as the hidden activation function. In this case the varying number of the number of epochs run with pretraining starting from 32 all the way up to 8192. The batch size used was 32, the number of warm-up steps was 1000 (200 of which were burn-in steps and 800 were adaptation steps). We fixed the Leapfrog steps to $L = 512$ using the HMC sampler. The ADAM optimizer was used for the pretraining phase. As usual we sampled 1000 neural networks with 10 steps between each sample. \relax }}{51}{figure.caption.28}\protected@file@percent }
+\newlabel{fig:std_residual_vs_pretraining}{{7.9}{51}{The figure shows the standardized residuals of a model with the architecture 5-20-20-1 with $\tanh (x)$ as the hidden activation function. In this case the varying number of the number of epochs run with pretraining starting from 32 all the way up to 8192. The batch size used was 32, the number of warm-up steps was 1000 (200 of which were burn-in steps and 800 were adaptation steps). We fixed the Leapfrog steps to $L = 512$ using the HMC sampler. The ADAM optimizer was used for the pretraining phase. As usual we sampled 1000 neural networks with 10 steps between each sample. \relax }{figure.caption.28}{}}
+\newlabel{fig:std_residual_vs_pretraining@cref}{{[figure][9][7]7.9}{[1][51][]51}}
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {7.3.3.3}Effect of Number of Parameters}{51}{subsubsection.7.3.3.3}\protected@file@percent }
+\@writefile{lof}{\contentsline {figure}{\numberline {7.10}{\ignorespaces  The figure shows the distribution of the standardized residuals computed on the test data using the models listed in table \ref  {tab:deep_models}. The Normal distribution is drawn in with a dotted black line for benchmarking reference. The figure is meant to illustrate the performance of the models with respect to the number of parameters in the models. The models were trained with 2500 warm-up steps (20\% burn-in and 80\% adaptation), gathering 1000 neural networks with 10 steps between each sample. We used 1000 pretraining epochs with a batch size of 32. The kernel used was the NUTS kernel with a maximum of $L = 4096$ Leapfrog steps. \relax }}{52}{figure.caption.29}\protected@file@percent }
+\newlabel{fig:standardized_residual_vs_params}{{7.10}{52}{The figure shows the distribution of the standardized residuals computed on the test data using the models listed in table \ref {tab:deep_models}. The Normal distribution is drawn in with a dotted black line for benchmarking reference. The figure is meant to illustrate the performance of the models with respect to the number of parameters in the models. The models were trained with 2500 warm-up steps (20\% burn-in and 80\% adaptation), gathering 1000 neural networks with 10 steps between each sample. We used 1000 pretraining epochs with a batch size of 32. The kernel used was the NUTS kernel with a maximum of $L = 4096$ Leapfrog steps. \relax }{figure.caption.29}{}}
+\newlabel{fig:standardized_residual_vs_params@cref}{{[figure][10][7]7.10}{[1][52][]52}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {7.3.4}Neutralino-Neutralino Cross Sections}{52}{subsection.7.3.4}\protected@file@percent }
+\newlabel{subsec:neuralino_experiments}{{7.3.4}{52}{Neutralino-Neutralino Cross Sections}{subsection.7.3.4}{}}
+\newlabel{subsec:neuralino_experiments@cref}{{[subsection][4][7,3]7.3.4}{[1][52][]52}}
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {7.3.4.1}Predictive Distributions}{52}{subsubsection.7.3.4.1}\protected@file@percent }
+\@writefile{lof}{\contentsline {figure}{\numberline {7.11}{\ignorespaces  The figure shows the predictive distribution estimated by use of model 3 in table \ref  {tab:deep_models} for to randomly chosen points from the test set. The red line shows the true target and the black line shows the predicted sample mean obtained from the distribution. The figure on top demonstrates a case where the sample mean is approximately the same as the target, while the figure at the bottom demonstrates a case where the true target lies entirely outside the predictive distrbution. \relax }}{53}{figure.caption.30}\protected@file@percent }
+\newlabel{fig:predictive_distributions}{{7.11}{53}{The figure shows the predictive distribution estimated by use of model 3 in table \ref {tab:deep_models} for to randomly chosen points from the test set. The red line shows the true target and the black line shows the predicted sample mean obtained from the distribution. The figure on top demonstrates a case where the sample mean is approximately the same as the target, while the figure at the bottom demonstrates a case where the true target lies entirely outside the predictive distrbution. \relax }{figure.caption.30}{}}
+\newlabel{fig:predictive_distributions@cref}{{[figure][11][7]7.11}{[1][52][]53}}
+\@writefile{lot}{\contentsline {table}{\numberline {7.2}{\ignorespaces  The table shows the training configuration used to sample the models listed in table~\ref  {tab:deep_models}. \relax }}{54}{table.caption.31}\protected@file@percent }
+\newlabel{tab:NN_mse_scores}{{7.2}{54}{The table shows the training configuration used to sample the models listed in table~\ref {tab:deep_models}. \relax }{table.caption.31}{}}
+\newlabel{tab:NN_mse_scores@cref}{{[table][2][7]7.2}{[1][52][]54}}
+\newlabel{chap:conclusion}{{7.3.4.1}{55}{Conclusion}{chapter*.32}{}}
+\newlabel{chap:conclusion@cref}{{[subsubsection][1][7,3,4]7.3.4.1}{[1][55][]55}}
+\@writefile{toc}{\contentsline {chapter}{Conclusion}{56}{chapter*.32}\protected@file@percent }
+\@writefile{toc}{\contentsline {chapter}{Appendices}{57}{section*.33}\protected@file@percent }
 \bibdata{bibliography.bib}
-\@writefile{toc}{\contentsline {chapter}{Appendix A}{55}{appendix*.30}\protected@file@percent }
+\@writefile{toc}{\contentsline {chapter}{Appendix A}{59}{appendix*.34}\protected@file@percent }
 \@writefile{lof}{\addvspace {10\p@ }}
 \@writefile{lot}{\addvspace {10\p@ }}
-\@writefile{toc}{\contentsline {section}{\numberline {A.1}Appendix 1 title }{55}{section.Alph0.1}\protected@file@percent }
-\newlabel{sec:appendix_1_label}{{A.1}{55}{Appendix 1 title}{section.Alph0.1}{}}
-\newlabel{sec:appendix_1_label@cref}{{[subappendix][1][2147483647,0]A.1}{[1][55][]55}}
-\bibcite{ADAM}{{1}{}{{}}{{}}}
-\bibcite{bayes_theorem}{{2}{}{{}}{{}}}
-\bibcite{ml_for_physicists}{{3}{}{{}}{{}}}
-\bibcite{conceptual_intro_hmc}{{4}{}{{}}{{}}}
-\bibcite{geometric_ergodicity}{{5}{}{{}}{{}}}
-\bibcite{rhat}{{6}{}{{}}{{}}}
-\bibcite{convergence_diagnostics}{{7}{}{{}}{{}}}
-\bibcite{metropolis}{{8}{}{{}}{{}}}
-\bibcite{metropolis_two}{{9}{}{{}}{{}}}
-\bibcite{classical_mechanics}{{10}{}{{}}{{}}}
-\bibcite{leapfrog}{{11}{}{{}}{{}}}
-\bibcite{nuts}{{12}{}{{}}{{}}}
-\bibcite{Nesterov2009}{{13}{}{{}}{{}}}
-\bibcite{neal2011}{{14}{}{{}}{{}}}
-\bibcite{tf}{{15}{}{{}}{{}}}
-\bibcite{backprop}{{16}{}{{}}{{}}}
-\bibcite{swish}{{17}{}{{}}{{}}}
-\bibcite{xla}{{18}{}{{}}{{}}}
-\bibcite{google_bnn_posteriors}{{19}{}{{}}{{}}}
+\@writefile{toc}{\contentsline {section}{\numberline {A.1}Appendix 1 title }{59}{section.Alph0.1}\protected@file@percent }
+\newlabel{sec:appendix_1_label}{{A.1}{59}{Appendix 1 title}{section.Alph0.1}{}}
+\newlabel{sec:appendix_1_label@cref}{{[subappendix][1][2147483647,0]A.1}{[1][59][]59}}
+\bibcite{prospino}{{1}{}{{}}{{}}}
+\bibcite{xsec}{{2}{}{{}}{{}}}
+\bibcite{ADAM}{{3}{}{{}}{{}}}
+\bibcite{bayes_theorem}{{4}{}{{}}{{}}}
+\bibcite{ml_for_physicists}{{5}{}{{}}{{}}}
+\bibcite{conceptual_intro_hmc}{{6}{}{{}}{{}}}
+\bibcite{geometric_ergodicity}{{7}{}{{}}{{}}}
+\bibcite{rhat}{{8}{}{{}}{{}}}
+\bibcite{convergence_diagnostics}{{9}{}{{}}{{}}}
+\bibcite{metropolis}{{10}{}{{}}{{}}}
+\bibcite{metropolis_two}{{11}{}{{}}{{}}}
+\bibcite{classical_mechanics}{{12}{}{{}}{{}}}
+\bibcite{leapfrog}{{13}{}{{}}{{}}}
+\bibcite{nuts}{{14}{}{{}}{{}}}
+\bibcite{Nesterov2009}{{15}{}{{}}{{}}}
+\bibcite{neal2011}{{16}{}{{}}{{}}}
+\bibcite{tf}{{17}{}{{}}{{}}}
+\bibcite{backprop}{{18}{}{{}}{{}}}
+\bibcite{swish}{{19}{}{{}}{{}}}
+\bibcite{xla}{{20}{}{{}}{{}}}
+\bibcite{google_bnn_posteriors}{{21}{}{{}}{{}}}
 \providecommand\NAT@force@numbers{}\NAT@force@numbers
-\gdef \@abspage@last{75}
+\gdef \@abspage@last{80}

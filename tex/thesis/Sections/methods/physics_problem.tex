@@ -1,12 +1,34 @@
-In this chapter, we shall discuss the need for application of machine learning models in physics problems
-and why this is a necessary solution.
+In this chapter, we shall motivate the need for Bayesian machine learning regression models to replace deterministic methods in high-energy physics in search for Beyond the Standard Model (BSM) physics. We will start of with an brief survey of the conventional way to compute cross sections, its need for precision and the inherent problems involved. We will end the chapter with a discussion of how Bayesian regression can provide a substitute for the standard way to compute cross sections.
 
- 
+
 \section{Computation of Beyond the Standard Model Cross Sections}
-The Standard Model of particle physics (SM) is a successful fundamental theory that describes fundamental particles and their interactions.
-Despite its success, however, it has a few limitations on its own which has led physicists to propose extentions to the model to explain physics that SM cannot. One such family of extensions is called \textit{supersymmetry}. 
+The Standard Model of particle physics (SM) is a successful fundamental theory that describes the fundamental particles of nature and their interactions.  Despite its success, however, it has a few limitations on its own which has led physicists to propose extentions to the model to explain physics that SM cannot. One such family of extensions is called \textit{supersymmetry}. Theories like this are known as BSM models. 
 
-\section{Tmp}
+In order to test whether a symmersymmetric extension to SM is valid, one has to search through large parameter spaces where the parameters themselves somewhat simplified represent the properties of the particles in the model. The technical aspect is to rather \textit{exclude} regions of parameter space which cannot explain observed data. To this end, theoretical physicists must compute what is known as a \text{cross section} $\sigma$. These are roughly speaking the probability that a particular \text{event} occurs in a particular experiment. The total number of events is given by the \textit{event equation}
+\begin{equation}
+    n = \sigma \epsilon A \mathcal{L},
+\end{equation}
+where $\epsilon$ represents the efficiency of the experimental apparatus, $A$ represents the acceptance and $\mathcal{L}$ is the integrated luminosity over the data used in the search or experiment. The job of the theoretical physicist is to compute $\sigma$, as all the other quantities can be inferred or measured from the experimental setup used.
+
+We may decompose the total number events as
+\begin{equation}\label{eq:total_events_decomp}
+    n = s + b,
+\end{equation}
+where $b$ is called the \textit{background} which is the portion of the events explained by the Standard Model. Here $s$ represents a portion of $n$ which cannot be explained by SM, but rather the new BSM model. Strictly speaking, the model proposed may only explain a subset of the total events that are not explained by the background and thus the decomposition in eq.~\eqref{eq:total_events_decomp} should contain an additional term not explained by either. 
+On a more technical level, the event equation can be divided into several \textit{cuts} or \textit{signal regions}. Anything below a certain threshold is excluded in this case. Thus the more general event equation reads
+\begin{equation}\label{eq:general_event_eq}
+    n_i = \sigma \epsilon_i A_i \mathcal{L}.
+\end{equation} 
+All but the cross section and the integrated luminosity depends on the cuts.
+
+
+Computation of cross sections involves computation of terms in a perturbation expansion of the form 
+\begin{equation}
+    \sigma = \underbrace{\text{leading-order}}_{=\text{LO}} + \underbrace{\text{next-to-leading-order}}_{=\text{NLO}} + \cdots.
+\end{equation}
+Computation of the cross section used in the event equation is in practice carried out using {\tt Prospino} \cite{prospino}. It is a software developed to compute cross sections up to the next-to-leading-order (NLO) term. This computation is exceedingly expensive and can take up to the order of hours for a single tuple of input parameters \cite{xsec}. This computational expense significantly hampers the exclusion of parameter regions of BSM models. The search for new physics is thus halted not by lack of possible BSM models to explain the discrepancies the observed data but instead by the computational cost to perform the search itself.
+
+\begin{comment}
 \begin{itemize}
     \item $n_i$: Målte events (kollisjoner) som oppfyller et sett (kalt signalregion) med kriterier (``cuts'').
     \item $b_i$: Bakgrunnen. Estimert SM bidrag for samme signal region.
@@ -25,5 +47,11 @@ Despite its success, however, it has a few limitations on its own which has led 
         q = -2\ln \frac{\mathcal{L}(s, b, n)}{\mathcal{L}(s=0, b, n)}.
     \end{equation}
 \end{itemize}
+\end{comment}
+
+\section{Bayesian Regression as a Substitute}
+
+
+
 
 

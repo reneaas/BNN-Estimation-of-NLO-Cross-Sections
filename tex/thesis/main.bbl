@@ -1,5 +1,16 @@
 \providecommand{\href}[2]{#2}\begingroup\raggedright\begin{thebibliography}{10}
 
+\bibitem{prospino}
+W.~Beenakker, R.~Hoepker and M.~Spira, \emph{Prospino: A program for the
+  production of supersymmetric particles in next-to-leading order qcd},  1996.
+\newblock 10.48550/ARXIV.HEP-PH/9611232.
+
+\bibitem{xsec}
+A.~Buckley, A.~Kvellestad, A.~Raklev, P.~Scott, J.~V. Sparre, J.~V. den Abeele
+  et~al., \emph{Xsec: the cross-section evaluation code},
+  \href{http://dx.doi.org/10.1140/epjc/s10052-020-08635-y}{\emph{The European
+  Physical Journal C} {\bf 80} (dec, 2020) }.
+
 \bibitem{ADAM}
 D.~P. Kingma and J.~Ba, \emph{Adam: A method for stochastic optimization},
   2014.
@@ -12,14 +23,14 @@ J.~L. Devore and K.~N. Berk, \emph{Modern Mathematical Statistics with
 
 \bibitem{ml_for_physicists}
 P.~Mehta, M.~Bukov, C.-H. Wang, A.~G. Day, C.~Richardson, C.~K. Fisher et~al.,
-  \emph{A high-bias, low-variance introduction to machine learning for
+  \emph{A high-bias, low-variance introduction to {M}achine {L}earning for
   physicists},
   \href{http://dx.doi.org/10.1016/j.physrep.2019.03.001}{\emph{Physics Reports}
   {\bf 810} (may, 2019) 1--124}.
 
 \bibitem{conceptual_intro_hmc}
-M.~Betancourt, \emph{A conceptual introduction to hamiltonian monte carlo},
-  2017.
+M.~Betancourt, \emph{{A} {C}onceptual {I}ntroduction to {H}amiltonian {M}onte
+  {C}arlo},  2017.
 \newblock 10.48550/ARXIV.1701.02434.
 
 \bibitem{geometric_ergodicity}
@@ -65,8 +76,8 @@ C.~M. Bishop, \emph{Pattern Recognition and Machine Learning}, ch.~11, p.~551.
 \newblock Springer New York, 2006.
 
 \bibitem{nuts}
-M.~D. Hoffman and A.~Gelman, \emph{The no-u-turn sampler: Adaptively setting
-  path lengths in hamiltonian monte carlo},  2011.
+M.~D. Hoffman and A.~Gelman, \emph{The {N}o-{U}-{T}urn {S}ampler: {A}daptively
+  {S}etting {P}ath {L}engths in {H}amiltonian {M}onte {C}arlo},  2011.
 
 \bibitem{Nesterov2009}
 Y.~Nesterov, \emph{Primal-dual subgradient methods for convex problems},
@@ -74,8 +85,8 @@ Y.~Nesterov, \emph{Primal-dual subgradient methods for convex problems},
   Programming} {\bf 120} (Aug, 2009) 221--259}.
 
 \bibitem{neal2011}
-S.~Brooks, A.~Gelman, G.~Jones and X.-L. Meng, eds., \emph{Handbook of Markov
-  Chain Monte Carlo}.
+S.~Brooks, A.~Gelman, G.~Jones and X.-L. Meng, eds., \emph{{H}andbook of
+  {M}arkov {C}hain {M}onte {C}arlo}.
 \newblock Chapman and Hall/{CRC}, may, 2011,
   \href{http://dx.doi.org/10.1201/b10905}{10.1201/b10905}.
 
@@ -96,11 +107,13 @@ P.~Ramachandran, B.~Zoph and Q.~V. Le, \emph{Searching for activation
   [\href{http://arxiv.org/abs/1710.05941}{{\tt 1710.05941}}].
 
 \bibitem{xla}
-A.~Sabne, \emph{Xla : Compiling machine learning for peak performance},  2020.
+A.~Sabne, \emph{{X}{L}{A} : {C}ompiling {M}achine {L}earning for {P}eak
+  {P}erformance},  2020.
 
 \bibitem{google_bnn_posteriors}
-P.~Izmailov, S.~Vikram, M.~D. Hoffman and A.~G. Wilson, \emph{What are bayesian
-  neural network posteriors really like?}, {\emph{CoRR} {\bf abs/2104.14421}
-  (2021) }, [\href{http://arxiv.org/abs/2104.14421}{{\tt 2104.14421}}].
+P.~Izmailov, S.~Vikram, M.~D. Hoffman and A.~G. Wilson, \emph{{W}hat {A}re
+  {B}ayesian {N}eural {N}etwork {P}osteriors {R}eally {L}ike?}, {\emph{CoRR}
+  {\bf abs/2104.14421} (2021) }, [\href{http://arxiv.org/abs/2104.14421}{{\tt
+  2104.14421}}].
 
 \end{thebibliography}\endgroup

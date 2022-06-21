@@ -10,6 +10,7 @@ from utils.preprocessing import split_data
 
 def main():
     model_name = r"models/2_small_hidden_layers.npz"
+    model_name = "models/3_hidden_layers_tanh.npz"
 
     bnn = BayesianNeuralNetwork()
     bnn.load_model(fname=model_name)
@@ -21,11 +22,11 @@ def main():
     kernels = weights[::2]
     biases = weights[1::2]
 
-    i = 2
-    j = 6
+    i = 1
+    j = 4
     l = 0
-    x_label = r"$W_{3,7}^1$"
-    y_label = r"$W_{3,6}^1$"
+    x_label = r"$W_{2,5}^1$"
+    y_label = r"$W_{2,4}^1$"
     w = weights[l][:, i, j].numpy().ravel()
     # sns.histplot(w)
     plt.hist(w, bins=100, histtype="step")
@@ -47,7 +48,7 @@ def main():
     df = pd.DataFrame(data)
     sns.jointplot(data=df, x=x_label, y=y_label, kind="kde")
     path = "/Users/reneaas/Documents/skole/master/thesis/master_thesis/tex/thesis/figures/posterior_distribution/"
-    fname = "posterior_weights2.pdf"
+    fname = "posterior_weights.pdf"
     plt.savefig(path + fname)
     plt.show()
 

@@ -6,7 +6,6 @@
 \addvspace {10\p@ }
 \addvspace {10\p@ }
 \addvspace {10\p@ }
-\contentsline {table}{\numberline {7.1}{\ignorespaces The table shows the training configuration used to sample the models listed in table~\ref {tab:deep_models}. \relax }}{43}{table.caption.25}%
-\contentsline {table}{\numberline {7.2}{\ignorespaces The table shows the models used in this section. For each model, 1000 sampled networks are used to generate each result shown in this section. The number of nodes per layer is shown in the ``Layers'' column. For each hidden layer, we used $\tanh (x)$ as the activation function. The final layer uses an identity function. \relax }}{47}{table.caption.26}%
-\addvspace {10\p@ }
+\contentsline {table}{\numberline {7.1}{\ignorespaces The table shows the models used in this section. For each model, 1000 sampled networks were sampled to collectively represent each BNN model. We used 2500 warm-up steps (20\% burn-in and 80\% adaptation). We skipped 10 samples for each sampled network. We used 1000 pretraining epochs with a batch size of 32. The kernel used for each model was the NUTS kernel with a maximum of $L = 4096$ Leapfrog steps. The number of nodes per layer is shown in the ``Layers'' column. For each hidden layer, we used $\tanh (x)$ as the activation function. The final layer uses an identity function. \relax }}{40}{table.caption.19}%
+\contentsline {table}{\numberline {7.2}{\ignorespaces The table shows the training configuration used to sample the models listed in table~\ref {tab:deep_models}. \relax }}{54}{table.caption.31}%
 \addvspace {10\p@ }
