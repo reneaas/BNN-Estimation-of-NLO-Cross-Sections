@@ -1,5 +1,4 @@
-Hamiltonian Monte Carlo is considered a state-of-the-art sampler that produces successive samples with low correlation
-that may lie far apart in sample space, 
+Hamiltonian Monte Carlo is considered a state-of-the-art sampler that efficiently explores sample space by producing large jumps to successive states with low correlation, 
 but suffers the need for manual tuning of the trajectory length $\epsilon L$. 
 In this chapter, we will explore improvements that adaptively adjust the trajectory length. This is achieved by means of adapting both the number of Leapfrog steps $L$ using an improved sampler called the \textit{No-U-Turn} (NUTS) sampler, and an adaptive scheme for setting the step size $\epsilon$ using a \textit{dual averaging} algorithm. We will closely follow the treatment in the original paper \cite{nuts} but adapt the notation to be consistent with the rest of this thesis.
 
@@ -7,7 +6,7 @@ We will start off with a discussion on how to adapt the number of Leapfrog steps
 done in the following way. Leapfrog steps are performed either forwards or backwards in time, first with a single Leapfrog step, then two Leapfrog steps, then followed by four Leapfrog steps and so on. This reiteration of the simulation is performed until the the path traced out starts to double back towards itself. The states traced out can be regarded as a \textit{balanced binary tree} where
 each node represents a phase-space state produced by the Leapfrog integrator during the simulation. The next state of the Markov chain is sampled at random from these nodes.  
 
-We will end the chapter with the dual averaging scheme for adaptively setting the step size using with the Leapfrog integrator. The algorithm is a modified version of a dual averaging scheme presented by Nesterov in \cite{Nesterov2009}.
+We will end the chapter with the dual averaging scheme for adaptively setting the step size using the Leapfrog integrator. The algorithm is a modified version of a dual averaging scheme presented by Nesterov in \cite{Nesterov2009}.
 
 
 
@@ -16,11 +15,12 @@ The No-U-Turn sampler augments standard HMC by introduction of a \textit{slice v
 \begin{equation}
     u \sim p(u|q, p) = \text{Uniform}\left(u; \left[0, \exp\left\{-H(q, p)\right\}\right]\right).
 \end{equation} 
-This implies the conditional distribution for $(q, p)$ given the slice variable as
+A slice variable impose a condition, in this case on $(q, p)$, that require that any valid state $(q, p)$ must lie within the slice defined by $u$. This imply a conditional distribution on $(q, p)$ given $u$
 \begin{equation}
-    p(q, p|u) = \text{Uniform}\left( q, p; \left\{q', p' \bigg| \exp\left\{-H(q, p)\right\} \geq u \right\} \right).
+    p(q, p|u) = \text{Uniform}\left( q, p; \left\{q, p \bigg| \exp\left\{-H(q, p)\right\} \geq u \right\} \right).
 \end{equation}
-Consequentially, we have a joint distribution 
+The distribution simply states that any state $(q, p)$ that lies in the set such that $\exp\{-H(q, p)\} \geq u$ is valid and is equally likely.
+Consequentially, we have the joint distribution 
 \begin{equation}
     p(q, p, u) \propto \mathbb{I}\left[u \in \left[0, \exp\left\{-H(q, p)\right\}\right]\right],
 \end{equation}
