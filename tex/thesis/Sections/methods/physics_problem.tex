@@ -15,18 +15,17 @@ We may decompose the total number events as
     n = s + b,
 \end{equation}
 where $b$ is called the \textit{background} which is the portion of the events explained by the Standard Model. Here $s$ represents a portion of $n$ which cannot be explained by SM, but rather the new BSM model. Strictly speaking, the model proposed may only explain a subset of the total events that are not explained by the background and thus the decomposition in eq.~\eqref{eq:total_events_decomp} should contain an additional term not explained by either. 
-On a more technical level, the event equation can be divided into several \textit{cuts} or \textit{signal regions}. Anything below a certain threshold is excluded in this case. Thus the more general event equation reads
+On a more technical level, the event equation can be divided into several \textit{cuts} or \textit{signal regions}. Anything below a certain threshold is excluded in this case. For a cut $i$, the general event equation reads
 \begin{equation}\label{eq:general_event_eq}
     n_i = \sigma \epsilon_i A_i \mathcal{L}.
 \end{equation} 
-All but the cross section and the integrated luminosity depends on the cuts.
-
+All but the cross section and the integrated luminosity depend on the cuts.
 
 Computation of cross sections involves computation of terms in a perturbation expansion of the form 
 \begin{equation}
     \sigma = \underbrace{\text{leading-order}}_{=\text{LO}} + \underbrace{\text{next-to-leading-order}}_{=\text{NLO}} + \cdots.
 \end{equation}
-Computation of the cross section used in the event equation is in practice carried out using {\tt Prospino} \cite{prospino}. It is a software developed to compute cross sections up to the next-to-leading-order (NLO) term. This computation is exceedingly expensive and can take up to the order of hours for a single tuple of input parameters \cite{xsec}. This computational expense significantly hampers the exclusion of parameter regions of BSM models. The search for new physics is thus halted not by lack of possible BSM models to explain the discrepancies the observed data but instead by the computational cost to perform the search itself.
+Computation of the cross section used in the event equation is in practice carried out using {\tt Prospino} \cite{prospino}. It is a software developed to compute cross sections up to the next-to-leading-order (NLO) term. This computation is exceedingly expensive and can take up to the order of hours for a single tuple of input parameters \cite{xsec}. This computational expense significantly hampers the exclusion of parameter regions of BSM models. The search for new physics is thus halted not by lack of possible BSM models to explain the discrepancies between the SM predictions and the observed data but instead by the computational cost to perform the search itself.
 
 \begin{comment}
 \begin{itemize}
@@ -50,7 +49,7 @@ Computation of the cross section used in the event equation is in practice carri
 \end{comment}
 
 \section{Bayesian Regression as a Substitute}
-
+Bayesian regression is a subfield of Bayesian inference and machine learning which attempts to perform regression tasks while simultaenously produce an estimate of the regression error. The need for fast computation of cross sections could be replaced by standard regression in principle but the inability to yield reliable uncertainty estimates with a prediction imply it is difficult to assess whether a prediction is accurate or not when dealing with unseen data. 
 
 
 
