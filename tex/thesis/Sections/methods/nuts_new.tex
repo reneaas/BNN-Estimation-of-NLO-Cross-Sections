@@ -32,6 +32,7 @@ over phase-space
 \end{equation}
 which is the target distribution we use in standard HMC.
 
+We shall now describe the way the NUTS sampler works. \textit{But be warned, what follows exact a heavy toll}.
 Let $\mathcal{B}$ be the set of all states traced out by the Leapfrog integrator used in HMC. Let $\mathcal{C} \subseteq \mathcal{B}$ be 
 the \textit{candidate set} of all candidate states $(q, p)$ from $\mathcal{B}$ that obey detailed balance. The candidate set is deterministically constructed from $\mathcal{B}$ by introducing a conditional distribution $p(\mathcal{B}, \mathcal{C}|q, p, u, \epsilon)$ with the following conditions imposed:
 \begin{enumerate}

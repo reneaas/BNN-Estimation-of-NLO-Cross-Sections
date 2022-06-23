@@ -83,6 +83,9 @@ for some true function $f(x)$ and a random noise $\delta \sim \mathcal{N}(0, 1)$
 \subsection{Computational Performance}
 
 \subsubsection{CPU v. GPU Performance}
+In this thesis we are primarily concerned with creation of an optimized alternative to direct calculations of cross sections.
+An important consideration is at which available commercially available hardware platform the most speedup can be achieved. In this section
+we pin the performance of available CPU and GPU hardware against each other. First note that {\tt TensorFlow} and its framework supports OpenMP-type parallelization on the CPU, that is, parallelization where a single node consisting of several cores, or in the case case of a CPU that supports hyperthreading, a set of virtual threads exceeeding the number of physical cores that evenly divide the workload within the compute node, using a shared memory parallelization strategy similar to what a GPU does. Unfortunately, multi-device parallelization either on the CPU or the GPU lacks support, particularly in the case of non-synchronous execution. Thus in this section we will only compare performance of the single-node performance that is achievable with either a CPU or GPU. We will thus contrast the performance achieved by a single CPU node with several (virtual) cores available to the performence obtained by employing the most taxing workload on a GPU.
 In figure \ref{fig:relative_performance}, we demonstrate the significant speedup that can be achieved
 with GPU accelerated sampling when using {\tt TensorFlow-Probability} and its implementation of samplers. Here we have used HMC and a fixed $L = 512$ Leapfrog steps with XLA (Accelerated Linear Algebra) compilation enabled on the GPU. This is a highly optimized linear algebra execution engine that can significantly speed up code written with {\tt TensorFlow} run on the GPU \cite{xla}. The time measurements per sample was in the order of magnitude of seconds for the most complex models
 tested. An important aspect for practical utilization of BNNs will be ease of training and accelerated sampling with NUTS or HMC, which is automatically achieved if the system can detect an NVIDIA GPU. Moreover, the full training time can be estimated by a few preliminary runs where execution time per sample is measured. This analysis is slightly more difficult when using NUTS. One can however set a maximum tree depth generated with {\tt BuildTree} which is also the case with the implementation employed by {\tt TensorFlow Probability}. As we argued in chapter \ref{chap:no_u_turn_sampler}, the additional computational cost added by NUTS per Leapfrog step is neglible given a sufficiently complex model and/or large dataset.
@@ -229,9 +232,7 @@ In figure \ref{fig:standardized_residual_vs_params}, we show the computed standa
     \label{fig:standardized_residual_vs_params}
 \end{figure}
 
-
-\subsection{Neutralino-Neutralino Cross Sections}\label{subsec:neuralino_experiments}
-\subsubsection{Predictive Distributions}
+\subsection{Predictive Distributions}
 As we discussed in chapter \ref{chap:bayesian_ml}, one of the primary objects we seek to compute
 in Bayesian ML is the predictive distribution $p(y^*|x^*, D)$ for a target $y^*$ given an unseen input point $x^*$ and
 a training dataset $D$. In figure \ref{fig:predictive_distributions}, we show the predictive distribution computed with model 3 in table \ref{tab:deep_models}. In the figure on top, the sample mean approximates the true target well with a fairly small spread in the distribution which is a desirable outcome in most cases. There are, however, ill cases as well which we demonstrate in the figure at the bottom. Here the true target lies entirely outside the predictive distribution. Thus care must be taken to understand when a BNNs prediction is reliable and when it is not.

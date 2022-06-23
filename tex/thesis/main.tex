@@ -9,6 +9,10 @@
 \DeclareMathAlphabet{\mathcal}{OMS}{cmsy}{m}{n}
 \raggedbottom %%reduces the gaps between the paragraphs
 \usepackage{jheppub}
+\usepackage{tikz-qtree}
+\usepackage{tikz}
+\usetikzlibrary{positioning}
+\usetikzlibrary{calc}
 
 \title{Bayesian Neural Network Estimation of Next-To-Leading-Order Cross Sections}
 %\subtitle{My subtitle}
@@ -60,7 +64,7 @@
 \input{Sections/methods/hmc}
 \chapter{Adaptive Hamiltonian Monte Carlo}\label{chap:no_u_turn_sampler}
 % \input{Sections/methods/nuts}
-\input{Sections/methods/nuts_new}
+\input{Sections/methods/adaptive_hmc}
 
 \chapter{Bayesian Neural Networks}\label{chap:bnn}
 \input{Sections/methods/neural_networks}

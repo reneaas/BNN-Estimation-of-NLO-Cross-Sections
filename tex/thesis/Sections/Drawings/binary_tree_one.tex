@@ -1,0 +1,35 @@
+\usepackage{tikz}
+\usetikzlibrary{positioning}
+\usetikzlibrary{calc}
+\begin{figure}[h!]
+    \centering
+    \begin{tikzpicture}[>=stealth',
+                        shorten >=1pt,
+                        auto,
+                        node distance=3cm,
+                        thick,
+                        main node/.style={circle,
+                                          draw,
+                                          font=\sffamily\Large\bfseries
+                                         }
+                       ]
+
+        \node[main node] (A) {a};
+        \node[main node] (B) [below right of=A] {b};
+        \node[main node] (C) [below left of=A] {c};
+        \node[main node] (D) [below left of=C] {d};
+        \node[main node] (E) [below left of=B] {e};
+        \node[main node] (F) [below right of=B] {f};
+        
+        
+       \path[every node/.style={font=\sffamily\small}]
+           (A) edge node [below] {} (C)
+           (B) edge node [above] {} (A)
+           (C) edge node [above] {} (D)
+           (B) edge node [below] {} (E)
+               edge node [below] {} (F);
+    \end{tikzpicture}
+    \caption{A simple binary tree}
+    \label{fig:neighborhood}
+\end{figure}
+

@@ -1,5 +1,9 @@
 \providecommand{\href}[2]{#2}\begingroup\raggedright\begin{thebibliography}{10}
 
+\bibitem{nuts}
+M.~D. Hoffman and A.~Gelman, \emph{The {N}o-{U}-{T}urn {S}ampler: {A}daptively
+  {S}etting {P}ath {L}engths in {H}amiltonian {M}onte {C}arlo},  2011.
+
 \bibitem{prospino}
 W.~Beenakker, R.~Hoepker and M.~Spira, \emph{Prospino: A program for the
   production of supersymmetric particles in next-to-leading order qcd},  1996.
@@ -75,20 +79,10 @@ J.~S. Helbert~Goldstein, Charles~Poole, \emph{Classical Mechanics, 3rd ed.},
 C.~M. Bishop, \emph{Pattern Recognition and Machine Learning}, ch.~11, p.~551.
 \newblock Springer New York, 2006.
 
-\bibitem{nuts}
-M.~D. Hoffman and A.~Gelman, \emph{The {N}o-{U}-{T}urn {S}ampler: {A}daptively
-  {S}etting {P}ath {L}engths in {H}amiltonian {M}onte {C}arlo},  2011.
-
 \bibitem{Nesterov2009}
 Y.~Nesterov, \emph{Primal-dual subgradient methods for convex problems},
   \href{http://dx.doi.org/10.1007/s10107-007-0149-x}{\emph{Mathematical
   Programming} {\bf 120} (Aug, 2009) 221--259}.
-
-\bibitem{neal2011}
-S.~Brooks, A.~Gelman, G.~Jones and X.-L. Meng, eds., \emph{{H}andbook of
-  {M}arkov {C}hain {M}onte {C}arlo}.
-\newblock Chapman and Hall/{CRC}, may, 2011,
-  \href{http://dx.doi.org/10.1201/b10905}{10.1201/b10905}.
 
 \bibitem{tf}
 M.~Abadi, A.~Agarwal, P.~Barham, E.~Brevdo, Z.~Chen, C.~Citro et~al.,
