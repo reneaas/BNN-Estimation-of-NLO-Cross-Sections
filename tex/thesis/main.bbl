@@ -84,6 +84,11 @@ Y.~Nesterov, \emph{Primal-dual subgradient methods for convex problems},
   \href{http://dx.doi.org/10.1007/s10107-007-0149-x}{\emph{Mathematical
   Programming} {\bf 120} (Aug, 2009) 221--259}.
 
+\bibitem{nuts_joonha_park}
+J.~Park and Y.~F. Atchadé, \emph{Markov chain monte carlo algorithms with
+  sequential proposals},  2019.
+\newblock 10.48550/ARXIV.1907.06544.
+
 \bibitem{tf}
 M.~Abadi, A.~Agarwal, P.~Barham, E.~Brevdo, Z.~Chen, C.~Citro et~al.,
   \emph{{TensorFlow}: Large-scale machine learning on heterogeneous systems},

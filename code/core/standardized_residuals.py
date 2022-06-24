@@ -144,10 +144,64 @@ def main():
         path,
         "standardized_residual_simple_models.pdf",
     ])
-    plt.savefig(figname)
+    # plt.savefig(figname)
     # sns.histplot(standardized_residuals[1], fill=False, )
-    # plt.show()
+    plt.show()
 
+
+    # In target space
+
+    model_predictions = [10 ** y_pred for y_pred in model_predictions]
+    mean_predictions = [np.mean(y_pred, axis=0) for y_pred in model_predictions]
+    predictions_std = [np.std(y_pred, axis=0) for y_pred in model_predictions]
+    y_test = 10 ** y_test
+
+
+    standardized_residuals = [
+        (y_test - y_pred) / std for y_pred, std in zip(mean_predictions, predictions_std)
+    ]
+    print(f"{np.mean(standardized_residuals, axis=1)=}")
+    print(f"{np.std(standardized_residuals, axis=1)=}")
+
+
+    rel_err = [
+        (y_test - y_pred) / y_test for y_pred in mean_predictions
+    ]
+    rel_err = [err[err >= -1] for err in rel_err]
+    rel_err = [err[err <= 1] for err in rel_err]
+    n_bins = 100
+    max_x = -100
+    min_x = 100
+
+    for i, residual in enumerate(standardized_residuals):
+        label = f"Model {i+1}"
+        plt.hist(residual, histtype="step", density=True, bins=n_bins, label=label)
+        max_x = max(residual) if max(residual) > max_x else max_x
+        min_x = min(residual) if min(residual) < min_x else min_x
+
+    # Create normal distribution
+    min_x = -5
+    max_x = 5   
+    x = np.linspace(min_x, max_x, 1001)
+    # x = np.linspace(-2, 2, 1000)
+    normal_dist = np.exp(-0.5 * x ** 2) / np.sqrt(2 * np.pi)
+    plt.plot(x, normal_dist, color="black", linestyle="--", label="$\mathcal{N}(0, 1)$")
+    sz = 14
+    plt.xticks(size=sz)
+    plt.yticks(size=sz)
+    plt.xlabel("Standardized residual", fontsize=sz)
+    plt.ylabel("Density", fontsize=sz)
+    plt.xlim((min_x, max_x))
+
+    plt.legend(fontsize=sz)
+
+    path = r"/Users/reneaas/Documents/skole/master/thesis/master_thesis/tex/thesis/figures/standardized_residuals"
+    figname = "/".join([
+        path,
+        "standardized_residual_target_space.pdf",
+    ])
+    plt.savefig(figname)
+    # plt.show()
 
 if __name__ == "__main__":
     with tf.device("/CPU:0"):

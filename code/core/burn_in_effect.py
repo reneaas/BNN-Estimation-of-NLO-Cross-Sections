@@ -68,7 +68,7 @@ def main():
 
     step = 2
     root_dir = "./models/"
-    kernel = "nuts"
+    kernel = "hmc"
     model_fnames = [
         root_dir + f"kernel_{kernel}_results_1000_burnin_{int(2 ** i)}_epochs_2500_leapfrogsteps_512_nodes_{layers}.npz"
         for i in range(5, 14, step)
