@@ -178,10 +178,20 @@ def main():
 
     with open(file=f"tab_data/r2_scores_burn_in_effect_{kernel}.txt", mode="w") as outfile:
         outfile.write(
-            "model r2_log r2_target \n"
+            "warm_up_steps r2_log r2_target \n"
         )
-        for i, (r2_log, r2) in enumerate(zip(r2_scores_log, r2_scores)):
-            outfile.write(f"{i + 1} {r2_log} {r2} \n")
+        for b, r2_log, r2 in zip(num_burnin_steps, r2_scores_log, r2_scores):
+            outfile.write(f"{b} {r2_log} {r2} \n")
+    plt.plot(num_burnin_steps, r2_scores_log, color="black", label="Log space")
+    plt.scatter(num_burnin_steps, r2_scores_log, color="red", marker="x")
+
+    plt.plot(num_burnin_steps, r2_scores, color="blue", label="Target space")
+    plt.scatter(num_burnin_steps, r2_scores, marker="x", color="red")
+    plt.xlabel("Warm-up steps")
+    plt.ylabel(r"$R^2$")
+    plt.xscale("log", base=2)
+    plt.legend()
+    plt.show()
 
 
 

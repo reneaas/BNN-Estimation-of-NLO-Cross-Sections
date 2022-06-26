@@ -10,6 +10,7 @@ import re
 from bnn.bnn import BayesianNeuralNetwork
 from slha_loader.slha_loader import SLHALoader
 from utils.preprocessing import split_data
+from utils.metrics import r2_score
 import sys 
 
 # def get_data(root_dir):
@@ -69,57 +70,83 @@ def main():
     step = 2
     root_dir = "./models/"
     kernel = "hmc"
+    pretraining_steps = [int(2 ** i) for i in range(5, 14, step)]
     model_fnames = [
-        root_dir + f"kernel_{kernel}_results_1000_burnin_1000_epochs_{int(2 ** i)}_leapfrogsteps_512_nodes_{layers}.npz"
-        for i in range(5, 14, step)
+        root_dir + f"kernel_{kernel}_results_1000_burnin_1000_epochs_{epoch}_leapfrogsteps_512_nodes_{layers}.npz"
+        for epoch in pretraining_steps
     ]
 
-    # root_dir = "./results/"
-    # model_data_fnames = [
-    #     root_dir + f"kernel_{kernel}_results_1000_burnin_1000_epochs_{int(2 ** i)}_leapfrogsteps_512_nodes_{layers}.txt"
-    #     for i in range(5, 14, 1)
-    # ]
 
-    # model_data = [
-    #     get_data(fname) for fname in model_data_fnames
-    # ]
-    # print(model_data)
-
-    # data_merged = {key: [] for key in model_data[0]}
-    # for d in model_data:
-    #     for key in d:
-    #         data_merged[key].append(d.get(key))
-    # print(data_merged)
-    # df = pd.DataFrame(data_merged)
-
-    # x = df["num_burnin_steps"].to_numpy(dtype=int)
-    # y = df["num_leapfrog_steps"].to_numpy(dtype=int)
-    # plt.plot(x, y)
-    # plt.scatter(x, y, label="datapoints", marker="^", color="red")
-    # plt.xscale("log", base=2)
-    # plt.xlabel("Number of Warm-up Steps")
-    # plt.ylabel("Avg. Leapfrog Steps")
-    # plt.legend()
-
-
-    # dir = "/Users/reneaas/Documents/skole/master/thesis/master_thesis/tex/thesis/figures/standardized_residuals/effect_of_pretraining"
-    # fname = f"avg_burnin_steps_nuts_vs_burn_in_steps.pdf"
-    # plt.savefig(dir + fname)
-    # plt.show()
-    # sys.exit()
-
-    num_burnin_steps = [int(2 ** i) for i in range(5, 14, step)]
-    
-    models = [BayesianNeuralNetwork() for _ in model_fnames]
-    for bnn, model_name in zip(models, model_fnames):
-        bnn.load_model(fname=model_name)
-    print(*models)
-
-    model_data = {
-        "models": models,
-        "num_burnin_steps": num_burnin_steps,
-        "model_fnames": model_fnames
+    samplers = {
+        "hmc": {
+            "kernel_name": "HMC",
+            "model_fnames": [
+                                root_dir + f"kernel_hmc_results_1000_burnin_1000_epochs_{epoch}_leapfrogsteps_512_nodes_{layers}.npz"
+                                for epoch in pretraining_steps
+                            ],       
+        },
+        # "nuts": {
+        #     "kernel_name": "NUTS",
+        #     "model_fnames": [
+        #         root_dir + f"kernel_nuts_results_1000_burnin_1000_epochs_{epoch}_leapfrogsteps_512_nodes_{layers}.npz"
+        #         for epoch in pretraining_steps
+        #     ],
+        # },
     }
+
+    # Load models
+    for s in samplers:
+        d = samplers.get(s)
+        models = [BayesianNeuralNetwork() for _ in d.get("model_fnames")]
+        for bnn, model_name in zip(models, d.get("model_fnames")):
+            bnn.load_model(fname=model_name)
+        d["models"] = models
+
+    # Compute predictions
+    for s in samplers:
+        d = samplers.get(s)
+        models = d.get("models")
+        predictions = [bnn(x_test).numpy().squeeze(-1) for bnn in models]
+        mean_predictions = [np.mean(y_pred, axis=0) for y_pred in predictions]
+        std_predictions = [np.std(y_pred, axis=0) for y_pred in predictions]
+        d["y_mean"] = mean_predictions
+        d["y_std"] = std_predictions
+    
+    print(samplers)
+
+
+    for s in samplers:
+        d = samplers.get(s)
+        y_mean = d.get("y_mean")
+        r2_scores_log = [
+            r2_score(y_true=y_test, y_pred=y_pred) for y_pred in y_mean
+        ]
+        predictions = [10 ** y for y in predictions]
+        y_mean = [np.mean(y, axis=0) for y in predictions]
+        r2_scores = [
+            r2_score(y_true=10 ** y_test, y_pred=y_pred) for y_pred in y_mean
+        ]
+
+
+        plt.scatter(pretraining_steps, r2_scores, marker="x")
+        plt.plot(pretraining_steps, r2_scores, label="Target space (HMC)")
+
+        plt.scatter(pretraining_steps, r2_scores_log, marker="x")
+        plt.plot(pretraining_steps, r2_scores_log, label="Log space (HMC)")
+
+        plt.xlabel("Pretraining Epochs")
+        plt.ylabel("$R^2$")
+        plt.xscale("log", base=2)
+        plt.legend()
+
+        dir = "/Users/reneaas/Documents/skole/master/thesis/master_thesis/tex/thesis/figures/r2_scores/"
+        fname = "r2_score_vs_pretraining.pdf"
+        plt.savefig(dir + fname)
+    plt.close()
+
+
+
+    # Standardized residuals in Log space
     
 
     y_preds = [bnn(x_test).numpy().squeeze(-1) for bnn in models]
@@ -130,10 +157,11 @@ def main():
     y_std = [np.std(y, axis=0) for y in y_preds]
     std_residuals = [(res / std).numpy() for res, std in zip(residuals, y_std)]
     print([p.shape for p in std_residuals])
+    print(f"{y_test.shape = }")
 
 
     x_min, x_max = -5, 5
-    for i, (residual, n) in enumerate(zip(std_residuals, num_burnin_steps)):
+    for i, (residual, n) in enumerate(zip(std_residuals, pretraining_steps)):
         label = str(n)
         plt.hist(residual, histtype="step", density=True, bins=100, label=label)
 
@@ -146,12 +174,8 @@ def main():
     plt.legend()
 
     dir = "/Users/reneaas/Documents/skole/master/thesis/master_thesis/tex/thesis/figures/standardized_residuals/effect_of_pretraining/"
-    fname = f"standardized_residuals_{kernel}_vs_pretraining_steps.pdf"
+    fname = f"standardized_residuals_hmc_vs_pretraining_steps.pdf"
     plt.savefig(dir + fname)
-    plt.show()
-
-
-
 
 
 

@@ -2080,6 +2080,11 @@ INPUT /Users/reneaas/Documents/skole/master/thesis/master_thesis/tex/thesis/figu
 INPUT /Users/reneaas/Documents/skole/master/thesis/master_thesis/tex/thesis/figures/computational_cost/time_vs_params.pdf
 INPUT /Users/reneaas/Documents/skole/master/thesis/master_thesis/tex/thesis/figures/computational_cost/time_vs_params.pdf
 INPUT /Users/reneaas/Documents/skole/master/thesis/master_thesis/tex/thesis/figures/computational_cost/time_vs_params.pdf
+INPUT /Users/reneaas/Documents/skole/master/thesis/master_thesis/tex/thesis/figures/r2_scores/effect_of_burnin_r2_scores.pdf
+INPUT /Users/reneaas/Documents/skole/master/thesis/master_thesis/tex/thesis/figures/r2_scores/effect_of_burnin_r2_scores.pdf
+INPUT /Users/reneaas/Documents/skole/master/thesis/master_thesis/tex/thesis/figures/r2_scores/effect_of_burnin_r2_scores.pdf
+INPUT /Users/reneaas/Documents/skole/master/thesis/master_thesis/tex/thesis/figures/r2_scores/effect_of_burnin_r2_scores.pdf
+INPUT /Users/reneaas/Documents/skole/master/thesis/master_thesis/tex/thesis/figures/r2_scores/effect_of_burnin_r2_scores.pdf
 INPUT /Users/reneaas/Documents/skole/master/thesis/master_thesis/tex/thesis/figures/standardized_residuals/effect_of_burnin/standardized_residuals_hmc_vs_burn_in_steps.pdf
 INPUT /Users/reneaas/Documents/skole/master/thesis/master_thesis/tex/thesis/figures/standardized_residuals/effect_of_burnin/standardized_residuals_hmc_vs_burn_in_steps.pdf
 INPUT /Users/reneaas/Documents/skole/master/thesis/master_thesis/tex/thesis/figures/standardized_residuals/effect_of_burnin/standardized_residuals_hmc_vs_burn_in_steps.pdf
@@ -2095,6 +2100,11 @@ INPUT /Users/reneaas/Documents/skole/master/thesis/master_thesis/tex/thesis/figu
 INPUT /Users/reneaas/Documents/skole/master/thesis/master_thesis/tex/thesis/figures/standardized_residuals/effect_of_burnin/avg_burnin_steps_nuts_vs_burn_in_steps.pdf
 INPUT /Users/reneaas/Documents/skole/master/thesis/master_thesis/tex/thesis/figures/standardized_residuals/effect_of_burnin/avg_burnin_steps_nuts_vs_burn_in_steps.pdf
 INPUT /Users/reneaas/Documents/skole/master/thesis/master_thesis/tex/thesis/figures/standardized_residuals/effect_of_burnin/avg_burnin_steps_nuts_vs_burn_in_steps.pdf
+INPUT /Users/reneaas/Documents/skole/master/thesis/master_thesis/tex/thesis/figures/r2_scores/r2_score_vs_pretraining.pdf
+INPUT /Users/reneaas/Documents/skole/master/thesis/master_thesis/tex/thesis/figures/r2_scores/r2_score_vs_pretraining.pdf
+INPUT /Users/reneaas/Documents/skole/master/thesis/master_thesis/tex/thesis/figures/r2_scores/r2_score_vs_pretraining.pdf
+INPUT /Users/reneaas/Documents/skole/master/thesis/master_thesis/tex/thesis/figures/r2_scores/r2_score_vs_pretraining.pdf
+INPUT /Users/reneaas/Documents/skole/master/thesis/master_thesis/tex/thesis/figures/r2_scores/r2_score_vs_pretraining.pdf
 INPUT /Users/reneaas/Documents/skole/master/thesis/master_thesis/tex/thesis/figures/standardized_residuals/effect_of_pretraining/standardized_residuals_hmc_vs_pretraining_steps.pdf
 INPUT /Users/reneaas/Documents/skole/master/thesis/master_thesis/tex/thesis/figures/standardized_residuals/effect_of_pretraining/standardized_residuals_hmc_vs_pretraining_steps.pdf
 INPUT /Users/reneaas/Documents/skole/master/thesis/master_thesis/tex/thesis/figures/standardized_residuals/effect_of_pretraining/standardized_residuals_hmc_vs_pretraining_steps.pdf

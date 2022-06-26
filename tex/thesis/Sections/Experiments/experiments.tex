@@ -8,7 +8,7 @@ In this section, we will describe the dataset and how it is generated. Moreover,
 For the predictions presented in this chapter, we have restricted our investigations to use the dataset for the particle process throughout. This will make it easier to compare the performance of BNNs across different configurations to better understand the strengths and shortcomings of the different choices made when training BNNs. 
 
 
-\subsection{Data Scaling and Transformations}
+\subsection{Data Transformations}\label{sec:data_transform}
 We shall briefly discuss how the training data is transformed before training.
 The targets in the dataset of NLO cross sections can span several orders of magnitude. For practical training of BNNs, this would require
 model parameters that also span several orders of magnitude. The result will usually be overflow and thus unsucessful training of the models.
@@ -115,9 +115,9 @@ with GPU accelerated sampling when using {\tt TensorFlow-Probability} and its im
 tested. An important aspect for practical utilization of BNNs will be ease of training and accelerated sampling with NUTS or HMC, which is automatically achieved if the system can detect an NVIDIA GPU. Moreover, the full training time can be estimated by a few preliminary runs where execution time per sample is measured. This analysis is slightly more difficult when using NUTS. One can however set a maximum tree depth generated with {\tt BuildTree} which is also the case with the implementation employed by {\tt TensorFlow Probability}. As we argued in chapter \ref{chap:no_u_turn_sampler}, the additional computational cost added by NUTS per Leapfrog step is neglible given a sufficiently complex model and/or large dataset.
 Thus one can simply perform the measurements using the implementation of HMC and estimate an upper-bound on the computational time defined by the setting of the maximum tree depth.
 
-\begin{figure}
+\begin{figure}[h!]
     \centering
-    \includegraphics[scale=0.8]{figures/cpu_vs_gpu/cpu_vs_gpu_performance.pdf}
+    \includegraphics[scale=0.7]{figures/cpu_vs_gpu/cpu_vs_gpu_performance.pdf}
     \caption{The figure shows the relative measured execution time used per sample using $L = 512$ Leapfrog steps,
     as a function of number of parameters. The CPU measurements are done using an 8-core M1 CPU (Apple Silicon). The GPU measurements
     are made with an NVIDIA Tesla P100 GPU.
@@ -134,17 +134,17 @@ The execution times appear proportional to the number of input points provided f
 
 The performance degradation that the computations in figure \ref{fig:prediction_time} suffers is inherently due to the limited vectorization capability of the CPU's computing units when performing matrix multiplications in the forward pass of the individual neural network models. The computation itself is performed with all 1000 sampled networks simultaneously, and so one might hypothesize that more specialized computing units may be able to handle several input points while applying all sampled networks at the same time. As it turns out, GPUs are excel at executing matrix multiplication and even more fortunate, {\tt TensorFlow} has added support for the built-in GPU on Apple Silicon system-on-chips. In figure \ref{fig:prediction_time_gpu} we can see the execution times achieved using the GPU to perform the same computations as before. In this case the order magnitude remains more or less the same in all the tests. Thus, computing predictions on several points can benefit greatly if the execution is employed on a GPU. Note, however, that the measured execution time of ``model 1'' is slightly slower than for more points which likely is due to the overhead introduced by using the GPU for such a simple model. Care must thus be taken when considering what type of hardware the computations should be performed with.
 
-\begin{figure}
+\begin{figure}[h!]
     \centering
-    \includegraphics[scale=0.8]{figures/prediction_time/prediction_time.pdf}
+    \includegraphics[scale=0.7]{figures/prediction_time/prediction_time.pdf}
     \caption{The figure shows the average prediction time to compute a prediction given a single input $x$ using the models in table \ref{tab:deep_models}. The average time used is measured in ms and is averaged over 1000 randomly sampled points. The measured time includes computation of the sample mean and sample error.
     }
     \label{fig:prediction_time}
 \end{figure}
 
-\begin{figure}
+\begin{figure}[h!]
     \centering
-    \includegraphics[scale=0.8]{figures/prediction_time/prediction_time_gpu.pdf}
+    \includegraphics[scale=0.7]{figures/prediction_time/prediction_time_gpu.pdf}
     \caption{The figure shows the average prediction time using the built-in GPU on an M1 Apple Silicon system-on-chip to compute a prediction given a single input $x$ using the models in table \ref{tab:deep_models}. The average time used is measured in ms and is averaged over 1000 randomly sampled points. The measured time includes computation of the sample mean and sample error. 
     }
     \label{fig:prediction_time_gpu}
@@ -155,9 +155,9 @@ Even if we have demonstrated a substantial speedup for predictions using BNNs, w
 
 In figure \ref{fig:loading_times} we show the resulted loading times measured using an M1 Apple Silicon system-on-chip and {\tt time.perf\_counter} from Python. The memory allocated to the BNN models were deallocated manually using the {\tt del} operator provided by Python to ensure that each load of the model of the model was from the SSD. The models loaded in are the ones listed in table \ref{tab:deep_models}. Given the order of magnitude of the loading times displayed in the figure is approximately the same order of magnitude as the execution time, we have demonstrated that BNNs can provide a serious substitute for {\tt Prospino} calculations from a purely computational perspective. It remains to be seen if the predictions themselves are reliable enough for this substitution to be adopted, which we will explore in later sections.
 
-\begin{figure}
+\begin{figure}[h!]
     \centering
-    \includegraphics[scale=0.8]{figures/computational_cost/loading_times.pdf}
+    \includegraphics[scale=0.7]{figures/computational_cost/loading_times.pdf}
     \caption{
         The figure shows the histograms of measured loading times in seconds using the models in table \ref{tab:deep_models}. The measurements were performed using {\tt time.perf\_counter} from Python using an M1 Apple Silicon system-on-chip. The time measurements consist of 1000 measurements for each model.
     }
@@ -177,7 +177,7 @@ It has been widely discussed that BNN posteriors are typically found to be multi
 We can observe that the projection onto the planes shown there indicate that the posterior distribution indeed is multimodal
 and unlikely to be approximated well with a parameterized surrogate distribution like the one in eq.~\eqref{eq:surrogate_dist}.
 
-\begin{figure}
+\begin{figure}[h!]
     \centering
     \includegraphics[scale=0.7]{figures/posterior_distribution/posterior_weights1.pdf}
     \includegraphics[scale=0.7]{figures/posterior_distribution/posterior_weights2.pdf}
@@ -188,7 +188,7 @@ and unlikely to be approximated well with a parameterized surrogate distribution
 
 
 \subsection{Benchmarks of Hyperparameters}\label{subsec:benchmarks}
-\begin{figure}
+\begin{figure}[h!]
     \centering
     \includegraphics[scale=0.7]{figures/computational_cost/time_vs_leapfrogsteps_hmc.pdf}
     \includegraphics[scale=0.7]{figures/computational_cost/time_vs_params.pdf}
@@ -205,10 +205,12 @@ to the stationary distribution of the posterior. Moreover, the literature has sh
 
 To investigate the effect of the number of warm-up steps, we employed a model with a 5-20-20-1 architechture using $\tanh(x)$ as the activation function on the hidden layers. We fixed the number of pretraining epochs to 2500 with a batch size of 32 using the ADAM optimizer.
 We then trained several models using various number of warm-up steps with both HMC and NUTS. When trained with HMC, we fixed the number of Leapfrog steps to $L = 512$. When trained with NUTS, we set a maximum tree depth of $12$ corresponding to a maximum of $L = 4096$ Leapfrog steps.
-In table \ref{tab:r2_burn_in} we show the achived $R^2$-scores of the different configurations both in log space and target space.
-In figure \ref{fig:standardized_residuals_vs_burn_in_steps} we display the standardized residuals in log space for both sampler over all trained configurations. 
-The standardized residuals demonstrate that the claims above may not be general enough to apply to BNNs as the models trained with HMC performs better almost regardless of how many warm-up steps that are performed. When using NUTS, the performance of the model trained with a substantial amount of warm-up steps appear to degrade as opposed to improve. The standardized residual of HMC lies consistently inside the Normal distribution for the bulk of the distribution albeit with longer tails, while the NUTS sampler produced rather few models that achieve the same. These results, then, actually indicate that we may be better off running the training procedure of BNNs with a fixed $L$, only adapting the step size. Even better, we may get by with a fairly limited amount of warm-up steps and a fairly small $L$. But the claim that NUTS performs at least as well as HMC with an equivalent number of Leapfrog steps begs the question then, how many Leapfrog steps did NUTS use on average? In figure \ref{fig:avg_leapfrog_steps_vs_burn_in}, we show the average number of Leapfrog steps the NUTS sampler used during the generation of the Markov chain as a function of number of warm-up steps. Clearly, NUTS used more Leapfrog steps on average, except in a single case. The NUTS sampler introduces the need for a slightly more complicated analysis than a one-to-one comparison like this though. Recall from chapter \ref{chap:no_u_turn_sampler}, that the NUTS sampler generates samples by running HMC forwards and backwards in time at random for until a stopping condition is met. At this point the sampler selects one of the acceptable points that does not violate detailed balance at random. Thus the selected point may lie close to the initial point while HMC automatically selects the final point of the simulation. Thus for the same number of Leapfrog steps, we should expect HMC to generate larger jumps in parameter space for a suitable step size.
+In figure \ref{fig:r2_score_vs_burn_in_steps} we show the achived $R^2$-scores of the different configurations both in log space and target space as function of the number of warm-up steps used. In log space, the models consistently achieve scores $R^2 \approx 1$ which suggest they on average correctly predict the targets in the test data. Transforming the predictions and targets back to target space, however, lead to som fairly poor results as we increase the number of warm-up steps with HMC outperforming the models trained with NUTS in all but one case. We removed the point at 32 warm-up steps for the NUTS sampler as it achieved a poor score of $R^2 = -1306$ in this case. It is difficult to explain this discrepancy as the $R^2$-score in log space is good. But the general observation to note here is that the performance of the models degrade once we transform back to target space which is expected as we discussed in section \ref{sec:data_transform} on the effect of the data transformations. At least we now have an empirical confirmation that suggests that reducing the base of the logarithm used to transformm the data should be investigated further.
 
+In figure \ref{fig:standardized_residuals_vs_burn_in_steps} we display the standardized residuals in log space for both samplers over all trained configurations. 
+The standardized residuals demonstrate that the claims discussed in the beginning of this section may not be general enough to apply to BNNs as the models trained with HMC performs better almost regardless of how many warm-up steps that are performed. When using NUTS, the performance of the model trained with a substantial amount of warm-up steps appear to degrade as opposed to improve consistent with their $R^2$-scores. The standardized residual of HMC lies consistently inside the Normal distribution for the bulk of the distribution albeit with longer tails, while the NUTS sampler produced rather few models that achieve the same. These results, then, actually indicate that we may be better off running the training procedure of BNNs with a fixed $L$, only adapting the step size. Even better, we may get by with a fairly small number of warm-up steps and a fairly small $L$. But the claim that NUTS performs at least as well as HMC with an equivalent number of Leapfrog steps begs the question, then, how many Leapfrog steps did NUTS use on average? In figure \ref{fig:avg_leapfrog_steps_vs_burn_in}, we show the average number of Leapfrog steps the NUTS sampler used during the generation of the Markov chain as a function of number of warm-up steps. Clearly, NUTS used more Leapfrog steps on average than $L = 512$, except in a single case. The NUTS sampler introduces the need for a slightly more complicated analysis than a one-to-one comparison like this though. Recall from chapter \ref{chap:no_u_turn_sampler}, that the NUTS sampler generates samples by running HMC forwards and backwards in time at random until a stopping condition is met. At this point the sampler selects one of the acceptable states that does not violate detailed balance at random. Thus the selected position (model parameter) may lie close to the initial position while HMC automatically selects the final position of the simulation. Thus for the same number of Leapfrog steps, we should expect HMC to generate larger jumps in parameter space when using the same step size. 
+
+\begin{comment}
 \begin{table}[h!]
     \centering
     \caption{
@@ -232,9 +234,19 @@ The standardized residuals demonstrate that the claims above may not be general 
 \end{tabular}
 \label{tab:r2_burn_in}
 \end{table}
+\end{comment}
+
+\begin{figure}[h!]
+    \centering
+    \includegraphics[scale=0.7]{figures/r2_scores/effect_of_burnin_r2_scores.pdf}
+    \caption{
+        The figure shows the computed $R^2$-scores in both log space and target space as a function number of warm-up steps (20\% burn-in and 80\% adaptation) achieved with HMC and NUTS. The architecture of the BNN model used is 5-20-20-1 with $\tanh(x)$ used as the activation function in the hidden layers. We performed 2500 pretraning steps with a batch size of 32 using the ADAM optimizer. In total 1000 neural networks were sampled with 10 steps between each stored sample. When HMC was used, we ran with a fixed number of Leapfrog steps $L = 512$. When the NUTS sampler was used, we allowed for a maximum of $L = 4096$ Leapfrog steps (a maximum tree depth of $12$).
+    }
+    \label{fig:r2_score_vs_burn_in_steps}
+\end{figure}
 
 
-\begin{figure}
+\begin{figure}[h!]
     \centering
     \includegraphics[scale=0.7]{figures/standardized_residuals/effect_of_burnin/standardized_residuals_hmc_vs_burn_in_steps.pdf}
     \includegraphics[scale=0.7]{figures/standardized_residuals/effect_of_burnin/standardized_residuals_nuts_vs_burn_in_steps.pdf}
@@ -244,9 +256,9 @@ The standardized residuals demonstrate that the claims above may not be general 
 \end{figure}
 
 
-\begin{figure}
+\begin{figure}[h!]
     \centering
-    \includegraphics[scale=0.8]{figures/standardized_residuals/effect_of_burnin/avg_burnin_steps_nuts_vs_burn_in_steps.pdf}
+    \includegraphics[scale=0.7]{figures/standardized_residuals/effect_of_burnin/avg_burnin_steps_nuts_vs_burn_in_steps.pdf}
     \caption{The figure shows the average number of Leapfrog steps $L$ as a function of number of warm-up steps used by the NUTS sampler when sampling the models shown in the bottom of figure \ref{fig:standardized_residuals_vs_burn_in_steps}. We have included a few more measurements to showcase how fluctuating the average number can be. 
     }
     \label{fig:avg_leapfrog_steps_vs_burn_in}
@@ -256,14 +268,25 @@ The standardized residuals demonstrate that the claims above may not be general 
 
 
 \subsubsection{The Effect of Pretraining}
-Pretraining a model before initiating the Markov chain is typically suggested as a means to accelerate convergence to the stationary distribution by minimizing a selected loss function with respect to the model parameters to obtain a point estimate. The point estimate is then used as the initial point of the Markov chain. This may help but as we discussed in chapter \ref{chap:mcmc}, the typical set, the set which we seek to sample from, may not lay particularly close to the mode of the loss function, or as we know it as, the potential energy function. Thus we have good reasons to challenge this recommendation and verify that it indeed improves the performance of the BNN models we sample. In figure \ref{fig:std_residual_vs_pretraining}, we
-show the computed standardized residuals resulting from models trained with a varying amount of pretraining. Here all other
-hyperparameters are fixed. The figure demonstrates a pretty noticable improvement as the amount of pretraining increases, up to a point. Once we surpass 2048 epochs of pretraining, we see a slight degradation of the model performance with a larger spread in the residual distribution. But we can rest assured that pretraining can be used to increase the performance of the trained BNN when everything else is held fixed. The various hyperparameters used are listed as part of the figure to avoid tedious repetition.
+Pretraining a model before initiating the Markov chain is typically suggested as a means to accelerate convergence to the stationary distribution by minimizing a selected loss function with respect to the model parameters to obtain a point estimate. The point estimate is then used as the initial point of the Markov chain. This may help but as we discussed in chapter \ref{chap:mcmc}, the typical set, the set which we seek to sample from, may not lay particularly close to the mode of the loss function, or as we know it as, the potential energy function. Thus we have good reasons to challenge this recommendation and verify that it indeed improves the performance of the BNN models we sample. We trained a BNN model with the architechture 5-20-20-1 with $\tanh(x)$ as the activation function in the hidden layers. We fixed the number of warm-up steps to 1000 of which 800 were used for adaptation of the step size and 200 were used for burn-in. We fixed the number of Leapfrog steps to $L = 512$ using the HMC sampler. As usual, we sampled 1000 neural networks with 10 steps between each sampled network. From the figure, we can observe that the performance of the model increases as we increase the number of pretraining epochs which gives us empirical grounds for initiating the Markov chain from the point estimate obtained. As in the previous section, we see can not a dramatic decrease in performance when we transform the predictions back to target space and compute the $R^2$-score. 
 
 
-\begin{figure}
+In figure \ref{fig:std_residual_vs_pretraining}, we
+show the computed standardized residuals in log space. The figure demonstrates a pretty noticable improvement as the amount of pretraining increases, up to a point. Once we surpass 2048 epochs of pretraining, we see a slight degradation of the model performance with a larger spread in the residual distribution. But we can rest assured that pretraining can be used to increase the performance of the trained BNN when everything else is held fixed, and should thus be applied as part of the training procedure. Note that the model used here consists of a rather small number of parameters. We performed pretraining of the models on a GPU which yielded less than 10\% GPU utilization, while the MCMC sampling of the model parameters required $\sim 90\%$ GPU utilization. Hence pretraining with models of this size is better performed on either a built-in GPU on an SoC such as the one shipped with an Apple Silicon SoC. Else, the pretraining should be employed on a multi-core CPU device.
+
+\begin{figure}[h!]
     \centering
-    \includegraphics[scale=0.8]{figures/standardized_residuals/effect_of_pretraining/standardized_residuals_hmc_vs_pretraining_steps.pdf}
+    \includegraphics[scale=0.7]{figures/r2_scores/r2_score_vs_pretraining.pdf}
+    \caption{The figure shows the computed $R^2$-scores of a model with the architecture 5-20-20-1 with $\tanh(x)$ as the
+    hidden activation function. In this case the varying number of the number of epochs run with pretraining starting from 32 all the way up to 8192. The batch size used was 32 with the ADAM optimizer. The number of warm-up steps was 1000 (200 of which were burn-in steps and 800 were adaptation steps). We fixed the Leapfrog steps to $L = 512$ using the HMC sampler. As usual we sampled 1000 neural networks with 10 steps between each sample.
+    }
+    \label{fig:r2_score_vs_pretraining}
+\end{figure}
+
+
+\begin{figure}[h!]
+    \centering
+    \includegraphics[scale=0.7]{figures/standardized_residuals/effect_of_pretraining/standardized_residuals_hmc_vs_pretraining_steps.pdf}
     \caption{The figure shows the standardized residuals of a model with the architecture 5-20-20-1 with $\tanh(x)$ as the
     hidden activation function. In this case the varying number of the number of epochs run with pretraining starting from 32 all the way up to 8192. The batch size used was 32, the number of warm-up steps was 1000 (200 of which were burn-in steps and 800 were adaptation steps). We fixed the Leapfrog steps to $L = 512$ using the HMC sampler. The ADAM optimizer was used for the pretraining phase. As usual we sampled 1000 neural networks with 10 steps between each sample.
     }
@@ -271,12 +294,12 @@ hyperparameters are fixed. The figure demonstrates a pretty noticable improvemen
 \end{figure}
 
 \subsubsection{Effect of Number of Parameters}
-Increasing the number of parameters of the BNN model may help capture the underlying model from the data to a larger degree. The typical problems posed by the \textit{bias-variance trade-off} \cite{ml_for_physicists} (pages 12-13) does not play as significant a role here since the trained model can compute a sample variance along with its prediction. This does not mean it is immune, however, as the model will still sample according to the nuances found in the training data which in principle may be due to noise. As explained in section \ref{sec:perf_metrics}, the dataset produced by {\tt Prospino} contains very little noise and thus specializing the model to inherent noise is not the issue. Instead, we may be a bit unfortunate with the splitting of the dataset such that the training data itself contains information in some of its datapoints that are not present in the test data or vice versa. This may result in a model with a large set of parameters that produces poor results when generalizing to the unseen test data. Moreover, the dataset we use is fairly small (~ 16000 datapoints in total), which may exacerbate the overfitting effect.
+Increasing the number of parameters of the BNN model may help capture the underlying model from the data to a larger degree. The typical problems posed by the \textit{bias-variance trade-off} \cite{ml_for_physicists} (pages 12-13) does not play as significant a role here since the trained model can compute a sample variance along with its prediction. This does not mean it is immune, however, as the model is still sampled according to the nuances found in the training data which in principle may be due to noise or not be particularly representive of the distribution of the underlying process we are trying to learn from the training data. As explained in section \ref{sec:perf_metrics}, the dataset produced by {\tt Prospino} contains very little noise and thus specializing the model to the inherent noise is not the issue. Instead, we may be a bit unfortunate with the splitting of the dataset such that the training data itself contains information in some of its datapoints that are not present in the test data or vice versa. Another problem may rise from problematic outliers that the training procedure will adjust the final sampled parameters to account for. If a model has a large number of parameters, then, the training may produce a BNN model that generalizing poorly to the unseen test data. Moreover, the dataset we use is fairly small ($\sim 16000$ datapoints in total), which may exacerbate the effect. 
 In figure \ref{fig:standardized_residual_vs_params}, we show the computed standardized residual distribution of the models listed in table \ref{tab:deep_models}, which gives us an idea of the performance the BNNs have on this dataset as a function of the number of parameters. We can note that model 3 and 4 performs fairly well given our chosen benchmark measure, but that model 5's performance degrade somewhat, which is the model that contains the most parameters of the models tested. 
 
-\begin{figure}
+\begin{figure}[h!]
     \centering
-    \includegraphics[scale=0.8]{figures/standardized_residuals/standardized_residual_simple_models.pdf}
+    \includegraphics[scale=0.7]{figures/standardized_residuals/standardized_residual_simple_models.pdf}
     \caption{
         The figure shows the distribution of the standardized residuals computed on the test data using the models listed in table \ref{tab:deep_models}. The Normal distribution is drawn in with a dotted black line for benchmarking reference.
         The figure is meant to illustrate the performance of the models with respect to the number of parameters in the models.
@@ -289,7 +312,7 @@ In figure \ref{fig:standardized_residual_vs_params}, we show the computed standa
 As we discussed in chapter \ref{chap:bayesian_ml}, one of the primary objects we seek to compute
 in Bayesian ML is the predictive distribution $p(y^*|x^*, D)$ for a target $y^*$ given an unseen input point $x^*$ and
 a training dataset $D$. In figure \ref{fig:predictive_distributions}, we show the predictive distribution computed with model 3 in table \ref{tab:deep_models}. In the figure on top, the sample mean approximates the true target well with a fairly small spread in the distribution which is a desirable outcome in most cases. There are, however, ill cases as well which we demonstrate in the figure at the bottom. Here the true target lies entirely outside the predictive distribution. Thus care must be taken to understand when a BNNs prediction is reliable and when it is not.
-\begin{figure}
+\begin{figure}[h!]
     \centering
     \includegraphics[scale=0.7]{figures/predictive_distributions/predictive_distribution_point_idx_360.pdf}
     \includegraphics[scale=0.7]{figures/predictive_distributions/predictive_distribution_point_idx_2052.pdf}
