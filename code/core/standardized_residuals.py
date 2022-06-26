@@ -15,6 +15,7 @@ from slha_loader.slha_loader import SLHALoader
 from utils.preprocessing import split_data
 
 
+
 def main():
     particle_ids = ["1000022"] * 2
     target_dir = "./targets"

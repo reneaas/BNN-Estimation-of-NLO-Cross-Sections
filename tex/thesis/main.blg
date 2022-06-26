@@ -3,44 +3,49 @@ Capacity: max_strings=200000, hash_size=200000, hash_prime=170003
 The top-level auxiliary file: main.aux
 The style file: JHEP.bst
 Database file #1: bibliography.bib
-You've used 21 entries,
+Warning--I'm ignoring r2_score's extra "note" field
+--line 16 of file bibliography.bib
+Warning--I'm ignoring r2_score's extra "note" field
+--line 17 of file bibliography.bib
+You've used 22 entries,
             2188 wiz_defined-function locations,
-            657 strings with 7655 characters,
-and the built_in function-call counts, 5317 in all, are:
-= -- 499
-> -- 281
+            668 strings with 7962 characters,
+and the built_in function-call counts, 5726 in all, are:
+= -- 543
+> -- 295
 < -- 0
-+ -- 82
-- -- 61
-* -- 399
-:= -- 777
-add.period$ -- 29
-call.type$ -- 21
-change.case$ -- 17
++ -- 86
+- -- 64
+* -- 432
+:= -- 831
+add.period$ -- 30
+call.type$ -- 22
+change.case$ -- 18
 chr.to.int$ -- 0
-cite$ -- 21
-duplicate$ -- 234
-empty$ -- 536
-format.name$ -- 61
-if$ -- 1365
+cite$ -- 22
+duplicate$ -- 253
+empty$ -- 571
+format.name$ -- 64
+if$ -- 1472
 int.to.chr$ -- 0
-int.to.str$ -- 21
-missing$ -- 47
-newline$ -- 74
-num.names$ -- 22
-pop$ -- 106
+int.to.str$ -- 22
+missing$ -- 51
+newline$ -- 77
+num.names$ -- 23
+pop$ -- 108
 preamble$ -- 1
 purify$ -- 0
 quote$ -- 0
-skip$ -- 138
+skip$ -- 155
 stack$ -- 0
-substring$ -- 191
-swap$ -- 70
+substring$ -- 227
+swap$ -- 81
 text.length$ -- 0
 text.prefix$ -- 0
 top$ -- 0
 type$ -- 0
 warning$ -- 0
-while$ -- 38
-width$ -- 23
-write$ -- 203
+while$ -- 41
+width$ -- 24
+write$ -- 213
+(There were 2 warnings)

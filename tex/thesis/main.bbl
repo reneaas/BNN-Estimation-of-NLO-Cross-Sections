@@ -105,6 +105,13 @@ P.~Ramachandran, B.~Zoph and Q.~V. Le, \emph{Searching for activation
   functions}, {\emph{CoRR} {\bf abs/1710.05941} (2017) },
   [\href{http://arxiv.org/abs/1710.05941}{{\tt 1710.05941}}].
 
+\bibitem{r2_score}
+D.~Chicco, M.~J. Warrens and G.~Jurman, \emph{The coefficient of determination
+  r-squared is more informative than smape, mae, mape, mse and rmse in
+  regression analysis evaluation},
+  \href{http://dx.doi.org/10.7717/peerj-cs.623}{\emph{PeerJ. Computer science}
+  {\bf 7} (Jul, 2021) e623--e623}.
+
 \bibitem{xla}
 A.~Sabne, \emph{{X}{L}{A} : {C}ompiling {M}achine {L}earning for {P}eak
   {P}erformance},  2020.

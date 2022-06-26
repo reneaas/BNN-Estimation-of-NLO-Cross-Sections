@@ -30,9 +30,9 @@ We will not worry too much about the choice of priors as the term in the potenti
 
 The likelihood for regression from eq.~\eqref{eq:likelihood_fn} formulated in terms of a neural network $\hat{f}(x^{(i)};W, b)$ is
 \begin{equation}
-  p(D|W, b) = \exp \left(-\frac{1}{2\sigma^2}\sum_{i=1}^N\norm{y^{(i)} - \hat{f}(x^{(i)};W, b)}_2^2\right).
+  p(D|W, b) = \exp \left(-\frac{1}{2\sigma^2}\sum_{i=1}^N\norm{y^{(i)} - \hat{f}(x^{(i)};W, b)}_2^2\right),
 \end{equation} 
-This is not the only valid choice for a likelihood function but it is the common choice since it can be identified with the Euclidean $L^2$-norm and
+where $\sigma$ is treated as a hyperparameter. This is not the only valid choice for a likelihood function but it is the common choice since it can be identified with the Euclidean $L^2$-norm and
 its ``neat'' mathematical properties.
 
 Combining the priors and the likelihood with eq.~\eqref{eq:loss_function_of_posterior} yields the potential energy function
@@ -55,11 +55,11 @@ Training BNNs in practice requires us to specify a fairly large number of hyperp
 \end{enumerate}
 
 \subsection{Training Algorithm of Bayesian Neural Networks}
-In this section we shall turn our attention to an actual training algorithm for BNNs. Assume we pick a sampler $S$ that represents either HMC or NUTS and a specified permuation of the hyperparameters discussed in the last section. In practice we can summarize a training algorithm as follows.
+In this section we shall turn our attention to an actual training algorithm for BNNs. Assume we pick a sampler $S$ that represents either HMC or NUTS and a specified permutation of the hyperparameters discussed in the last section. In practice we can summarize a training algorithm as follows.
 \begin{enumerate}
   \item Initialize the weights of the model from the specified priors, i.e.
   \begin{equation}
-    W^\ell \sim p(W^\ell) \qq{and} b^\ell \sim p(b^\ell) \qq{for} \ell=1,\ldots, L.
+    \qq*{Sample} W^\ell \sim p(W^\ell) \qq{and} \qq*{sample} b^\ell \sim p(b^\ell) \qq{for} \ell=1,\ldots, L.
   \end{equation}
   \item Minimize the potential energy function $\mathcal{L}$ with respect to the weights of the model using an optimizer of your choice to obtain a point estimate for use as the initial state of the Markov chain.
   \item Initialize the Markov chain for a finite set of burn-in steps to achieve mixing using $S$. A proportion of the initial burn-in steps are used for step size adaptation, while the remaining are used for mixing.

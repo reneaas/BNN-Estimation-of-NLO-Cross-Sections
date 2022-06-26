@@ -1,6 +1,11 @@
+Six technical chapters have culminated to the main event, the numerical experiments and their results. This is where we learn if BNNs can deliver on the promise of substituting direct calculations of cross sections. We will begin with a description of the dataset and the data transformations made prior to training and their potential implications for the predictive performance of the trained BNNs. We will then explain the methodology employed including the implementation details, the selection of BNN models and hyperparameters and performance metrics. Once discussed, we will explore the results and their consequences.
+
+
+
 \section{The Dataset}\label{sec:dataset}
 In this section, we will describe the dataset and how it is generated. Moreover, we will discuss the data transformations prior to training and its implications on the accuracy of the predictions.
-\subsection{Data Generation}
+
+For the predictions presented in this chapter, we have restricted our investigations to use the dataset for the particle process throughout. This will make it easier to compare the performance of BNNs across different configurations to better understand the strengths and shortcomings of the different choices made when training BNNs. 
 
 
 \subsection{Data Scaling and Transformations}
@@ -8,8 +13,13 @@ We shall briefly discuss how the training data is transformed before training.
 The targets in the dataset of NLO cross sections can span several orders of magnitude. For practical training of BNNs, this would require
 model parameters that also span several orders of magnitude. The result will usually be overflow and thus unsucessful training of the models.
 Therefore, we have chosen to map the targets using the base-10 logarithm, i.e. $y \mapsto \log_{10}(y)$. More generally, we could choose any base-$a$ logarithm. A practical consideration here is that once the model is trained, any prediction it produces must be transformed back using
-the inverse mapping. As we increase the value of $a$, the precision the model's prediction decreases. Thus a small error in log-space 
+the inverse mapping to produce a cross section. As we increase the value of $a$, the precision the model's prediction decreases. Thus a small error in log-space 
 can result in a large error in what we may refer to as the target space, the larger the value of $a$ is. 
+We will explore the performance both in log space using the transformed data and in target space by applying the inverse mapping to the predictions.
+
+\begin{comment}
+    A final aspect we mention is that only $a$ on the form $a = 2^b$ for an integer $b \geq 0$ will yield transformed data that can be represented exactly on a computer. Any other transformation automatically introduces a truncation or rounding error once the transformation is performed which introduces a small systematic error in the training data \textit{before} even training has begun. 
+\end{comment}
 
 \subsection{Data Splitting}
 The conventional way is to split the dataset $\mathcal{D}$ into three subsets: 
@@ -18,16 +28,18 @@ The conventional way is to split the dataset $\mathcal{D}$ into three subsets:
     \item A validation set $\mathcal{D}_\text{val}$. This dataset is typically the smallest of the bunch and is sometimes used in classical machine learning problems to perform cross-validation or similar methods. The results measured here are typically used to select hyperparameters of the model.
     \item A test set $\mathcal{D}_\text{test}$. This partition is slightly larger than the validation set and is used as an out-of-sample check to measure the performance of a model. 
 \end{enumerate}
-We have selected to use a division of 80\% training data, 5\% validation data and 15\% as test data. In practice though, the notion of a validation set does not lend itself as easily to Bayesian ML tasks and we may in practice therefore use both the validation and test data as the test set.
+We have selected to use a division of 80\% training data, 5\% validation data and 15\% test data. In practice though, the notion of a validation set does not lend itself as easily to Bayesian ML tasks and we may in practice therefore use both the validation and test data as the test set.
 
 \section{Methodology}
 In this section, we shall explain the methodology used to train and test the BNNs explored in this thesis. We will explain the framework implementation, the selection of models and 
 
 \subsection{Implementation}
 We have utilized the Python libraries {\tt TensorFlow 2.7.0} and {\tt TensorFlow-Probability 0.15.0} to implement the BNNs. 
-The implementation itself is available at \url{LEGG TIL URL HER}. Unfortunately, BNNs trained with HMC or NUTS has not been of interest for most of the deep learning community and as a result not particularly useful implementation of BNNs for these kind of samplers have been implemented directly into the either framework. Therefore, we created our own class that facilitates the usual kind of conveniences shipped with {\tt TensorFlow} such as the ability to automatically save, load or print the model architecture to screen. The class and its functionality is well-documented and made with the intention to be reused, expanded and modified. 
+The implementation itself is available at \url{LEGG TIL URL HER}. Unfortunately, BNNs trained with HMC or NUTS has not been of interest for majority of the deep learning community. The main focus has been with use of surrogate distributions to develop algorithms that when employed using GPUs spend roughly the same amount of time per epoch as training of classical neural networks. As a result no implementations of BNNs for these kind of samplers have been implemented directly into the either framework. Luckily, {\tt TensorFlow-Probability} provide general purpose implementations of the samplers we have discussed hithertho 
+which only requires us to define the \textit{unnormalized negative log-target density} (which is the negative potential function -$\mathcal{L}$) to utilize the them. 
+Consequentially, we created our own class that facilitates the usual kind of conveniences shipped with {\tt TensorFlow} such as the ability to automatically save, load or print the model architecture to screen, to name as few. The class and its functionality is well-documented and made with the intention to be reused, expanded and modified. 
 
-Both {\tt TensorFlow} and {\tt TensorFlow-Probability} handle execution on NVIDIA GPUs automatically with minimal effort on the user side, which we have utilized to generate our results. We will also provide measurements that indicate the expected speedup gained from using a GPU instead of a CPU for training of BNNs.
+Both {\tt TensorFlow} and {\tt TensorFlow-Probability} handle execution on NVIDIA GPUs automatically with minimal effort on the user side, which we have utilized to generate our results. We will also provide measurements that indicate the expected speedup gained from using a GPU instead of a CPU for training of BNNs. Some of the results are also generated using the built-in GPU on an M1 Apple Silicon system-on-chip (SoC), since a port that supports execution on this device is available. In any case where computational performance is measured, we will make it crystal clear on what hardware the calculations are performed.
  
 
 \subsection{Selection of Models and Hyperparameters}
@@ -35,9 +47,9 @@ In order to better understand the behaviour of BNNs, we have chosen to train a s
 \begin{table}[h!]
     \centering
     \caption{
-        The table shows the models used in this section. For each model, 1000 sampled networks were sampled to collectively represent each BNN model. We used 2500 warm-up steps (20\% burn-in and 80\% adaptation). We skipped 10 samples for each sampled network. We used 1000 pretraining epochs with a batch size of 32. The kernel used for each model was the NUTS kernel with a maximum of $L = 4096$ Leapfrog steps.
+        The table shows the models used in this section. For each model, 1000 sampled networks were sampled to collectively represent each BNN model. We used 2500 warm-up steps (20\% burn-in and 80\% adaptation). We skipped 10 samples for each sampled network. We performed 1000 pretraining epochs with a batch size of 32 using the ADAM optimizer. The kernel used for each model was the NUTS kernel with a maximum of $L = 4096$ Leapfrog steps.
         The number of nodes per layer is shown in the ``Layers'' column.
-        For each hidden layer, we used $\tanh(x)$ as the activation function. The final layer uses an identity function.
+        For each hidden layer, we used $\tanh(x)$ as the activation function. The final layer used an identity activation.
     }
 \begin{tabular}{c@{\hspace{1cm}}c@{\hspace{1cm}} c}
 \hline
@@ -57,29 +69,41 @@ In order to better understand the behaviour of BNNs, we have chosen to train a s
 \subsection{Performance Metrics}\label{sec:perf_metrics}
 In this section, we will discuss the performance metrics used to benchmark and measure the performance of the models trained in this thesis.
 Due to the inherent probabilistic nature of the models trained, any output the model produces will be a distribution from which we can calculate
-a sample mean and variance.
+a sample mean and variance. 
+We will introduce a metric to measure the performance of the mean predictions of the BNNs called coefficient of determination and a metric to assess the BNNs ability to yield reliable uncertainties in its predictions called standardized residuals.
 
-\subsubsection{Relative Error}
-The first and simplest form of performance metric we can use is the \textit{relative error} which is defined as
-\begin{equation}
-    \epsilon(x^*) = \frac{y_\text{true}- \hat{y}_\text{mean}(x^*)}{y_\text{true}},
+\subsubsection{Coefficent of Determination}
+The \textit{coefficent of determination}, or the $R^2$-\textit{score}, is used to assess the quality of the predictions of a model in supervised regression tasks. For a dataset $\mathcal{D} = \{(x^{(i)}, y^{(i)})\}_{i=1}^N$, it is given by
+\begin{equation}\label{eq:r2_score}
+    R^2 = 1 - \frac{\sum_{i=1}^N (y^{(i)} - \hat{y}^{(i)})^2}{\sum_{i=1}^N (y^{(i)} - \bar{y})^2},
 \end{equation}
-where $y_\text{true}$ is the true target and $\hat{y}_\text{mean}(x^*)$ is the sample mean of the empirical predicitive distribution of the model.
+where $y^{(i)}$ denotes the target of an input $x^{(i)}$ and $\hat{y}^{(i)}$ denotes the model prediction and $\bar{y}$ denotes the sample mean of the targets
+\begin{equation}
+    \bar{y} = \frac{1}{N}\sum_{i=1}^N y^{(i)}.
+\end{equation}
+The $R^2$-score lies in the range $R^2 \in (-\infty, 1]$ where the larger the value, the better the model predicts. The score is interpreted as the proportion of the variance in the targets that can be predicted from the inputs. The reason we select this metric is that it provides a more reliable interpretation of the prediction quality of our models than other metrics such as mean squared error (MSE), root mean squared error (RMSE) and the mean absolute error (MAE) which can only be used to compare the predictions of models relative to each other \cite{r2_score}. Their values all lie in the range of $[0, \infty)$ where a perfect prediction would yield zero. The lack of an upper-bound on these alternative metrics make them difficult to interpret in a vacuum, a weakness the $R^2$-score does not suffer from. If $R^2 < 0$, the model performs poorly, while of $R^2 \in [0, 1]$, the model explains the variation in the data with $R^2 = 0$ meaning the model cannot explain any of the variance in the targets around their sample mean. A score of $R^2 = 1$ means a perfect prediction.
+
+Note that when we use BNNs to compute the $R^2$-score, we will replace $\hat{y}^{(i)}$ in eq.~\eqref{eq:r2_score} with the sample mean of the predictive distribution computed by the BNNs. 
 
 \subsubsection{Standardized Residuals}
-A particularly useful way to represent how well a probabilitic model performs is to study its \textit{standardized residual} which is given by
-\begin{equation}
-    z(x^*) = \frac{y_\text{true} - \hat{y}_\text{mean}(x^*)}{\hat{\sigma}(x^*)},
+\textit{Standardized residuals} is a transformation of a model prediction given an input feature $x^*$ and a target $y^*$. The mapping is defined as
+\begin{equation}\label{eq:standardized_residuals}
+    z(x^*) = \frac{y^* - \hat{y}_\text{mean}(x^*)}{\hat{\sigma}(x^*)},
 \end{equation}
-where $\hat{\sigma}(x^*)$ is the square-root of the sample variance. The mathematical representation of the targets $y$ is that they can be decomposed as
+where $\hat{\sigma}(x^*)$ is the square-root of the sample variance of the model predicitions and $\hat{y}_\text{mean}(x^*)$ is the sample mean of the predictions and. The mapping in eq~\eqref{eq:standardized_residuals} resembles the mapping of a random variable $x \sim \mathcal{N}(\mu, \sigma^2)$ onto the standard Normal distribution $z \sim \mathcal{N}(0, 1)$.
+
+
+As we discussed in chapter \ref{chap:bayesian_ml}, the fundamental assumption made is that any target $y$ can be decomposed as
 \begin{equation}
     y = f(x) + \delta,
 \end{equation}
-for some true function $f(x)$ and a random noise $\delta \sim \mathcal{N}(0, 1)$, i.e it is distributed according to a standard Normal distribution. But in the case of data produced by \texttt{Prospino}, the noise is neglible which means that $y \approx f(x)$. The regression error obtained through the sample variance is therefore dominated by the predictive distribution computed by the model itself. In practice, we want a model whose distribution lies inside a Normal distribution for it to be considered a reliable model. This choice is somewhat arbitary of course as we could have opted for a model with a Gaussian distribution with a different variance and used that as a benchmarking measure instead. 
+for some true function $f(x)$ and a random noise $\delta \sim \mathcal{N}(0, 1)$, i.e it is distributed according to a standard Normal distribution. But the noise in the data produced by \texttt{Prospino} is neglible, which means that $y \approx f(x)$. The regression error obtained through the sample variance of the model predictions must therefore be dominated by the variance of the predictive distribution computed by the model itself. Let $\sigma_z^2$ denote the variance of the distribution of the standardized residual. If $\sigma_z > 1$, the model will be considered overconfident in its predictions since the sample variance of the model's predictions are smaller than the variance of the targets around the mean prediction. On the other hand, if $\sigma_z \leq 1$, we consider the model to yield reliable uncertainty estimates. In this case, the model is not considered to be ``underconfident'' but rather ``conservative''.
 
 
 
-\section{Results}\label{sec:results}
+\section{Results and Discussion}\label{sec:results}
+In this section we present the results from various numerical experiments and discuss their implications. We start off with measurement of computational performance with a focus on training time, prediction time and loading times. We then investigate the posterior distribution projected onto a 2-dimensional planes of the BNN weights to investigate their property with a focus on whether typical approximations made in the literature provides a sufficient representation of the exact posterior distribution. Following this, we present the effect of various hyperparameters pertaining to the training of BNNs, including the performance achieved when using HMC and NUTS. Finally, we explore the predictive distributions of various trained BNNs.
+
 \subsection{Computational Performance}
 
 \subsubsection{CPU v. GPU Performance}
@@ -174,11 +198,40 @@ and unlikely to be approximated well with a parameterized surrogate distribution
     \label{fig:time_vs_leapfrogsteps}
 \end{figure}
 
-\subsubsection{The Effect of Number of Burn-in Steps and Step Size Adaptation}
+\subsubsection{The Effect of Number of Warm-up Steps}
 As we discussed in section \ref{sec:practical_bnn}, we must set a predetermined number of warm-up steps, i.e. number of burn-in steps and number of adaptation steps when using {\tt TensorFlow Probability}'s samplers.
 Conventional wisdom would have us believe that increasing the number of burn-in steps increases the probability that the Markov chain has converged
 to the stationary distribution of the posterior. Moreover, the literature has shown that NUTS performs at least as good as or better than HMC with an equivalent number of maximum Leapfrog steps or more as the results in \cite{nuts} demonstrated. In our case we have split the number of warm-up steps to 20\% burn-in steps and 80\% adaptation steps, respectively. This is a heuristic recommended by the {\tt TensorFlow Probability} developers.
-In figure \ref{fig:standardized_residuals_vs_burn_in_steps} we demonstrate that the claims above may not be general enough to apply to BNNs as the HMC performs better almost regardless of how many burn-in/adaptation steps that are performed. When using NUTS, the performance of the model trained with a substantial amount of burn-in/adaptation steps appear to degrade as opposed to improve. The standardized residual of HMC lies consistently inside the Normal distribution for the most part, while the NUTS sampler produced few models that achieve the same. These results, then, actually indicate that we may be better off running the training procedure of BNNs with a fixed $L$, only adapting the step size. Even better, we may get by with a fairly limited amount of burn-in/adaptation steps and a fairly small $L$. The results in figure \ref{fig:standardized_residuals_vs_burn_in_steps} were generated with a fixed $L = 512$ Leapfrog steps when using the HMC sampler, while the NUTS sampler allowed for a maximum of $L = 4096$ Leapfrog steps. In figure \ref{fig:avg_leapfrog_steps_vs_burn_in}, we show the average number of Leapfrog steps the NUTS sampler used during the generation of the Markov chain as a function of number of warm-up steps.
+
+To investigate the effect of the number of warm-up steps, we employed a model with a 5-20-20-1 architechture using $\tanh(x)$ as the activation function on the hidden layers. We fixed the number of pretraining epochs to 2500 with a batch size of 32 using the ADAM optimizer.
+We then trained several models using various number of warm-up steps with both HMC and NUTS. When trained with HMC, we fixed the number of Leapfrog steps to $L = 512$. When trained with NUTS, we set a maximum tree depth of $12$ corresponding to a maximum of $L = 4096$ Leapfrog steps.
+In table \ref{tab:r2_burn_in} we show the achived $R^2$-scores of the different configurations both in log space and target space.
+In figure \ref{fig:standardized_residuals_vs_burn_in_steps} we display the standardized residuals in log space for both sampler over all trained configurations. 
+The standardized residuals demonstrate that the claims above may not be general enough to apply to BNNs as the models trained with HMC performs better almost regardless of how many warm-up steps that are performed. When using NUTS, the performance of the model trained with a substantial amount of warm-up steps appear to degrade as opposed to improve. The standardized residual of HMC lies consistently inside the Normal distribution for the bulk of the distribution albeit with longer tails, while the NUTS sampler produced rather few models that achieve the same. These results, then, actually indicate that we may be better off running the training procedure of BNNs with a fixed $L$, only adapting the step size. Even better, we may get by with a fairly limited amount of warm-up steps and a fairly small $L$. But the claim that NUTS performs at least as well as HMC with an equivalent number of Leapfrog steps begs the question then, how many Leapfrog steps did NUTS use on average? In figure \ref{fig:avg_leapfrog_steps_vs_burn_in}, we show the average number of Leapfrog steps the NUTS sampler used during the generation of the Markov chain as a function of number of warm-up steps. Clearly, NUTS used more Leapfrog steps on average, except in a single case. The NUTS sampler introduces the need for a slightly more complicated analysis than a one-to-one comparison like this though. Recall from chapter \ref{chap:no_u_turn_sampler}, that the NUTS sampler generates samples by running HMC forwards and backwards in time at random for until a stopping condition is met. At this point the sampler selects one of the acceptable points that does not violate detailed balance at random. Thus the selected point may lie close to the initial point while HMC automatically selects the final point of the simulation. Thus for the same number of Leapfrog steps, we should expect HMC to generate larger jumps in parameter space for a suitable step size.
+
+\begin{table}[h!]
+    \centering
+    \caption{
+        The table shows the computed $R^2$-scores in both log space and target space for an increasing number of warm-up steps (20\% burn-in and 80\% adaptation) achieved with HMC and NUTS. The architecture of the BNN model used is 5-20-20-1 with $\tanh(x)$ used as the activation function in the hidden layers. We performed 2500 pretraning steps with a batch size of 32 using the ADAM optimizer. In total 1000 neural networks were sampled with 10 steps between each stored sample. When HMC was used, we ran with a fixed number of Leapfrog steps $L = 512$. When the NUTS sampler was used, we allowed for a maximum of $L = 4096$ Leapfrog steps (a maximum tree depth of $12$).
+    }
+\begin{tabular}{c@{\hspace{1cm}}c@{\hspace{1cm}}c@{\hspace{1cm}} c}
+\hline
+    Sampler & Warm-up steps & $R^2$ (Log space) & $R^2$ (Target space)\\
+\hline
+    HMC & 32 & 0.990 & 0.950 \\
+    HMC & 128 & 0.992 & 0.950 \\
+    HMC & 512 & 0.991 & 0.915 \\
+    HMC & 2048 & 0.988 & 0.948\\
+    HMC & 8192 & 0.990 & 0.877\\
+    NUTS & 32 & 0.989 & -1306 \\
+    NUTS & 128 & 0.991 & 0.917 \\
+    NUTS & 512 & 0.991 & 0.931 \\
+    NUTS & 2048 & 0.987 & 0.855 \\
+    NUTS & 8192 & 0.987 & 0.855 \\
+\hline
+\end{tabular}
+\label{tab:r2_burn_in}
+\end{table}
 
 
 \begin{figure}
@@ -247,21 +300,6 @@ a training dataset $D$. In figure \ref{fig:predictive_distributions}, we show th
 \end{figure}
 
 
-
-\begin{table}[h!]
-    \centering
-\begin{tabular}{c@{\hspace{1cm}}c@{\hspace{1cm}}c@{\hspace{1cm}}c@{\hspace{1cm}}c@{\hspace{1cm}}c}
-\hline
-    Burn-in steps & \makecell{Number \\of \\steps between} & Kernel & \makecell{Number \\ of \\ results} & \makecell{Pretraining \\ epochs} & \makecell{Pretraining \\ batch size} \\
-\hline
-    2500 & 10 & NUTS & 1000 & 1000 & 32 \\
-\hline
-\end{tabular}
-\caption{
-    The table shows the training configuration used to sample the models listed in table~\ref{tab:deep_models}.
-}
-\label{tab:NN_mse_scores}
-\end{table}
 
 
 

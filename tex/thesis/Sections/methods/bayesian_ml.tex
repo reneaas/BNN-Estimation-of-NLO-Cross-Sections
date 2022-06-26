@@ -14,9 +14,9 @@ where $x^{(i)} \in \mathbb{R}^p$ is the set of \textit{features}
 and $y^{(i)} \in \mathbb{R}^d$ is the \textit{target}. 
 The next ingredient is to assume the targets can be decomposed as
 \begin{equation}\label{eq:model_assumption}
-	y = f(x) + \epsilon,
+	y = f(x) + \delta,
 \end{equation}
-for some true function $f : \mathbb{R}^p \to \mathbb{R}^d$ (also known as the \textit{ground truth}), where $\epsilon \in \mathbb{R}^d$ is introduced to account for random noise. 
+for some true function $f : \mathbb{R}^p \to \mathbb{R}^d$ (also known as the \textit{ground truth}), where $\delta \in \mathbb{R}^d$ is introduced to account for random noise. 
 The objective is to learn $f(x)$ from the dataset. To this end, we choose a \textit{model class} $\hat{f}(x; \theta)$ 
 parameterized by a model parameters $\theta \in \mathbb{R}^m$,
 combined with a procedure to infer an estimate of the parameters $\hat{\theta}$ such that the model is as close to $f(x)$ as possible. 

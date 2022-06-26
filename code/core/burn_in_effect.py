@@ -10,6 +10,7 @@ import re
 from bnn.bnn import BayesianNeuralNetwork
 from slha_loader.slha_loader import SLHALoader
 from utils.preprocessing import split_data
+from utils.metrics import r2_score
 import sys 
 
 # def get_data(root_dir):
@@ -36,9 +37,13 @@ def get_data(fname):
         data = {key: val for key, val in zip(keys, vals)}
     return data
 
-def main():
-    # Load dataset
-    particle_ids = ["1000022"] * 2
+def load_models(model_fnames):
+    models = [BayesianNeuralNetwork() for _ in model_fnames]
+    for bnn, model_name in zip(models, model_fnames):
+        bnn.load_model(fname=model_name)
+    return models
+
+def load_dataset(particle_ids):
     dl = SLHALoader(
         particle_ids=particle_ids,
         feat_dir="./features",
@@ -53,12 +58,11 @@ def main():
     features = features[idx]
 
     data = split_data(features=features, targets=targets)
-    x_test, y_test = data.get("test")
-    x_test = tf.convert_to_tensor(x_test, dtype=tf.float32)
-    y_test = y_test.squeeze(-1)
-    y_test = tf.convert_to_tensor(y_test, dtype=tf.float32)
+    return data
 
 
+
+def main():
     # Load models
 
     layers = "[5, 20, 20, 1]"
@@ -68,7 +72,7 @@ def main():
 
     step = 2
     root_dir = "./models/"
-    kernel = "hmc"
+    kernel = "nuts"
     model_fnames = [
         root_dir + f"kernel_{kernel}_results_1000_burnin_{int(2 ** i)}_epochs_2500_leapfrogsteps_512_nodes_{layers}.npz"
         for i in range(5, 14, step)
@@ -103,17 +107,22 @@ def main():
 
 
     dir = "/Users/reneaas/Documents/skole/master/thesis/master_thesis/tex/thesis/figures/standardized_residuals/effect_of_burnin/"
-    fname = f"avg_burnin_steps_nuts_vs_burn_in_steps.pdf"
-    plt.savefig(dir + fname)
+    fname = f"avg_burnin_steps_{kernel}_vs_burn_in_steps.pdf"
+    # plt.savefig(dir + fname)
     plt.show()
-    sys.exit()
+
+
+    # Load dataset
+    data = load_dataset(particle_ids=["1000022"] * 2)
+    x_test, y_test = data.get("test")
+    x_test = tf.convert_to_tensor(x_test, dtype=tf.float32)
+    y_test = y_test.squeeze(-1)
+    y_test = tf.convert_to_tensor(y_test, dtype=tf.float32)
+
 
     num_burnin_steps = [int(2 ** i) for i in range(5, 14, step)]
     
-    models = [BayesianNeuralNetwork() for _ in model_fnames]
-    for bnn, model_name in zip(models, model_fnames):
-        bnn.load_model(fname=model_name)
-    print(*models)
+    models = load_models(model_fnames=model_fnames)
 
     model_data = {
         "models": models,
@@ -123,13 +132,10 @@ def main():
     
 
     y_preds = [bnn(x_test).numpy().squeeze(-1) for bnn in models]
-    print([y.shape for y in y_preds])
     y_mean = [np.mean(y, axis=0) for y in y_preds]
-    print([y.shape for y in y_mean])
     residuals = [y - y_test for y in y_mean]
     y_std = [np.std(y, axis=0) for y in y_preds]
     std_residuals = [(res / std).numpy() for res, std in zip(residuals, y_std)]
-    print([p.shape for p in std_residuals])
 
 
     x_min, x_max = -5, 5
@@ -147,8 +153,41 @@ def main():
 
     dir = "/Users/reneaas/Documents/skole/master/thesis/master_thesis/tex/thesis/figures/standardized_residuals/effect_of_burnin/"
     fname = f"standardized_residuals_{kernel}_vs_burn_in_steps.pdf"
-    plt.savefig(dir + fname)
+    # plt.savefig(dir + fname)
     plt.show()
+
+
+    model_predictions = [bnn(x_test).numpy().squeeze(-1) for bnn in models]
+    mean_predictions = [np.mean(p, axis=0) for p in model_predictions]
+    predictions_std = [np.std(p, axis=0) for p in model_predictions]
+
+    r2_scores_log = [
+        r2_score(y_true=y_test, y_pred=y_pred) for y_pred in mean_predictions
+    ]
+    print(f"Log space: {r2_scores_log = }")
+
+    # Target space calculations
+
+    y_test = 10 ** y_test
+    model_predictions = [10 ** y_pred for y_pred in model_predictions]
+    mean_predictions = [np.mean(p, axis=0) for p in model_predictions]
+    r2_scores = [
+        r2_score(y_true=y_test, y_pred=y_pred) for y_pred in mean_predictions
+    ]
+    print(f"Target space: {r2_scores = }")
+
+    with open(file=f"tab_data/r2_scores_burn_in_effect_{kernel}.txt", mode="w") as outfile:
+        outfile.write(
+            "model r2_log r2_target \n"
+        )
+        for i, (r2_log, r2) in enumerate(zip(r2_scores_log, r2_scores)):
+            outfile.write(f"{i + 1} {r2_log} {r2} \n")
+
+
+
+    # Compute r2 scores
+
+
 
 
 
