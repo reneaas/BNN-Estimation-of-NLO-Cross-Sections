@@ -12,15 +12,14 @@ from utils.preprocessing import split_data
 import sys 
 
 
-
-def main():
+def load_models():
     model_fname = "models/3_hidden_layers_tanh.npz"
     bnn = BayesianNeuralNetwork()
     bnn.load_model(fname=model_fname)
     print(bnn)
+    return bnn
 
-
-    particle_ids = ["1000022"] * 2
+def load_dataset(particle_ids):
     dl = SLHALoader(
         particle_ids=particle_ids,
         feat_dir="./features",
@@ -35,6 +34,11 @@ def main():
     features = features[idx]
 
     data = split_data(features=features, targets=targets)
+    return data
+
+def good_vs_bad_cases():
+    bnn = load_models()
+    data = load_dataset(particle_ids=["1000022"] * 2)
     x_test, y_test = data.get("test")
     x_test = tf.convert_to_tensor(x_test, dtype=tf.float32)
     y_test = y_test.squeeze(-1)
@@ -61,6 +65,36 @@ def main():
         plt.savefig(dir + f"predictive_distribution_point_idx_{idx}.pdf")
         plt.close()
 
+def confidence_interval(data_type="test"):
+    bnn = load_models()
+    data = load_dataset(particle_ids=["1000022"] * 2)
+    x_test, y_test = data.get(data_type)
+    x_test = tf.convert_to_tensor(x_test, dtype=tf.float32)
+    y_test = y_test.squeeze(-1)
+    # y_test = tf.convert_to_tensor(y_test, dtype=tf.float32)
+    predictions = bnn(x_test).numpy().squeeze(-1)
+
+    sample_mean = np.mean(predictions, axis=0)
+    sample_std = np.std(predictions, axis=0)
+
+    idx_above = (sample_mean - sample_std <= y_test)
+    idx_below = (y_test <= sample_mean + sample_std)
+    idx = (idx_above == idx_below)
+    cumulative_confidence = []
+    stddevs = [k for k in range(1, 6)]
+    # stddevs = np.linspace(0.1, 5, 15)
+    for i, k in enumerate(stddevs):
+        # stddevs.append(k)
+        idx_above = 1. * (sample_mean - k * sample_std <= y_test)
+        idx_below = 1. * (y_test <= sample_mean + k * sample_std)
+        n = np.sum(idx_above * idx_below)
+        print(f"{n = } ; {n / y_test.shape[0] = } ; {k = }")
+        cumulative_confidence.append(n / y_test.shape[0])
+
+
+    return stddevs, cumulative_confidence
+    
+
 
 
    
@@ -68,4 +102,17 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    data_types = ["train", "val", "test"]
+    for d in data_types:
+        stddevs, cumulative_confidence = confidence_interval(data_type=d)
+        plt.plot(stddevs, cumulative_confidence, label=d)
+        plt.scatter(stddevs, cumulative_confidence, marker="x")
+        plt.axhline(y=0.95, linestyle="--", color="black")
+
+    plt.xlabel("$k$")
+    plt.ylabel("Percentage of Predictions")
+    plt.legend()
+    dir = "/Users/reneaas/Documents/skole/master/thesis/master_thesis/tex/thesis/figures/confidence_estimation/"
+    fname = dir + "good_vs_bad_cases_confidence.pdf"
+    plt.savefig(fname)
+    plt.close()

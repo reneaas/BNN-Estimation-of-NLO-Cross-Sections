@@ -4,6 +4,13 @@
 M.~D. Hoffman and A.~Gelman, \emph{The {N}o-{U}-{T}urn {S}ampler: {A}daptively
   {S}etting {P}ath {L}engths in {H}amiltonian {M}onte {C}arlo},  2011.
 
+\bibitem{colliderbit}
+C.~Bal{\'{a}}zs, , A.~Buckley, L.~A. Dal, B.~Farmer, P.~Jackson et~al.,
+  \emph{{ColliderBit}: a {GAMBIT} module for the calculation of high-energy
+  collider observables and likelihoods},
+  \href{http://dx.doi.org/10.1140/epjc/s10052-017-5285-8}{\emph{The European
+  Physical Journal C} {\bf 77} (nov, 2017) }.
+
 \bibitem{prospino}
 W.~Beenakker, R.~Hoepker and M.~Spira, \emph{Prospino: A program for the
   production of supersymmetric particles in next-to-leading order qcd},  1996.
@@ -14,6 +21,11 @@ A.~Buckley, A.~Kvellestad, A.~Raklev, P.~Scott, J.~V. Sparre, J.~V. den Abeele
   et~al., \emph{Xsec: the cross-section evaluation code},
   \href{http://dx.doi.org/10.1140/epjc/s10052-020-08635-y}{\emph{The European
   Physical Journal C} {\bf 80} (dec, 2020) }.
+
+\bibitem{universal_function_approximator}
+T.~Nishijima, \emph{Universal approximation theorem for neural networks},
+  2021.
+\newblock 10.48550/ARXIV.2102.10993.
 
 \bibitem{ADAM}
 D.~P. Kingma and J.~Ba, \emph{Adam: A method for stochastic optimization},

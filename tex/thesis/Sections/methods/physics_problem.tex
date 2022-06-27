@@ -1,31 +1,44 @@
-In this chapter, we shall motivate the need for Bayesian machine learning regression models to replace deterministic methods in high-energy physics in search for Beyond the Standard Model (BSM) physics. We will start of with an brief survey of the conventional way to compute cross sections, its need for precision and the inherent problems involved. We will end the chapter with a discussion of how Bayesian regression can provide a substitute for the standard way to compute cross sections.
+In this chapter, we shall motivate the need for Bayesian machine learning regression models to replace deterministic methods in high-energy physics in the search for Beyond the Standard Model (BSM) physics. We will start off with a brief survey of the conventional way to compute cross sections, its need for precision and the inherent problems involved. We will end the chapter with a discussion of how Bayesian regression can provide a substitute for the standard way to compute cross sections.
 
 
 \section{Computation of Beyond the Standard Model Cross Sections}
-The Standard Model of particle physics (SM) is a successful fundamental theory that describes the fundamental particles of nature and their interactions.  Despite its success, however, it has a few limitations on its own which has led physicists to propose extentions to the model to explain physics that SM cannot. One such family of extensions is called \textit{supersymmetry}. Theories like this are known as BSM models. 
+The Standard Model of particle physics (SM) is a successful fundamental theory that describes the fundamental particles of nature and their interactions.  Despite its success, however, it has a few limitations on its own which has led physicists to propose extentions to the model to explain physics that the SM cannot. One such family of extensions is called \textit{supersymmetry}. Theories like this are known as BSM models. 
 
-In order to test whether a symmersymmetric extension to SM is valid, one has to search through large parameter spaces where the parameters themselves somewhat simplified represent the properties of the particles in the model. The technical aspect is to rather \textit{exclude} regions of parameter space which cannot explain observed data. To this end, theoretical physicists must compute what is known as a \text{cross section} $\sigma$. These are roughly speaking the probability that a particular \text{event} occurs in a particular experiment. The total number of events is given by the \textit{event equation}
-\begin{equation}
+In order to test whether a particular symmersymmetric extension to the SM is valid, one has to search through large (high-dimensinoal) parameter spaces where the parameters themselves somewhat simplified represent the properties of the particles in the model. The technical aspect is to rather \textit{exclude} regions of parameter space which cannot explain observed data. To this end, theoretical physicists must compute what is known as a \text{cross section} $\sigma$. These are roughly speaking the probability that a particular \text{event} occurs in a particular collider experiment. The total number of such events is given by the \textit{event equation}
+\begin{equation}\label{eq:event_equation}
     n = \sigma \epsilon A \mathcal{L},
 \end{equation}
-where $\epsilon$ represents the efficiency of the experimental apparatus, $A$ represents the acceptance and $\mathcal{L}$ is the integrated luminosity over the data used in the search or experiment. The job of the theoretical physicist is to compute $\sigma$, as all the other quantities can be inferred or measured from the experimental setup used.
+where $\epsilon$ represents the efficiency of the experimental apparatus, $A$ represents the acceptance and $\mathcal{L}$ is the integrated luminosity of the data taken in the search or experiment, i.e. the amount of data. The job of the theoretical physicist is to compute $\sigma$, as all the other quantities can be inferred or measured from the experimental setup used.
 
-We may decompose the total number events as
+We may further decompose the total number events as
 \begin{equation}\label{eq:total_events_decomp}
     n = s + b,
 \end{equation}
-where $b$ is called the \textit{background} which is the portion of the events explained by the Standard Model. Here $s$ represents a portion of $n$ which cannot be explained by SM, but rather the new BSM model. Strictly speaking, the model proposed may only explain a subset of the total events that are not explained by the background and thus the decomposition in eq.~\eqref{eq:total_events_decomp} should contain an additional term not explained by either. 
-On a more technical level, the event equation can be divided into several \textit{cuts} or \textit{signal regions}. Anything below a certain threshold is excluded in this case. For a cut $i$, the general event equation reads
+where $b$ is called the \textit{background} which is the portion of the events explained by the SM. Here $s$ represents a portion of $n$ which cannot be explained by SM, but rather the new BSM model, and is called the \textit{signal}. Strictly speaking, the model proposed may only explain a subset of the total events. 
+On a more technical level, the event equation can be divided into several \textit{cuts}. A cut defined a range of an experimentally measured quantity where anything outside of it is excluded. A \textit{signal region} consists of a set of cuts. For a signal region $i$, the event equation reads
 \begin{equation}\label{eq:general_event_eq}
     n_i = \sigma \epsilon_i A_i \mathcal{L}.
 \end{equation} 
-All but the cross section and the integrated luminosity depend on the cuts.
+All but the cross section and the integrated luminosity depend on the signal region.
 
-Computation of cross sections involves computation of terms in a perturbation expansion of the form 
-\begin{equation}
-    \sigma = \underbrace{\text{leading-order}}_{=\text{LO}} + \underbrace{\text{next-to-leading-order}}_{=\text{NLO}} + \cdots.
+The computation of $\sigma$ in eq.~\eqref{eq:event_equation} needs to be carried out to a high accuracy to yield a greater exlusion power. To explain why, consider the Poisson likelihood
+\begin{equation}\label{eq:poisson_likelihood}
+    \mathcal{L}(n|s, b) = \int_0^\infty \frac{[\xi(s + b)]^n e^{-\xi(b + s)}}{n!}P(\xi)\dd \xi,
 \end{equation}
-Computation of the cross section used in the event equation is in practice carried out using {\tt Prospino} \cite{prospino}. It is a software developed to compute cross sections up to the next-to-leading-order (NLO) term. This computation is exceedingly expensive and can take up to the order of hours for a single tuple of input parameters \cite{xsec}. This computational expense significantly hampers the exclusion of parameter regions of BSM models. The search for new physics is thus halted not by lack of possible BSM models to explain the discrepancies between the SM predictions and the observed data but instead by the computational cost to perform the search itself.
+where $\xi$ is a rescaling parameter and $P(\xi)$ is its probability distribution which is peaked at $\xi = 1$.
+Its width is defined by
+\begin{equation}\label{eq:xi_width}
+    \sigma_\xi^2 = \frac{\sigma_s^2 + \sigma_b^2}{(s + b)^2},
+\end{equation}
+where $\sigma_s$ is the systematic uncertainty of the signal predictions $s$ and $\sigma_b$ is the systematic uncertainty of the background $b$. The particular form of $P(\xi)$ given a width $\sigma_\xi$ is typically chosen to be Gaussian or log-normal \cite{colliderbit}.
+To compare $s$ and $b$ correctly to $n$ we must evaluate eq.~\eqref{eq:poisson_likelihood}. If $\sigma_s$ is large, this will increase the width $\sigma_\xi$ which yields a larger value of the likelihood for all points $\xi$. The consequence is less exclusion power achieved by the statistical analysis for the experimental data from which $n$ was measured.
+
+Computation of cross sections involves computation in quantum field theory of terms in a perturbation expansion which are of the form 
+\begin{equation}
+    \sigma = \alpha^2\sigma_{\text{LO}} +  \alpha^4 \sigma_{\text{NLO}} + \text{higher order terms},
+\end{equation}
+where $\alpha$ is a small parameter, $\sigma_{\text{LO}}$ is the leading order (LO) term and $\sigma_{\text{NLO}}$ is the next-to-leading order (NLO) term.
+For supersymmtric models, computation of the cross section used in the event equation is in practice carried out using {\tt Prospino} \cite{prospino}. It is a software developed to compute cross sections up to the (NLO) term. This computation is exceedingly expensive and can take up to the order of hours for a single tuple of input parameters \cite{xsec}. This computational expense significantly hampers the investigation of parameter regions of BSM models. The search for new physics is thus halted, not by lack of possible BSM models to explain the discrepancies between the SM predictions and the observed data, but instead by the computational cost to perform the search itself. But the necessity for high accuracy in the computed cross sections used with the event equation forces the theoretical physicist to carry them out regardless, to progress in the search for new physics.
 
 \begin{comment}
 \begin{itemize}
@@ -49,7 +62,20 @@ Computation of the cross section used in the event equation is in practice carri
 \end{comment}
 
 \section{Bayesian Regression as a Substitute}
-Bayesian regression is a subfield of Bayesian inference and machine learning which attempts to perform regression tasks while simultaenously produce an estimate of the regression error. The need for fast computation of cross sections could be replaced by standard regression in principle but the inability to yield reliable uncertainty estimates with a prediction imply it is difficult to assess whether a prediction is accurate or not when dealing with unseen data. 
+Regression models are widely employed in problems where direct calculation of a target $y \in \mathbb{R}^d$ from an independent variable $x \in \mathbb{R}^p$ (which we usually call the features) is either too expensive to be considered tractible or the relationship between $x$ and $y$ is difficult to capture from first principles. The typical strategy is to represent the relationship between $x$ and $y$ with a mathematical function imbued with a collection of free parameters which are adjusted according to some ``learning'' algorithm that given a large number of examples is able to correctly predict the targets of unseen examples. This is what is referred to as \textit{supervised machine learning}. The strategy has proved to be an efficient one, employing what we may coin as \textit{black box} algorithms where we learn a mathematical function which is able to calculate the target given its independent variable without any intrinstic knowledge of the fundamental relationship between the two. 
+
+It comes with a major drawback, however. Assessing the accuracy of the prediction is difficult if the target is unknown. This is where \textit{Bayesian regression} comes into the picture. Mathematical models trained within the Bayesian regression framework provides a natural way to not only predict a target $y$ but also yield a corresponding uncertainty in its prediction, given an example of $x$.
+The resulting model produces a distribution of targets instead of a single prediction. This allow for a more thorough statistical analysis of the quality of its predictions, which is necessary if the regression model is to be used as a reliable substitute for direct calculations of NLO cross sections.
+
+In this thesis, we propose to perform Bayesian regression using neural networks to substitute direct calculations of NLO cross sections. Neural networks are universal function approximators \cite{universal_function_approximator} and are thus a robust mathematical model to employ for regression tasks that may need a large number of free parameters to learn the relationship between the targets and the features.
+Neural networks trained within the Bayesian framework is referred to as Bayesian neural networks (\textit{roll credits}). Due to the large number of free parameters found in neural networks, using them in Bayesian regression tasks is a considerable challenge. The vast majority of their usage in the literature employ approximate strategies to infer parameters of the model. The main reason for this is that modern machine learning libraries such as TensorFlow or PyTorch provide highly optimized and modular frameworks for neural network models, and research have been conducted to create Bayesian alternatives which spend approximately the same amount of time learning its parameters per training example. Given a set of data examples, the distributions of the model parameters in the neural network are parameterized with a surrogate distribution, i.e. a Gaussian distribution for each parameter. The parameterization is adjusted when shown training examples to ``learn'' an approximation to the true distribution of the model parameters. Once a parameterization is learned, the model can be used to computed a predictive distribution of a target given an example of the independent variable. This is achieved by drawing samples from the learned distribution, usually by use of Markov chain Monte Carlo (MCMC) methods. 
+
+We will explore the properties of Bayesian neural networks where its parameters are sampled from the \textit{exact} posterior using MCMC methods. Important problems to investigate is the computational cost of the methods on different types of hardware such as a CPU and a GPU. The ability to correctly predict targets and yield reliable uncertainty estimates are especially imperative to replace direct calculations of NLO cross sections. Exploring the exact distribution of neural network parameters is also of interest to evaluate the degree to which its distribution can be approximated with parameterized surrogate distributions.
+This will be \textit{some} of the main concerns in this thesis. 
+
+In the next chapter, we shall formalize the notion of a Bayesian regression and Bayesian machine learning precisely.
+
+
 
 
 
