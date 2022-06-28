@@ -50,6 +50,20 @@ the inverse mapping to produce a cross section. As we increase the value of $a$,
 can result in a large error in what we may refer to as the target space, the larger the value of $a$ is. 
 We will explore the performance both in log space using the transformed data and in target space by applying the inverse mapping to the predictions.
 
+
+\begin{comment}
+    \subsubsection{Error Propagation}
+As we discussed in section \ref{sec:data_transform}, we perform the mapping $y \mapsto \log_{10}(y)$ on the targets in the training data. Thus our BNN models will train on targets in log space and its predictions will reside in the same space. Let us denote its predictions as $\hat{y}$ which we treat as a stochastic variable since it produces a predictive distribution given an input $x$. Suppose $\hat{y}_\text{mean}$ is the sample mean of its predictions and $\sigma_{\hat{y}}^2$ is the sample variance. Let us denote $\hat{f} = {10}^{\hat{y}}$ as its prediction transformed back to target space. The differential of $\hat{f}$ is
+\begin{equation}
+    \dd \hat{f} = \dd \hat{y} \ 10^{\hat{y}} \ln(10).
+\end{equation}
+Treating $\dd \hat{y} \to \sigma_{\hat{y}}$ and $\dd \hat{f} \to \sigma_{\hat{f}}$ we can approximate the error propagated from log space onto target space as
+\begin{equation}
+    \sigma_{\hat{f}} \approx \sigma_{\hat{y}} \ 10^{\hat{y}} \ln(10),
+\end{equation}
+where $\hat{y}$ is understood as the sample mean of the 
+\end{comment}
+
 \begin{comment}
     A final aspect we mention is that only $a$ on the form $a = 2^b$ for an integer $b \geq 0$ will yield transformed data that can be represented exactly on a computer. Any other transformation automatically introduces a truncation or rounding error once the transformation is performed which introduces a small systematic error in the training data \textit{before} even training has begun. 
 \end{comment}
@@ -65,7 +79,7 @@ The conventional way is to split the dataset $\mathcal{D}$ into three subsets:
 We have selected to use a division of 80\% training data, 5\% validation data and 15\% test data. In practice though, the notion of a validation set does not lend itself as easily to Bayesian ML tasks and we may in practice therefore use both the validation and test data as the test set.
 
 \section{Methodology}
-In this section, we shall explain the methodology used to train and test the BNNs explored in this thesis. We will explain the framework implementation, the selection of models and 
+In this section, we shall explain the methodology used to train and test the BNNs explored in this thesis. We will explain the implementations, selection of models and hyperparameters and performance metrics used.
 
 \subsection{Implementation}
 We have utilized the Python libraries {\tt TensorFlow 2.7.0} and {\tt TensorFlow-Probability 0.15.0} to implement the BNNs. 
@@ -139,6 +153,8 @@ for some true function $f(x)$ and a random noise $\delta \sim \mathcal{N}(0, 1)$
 In this section we present the results from various numerical experiments and discuss their implications. We start off with measurement of computational performance with a focus on training time, prediction time and loading times. We then investigate the posterior distribution projected onto a 2-dimensional planes of the BNN weights to investigate their property with a focus on whether typical approximations made in the literature provides a sufficient representation of the exact posterior distribution. Following this, we present the effect of various hyperparameters pertaining to the training of BNNs, including the performance achieved when using HMC and NUTS. Finally, we explore the predictive distributions of various trained BNNs.
 
 \subsection{Computational Performance}
+In this section we will explore the computational performance of BNN models, both on modern CPUs and GPUs. We shall measure the training time which with the way we perform Bayesian inference of the BNN parameters most appropriately translates to the time used per generated sample with HMC and NUTS. Another measurement of great interest is the time a trained BNN model used to compute predictions as this will be their central usage once trained. But because we must store the full BNN model on disk, the loading times play an important role as well. We shall therefore measure both the execution time of predictions and loading times separately.
+We will perform wall clock measurements using {\tt time.perf\_counter} provided by the {\tt time} module of the standard library shipped with Python 3. It yields a measurement in fractional seconds of the clock with the highest available resolution on the system.
 
 \subsubsection{CPU v. GPU Performance}
 In this thesis we are primarily concerned with creation of an optimized alternative to direct calculations of cross sections.
@@ -146,8 +162,8 @@ An important consideration is at which available commercially available hardware
 we pin the performance of available CPU and GPU hardware against each other. First note that {\tt TensorFlow} and its framework supports OpenMP-type parallelization on the CPU, that is, parallelization where a single node consisting of several cores, or in the case case of a CPU that supports hyperthreading, a set of virtual threads exceeeding the number of physical cores that evenly divide the workload within the compute node, using a shared memory parallelization strategy similar to what a GPU does. Unfortunately, multi-device parallelization either on the CPU or the GPU lacks support, particularly in the case of non-synchronous execution. Thus in this section we will only compare performance of the single-node performance that is achievable with either a CPU or GPU. We will thus contrast the performance achieved by a single CPU node with several (virtual) cores available to the performence obtained by employing the most taxing workload on a GPU.
 In figure \ref{fig:relative_performance}, we demonstrate the significant speedup that can be achieved
 with GPU accelerated sampling when using {\tt TensorFlow-Probability} and its implementation of samplers. Here we have used HMC and a fixed $L = 512$ Leapfrog steps with XLA (Accelerated Linear Algebra) compilation enabled on the GPU. This is a highly optimized linear algebra execution engine that can significantly speed up code written with {\tt TensorFlow} run on the GPU \cite{xla}. The time measurements per sample was in the order of magnitude of seconds for the most complex models
-tested. An important aspect for practical utilization of BNNs will be ease of training and accelerated sampling with NUTS or HMC, which is automatically achieved if the system can detect an NVIDIA GPU. Moreover, the full training time can be estimated by a few preliminary runs where execution time per sample is measured. This analysis is slightly more difficult when using NUTS. One can however set a maximum tree depth generated with {\tt BuildTree} which is also the case with the implementation employed by {\tt TensorFlow Probability}. As we argued in chapter \ref{chap:no_u_turn_sampler}, the additional computational cost added by NUTS per Leapfrog step is neglible given a sufficiently complex model and/or large dataset.
-Thus one can simply perform the measurements using the implementation of HMC and estimate an upper-bound on the computational time defined by the setting of the maximum tree depth.
+tested. An important aspect for practical utilization of BNNs will be ease of training and accelerated sampling with NUTS or HMC, which is automatically achieved if the system can detect an NVIDIA GPU. Moreover, the full training time can be estimated by a few preliminary runs where execution time per sample is measured. This analysis is slightly more difficult when using NUTS. One can however set a maximum tree depth $J$ which translates to a maximum of $L = 2^J$ Leapfrog steps when using the implementation in {\tt Tensorflow-Probability}. As we argued in chapter \ref{chap:no_u_turn_sampler}, the additional computational cost added by NUTS per Leapfrog step is neglible given a sufficiently complex model and/or large dataset, so measurement of the time per sample used by HMC with a fixed $L$ provides a sensible estimate of the maximal time used by NUTS per sample if the maximum tree depth is set to the corresponding number of Leapfrog steps used.
+Thus one can simply perform the measurements using the implementation of HMC and estimate an upper-bound on the computational time.
 
 \begin{figure}[h!]
     \centering

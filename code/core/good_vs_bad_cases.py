@@ -93,6 +93,28 @@ def confidence_interval(data_type="test"):
 
 
     return stddevs, cumulative_confidence
+
+
+
+def sample_std():
+    bnn = load_models()
+    data = load_dataset(particle_ids=["1000022"] * 2)
+    x_test, y_test = data.get("test")
+    x_test = tf.convert_to_tensor(x_test, dtype=tf.float32)
+    y_test = y_test.squeeze(-1)
+
+    predictions = bnn(x_test).numpy().squeeze(-1)
+    sample_mean = np.mean(predictions, axis=0)
+    sample_std = np.std(predictions, axis=0)
+
+    sample_std_target = [std * 10 ** mean * np.log(10) for std, mean in zip(sample_std, sample_mean)]
+    print(f"{sample_std = }")
+    print(f"{sample_std_target = }")
+    predictions = [10 ** y for y in predictions]
+    sample_std_target = [np.std(y, axis=0) for y in predictions]
+    print(f"{sample_std_target = }")
+
+
     
 
 
@@ -102,17 +124,18 @@ def confidence_interval(data_type="test"):
 
 
 if __name__ == "__main__":
-    data_types = ["train", "val", "test"]
-    for d in data_types:
-        stddevs, cumulative_confidence = confidence_interval(data_type=d)
-        plt.plot(stddevs, cumulative_confidence, label=d)
-        plt.scatter(stddevs, cumulative_confidence, marker="x")
-        plt.axhline(y=0.95, linestyle="--", color="black")
+    sample_std()
+    # data_types = ["train", "val", "test"]
+    # for d in data_types:
+    #     stddevs, cumulative_confidence = confidence_interval(data_type=d)
+    #     plt.plot(stddevs, cumulative_confidence, label=d)
+    #     plt.scatter(stddevs, cumulative_confidence, marker="x")
+    #     plt.axhline(y=0.95, linestyle="--", color="black")
 
-    plt.xlabel("$k$")
-    plt.ylabel("Percentage of Predictions")
-    plt.legend()
-    dir = "/Users/reneaas/Documents/skole/master/thesis/master_thesis/tex/thesis/figures/confidence_estimation/"
-    fname = dir + "good_vs_bad_cases_confidence.pdf"
-    plt.savefig(fname)
-    plt.close()
+    # plt.xlabel("$k$")
+    # plt.ylabel("Percentage of Predictions")
+    # plt.legend()
+    # dir = "/Users/reneaas/Documents/skole/master/thesis/master_thesis/tex/thesis/figures/confidence_estimation/"
+    # fname = dir + "good_vs_bad_cases_confidence.pdf"
+    # plt.savefig(fname)
+    # plt.close()

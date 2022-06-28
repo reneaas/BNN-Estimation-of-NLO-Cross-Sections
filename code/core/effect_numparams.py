@@ -184,8 +184,7 @@ def main():
 
             print(f"{r2_scores_log = }")
 
-            predictions = [10 ** y for y in predictions]
-            y_mean = [np.mean(y, axis=0) for y in predictions]
+            y_mean = [10 ** y for y in y_mean]
             r2_scores = [
                 r2_score(y_true=10 ** y_data.get(dataset), y_pred=y) for y in y_mean
             ]
