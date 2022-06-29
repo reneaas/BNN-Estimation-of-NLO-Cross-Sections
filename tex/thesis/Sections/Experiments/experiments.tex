@@ -50,6 +50,26 @@ the inverse mapping to produce a cross section. As we increase the value of $a$,
 can result in a large error in what we may refer to as the target space, the larger the value of $a$ is. 
 We will explore the performance both in log space using the transformed data and in target space by applying the inverse mapping to the predictions.
 
+The models we train will compute predictive distribution for each input and thus must be treated as a stochastic variable. Transformation of its prediction back to target space will thus in practice mean transformation of its sample mean and variance. Denote $f = \log_{10}(y)$ as the targets in log space for a moment, which we regard as a stochastic variable. Let $\mu_f$ be the expectation and $\sigma_f^2$ the variance of the predictive distribution in log space. Let $y = 10^f$ be the corresponding stochastic variable in target space. We need a way to compute the variance $\sigma_y$ in target space given the variance in log space. Consider the Taylor expansion
+\begin{equation}
+    y \approx y(\mu_f) + \dv{y}{f}(\mu_f)(f - \mu_f).
+\end{equation}
+The variance is then
+\begin{equation}
+    \text{Var}(y) \approx \abs{\dv{y}{f}(\mu_f)}^2\text{Var}(f),
+\end{equation}
+which imply that to a first order approximation, the propagated error is
+\begin{equation}
+    \sigma_y \approx \abs{\dv{y}{f}(\mu_f)}\sigma_f.
+\end{equation}
+Applied to the relationship introduced by our transformation of the targets, this imply
+\begin{equation}
+    \sigma_y \approx 10^{\mu_f} \ln(10)\sigma_f,
+\end{equation}
+and our estimation of the target is
+\begin{equation}
+    \hat{y} = 10^{\mu_f}.
+\end{equation}
 
 \begin{comment}
     \subsubsection{Error Propagation}
