@@ -16,6 +16,8 @@ gpu_num_samples = (
     + gpu_std_config.get("num_burnin_steps")
 )
 
+print(f"{gpu_num_samples = }")
+
 cpu_std_config = {
     "num_burnin_steps": 100,
     "batch_size": 32,
@@ -49,6 +51,8 @@ def main():
     gpu_df = gpu_df[
         gpu_df["num_leapfrog_steps"] == 512
     ]
+
+    print(f"{gpu_df = }")
         
 
     # Prepare CPU data    
@@ -114,30 +118,44 @@ def main():
     # gpu_data["layers"] = [np.array(x) for x in gpu_data.get("layers")]
     # gpu_data["layers"] = np.array(gpu_data.get("layers"), dtype=object)
     # gpu_data["layers"] = gpu_data["layers"][idx]
+    print(f"{gpu_data = }")
     for key in gpu_data:
         gpu_data[key] = gpu_data.get(key)[idx]
     gpu_data["timeused"] /= gpu_num_samples
     print(f"{gpu_data = }")
 
 
-    # Compute relative times with CPU as baseline
+
+    nodes = [2 ** i for i in range(5, 11)]
+    # Compute relative times with CPU as basel
     data = {"num_params": [], "relative_time": []}
     for i, (cpu_time, gpu_time) in enumerate(zip(cpu_data.get("timeused"), gpu_data.get("timeused"))):
         data["num_params"].append(cpu_data.get("num_params")[i])
         data["relative_time"].append(cpu_time / gpu_time)
     print(f"{data = }")
 
-    plt.plot(data.get("num_params"), data.get("relative_time"))
-    plt.scatter(data.get("num_params"), data.get("relative_time"), label="Datapoints", color="red")
-    plt.xlabel("Number of parameters")
+    plt.plot(nodes, data.get("relative_time"))
+    plt.scatter(nodes, data.get("relative_time"), color="red")
+    plt.xlabel("Number of Hidden Layer Nodes")
     plt.ylabel("Relative Time")
     plt.xscale("log", base=2)
-    plt.legend()
 
     path = "/Users/reneaas/Documents/skole/master/thesis/master_thesis/tex/thesis/figures/cpu_vs_gpu/"
     fname = "cpu_vs_gpu_performance.pdf"
     plt.savefig(path + fname)
+    # plt.show()
+    plt.close()
 
+
+    plt.scatter(nodes, gpu_data.get("timeused"), color="red")
+    plt.plot(nodes, gpu_data.get("timeused"))
+    plt.xlabel("Number of Hidden Layer Nodes")
+    plt.ylabel("Time Used per Sample [s]")
+    plt.xscale("log", base=2)
+
+    fname = "gpu_training_time.pdf"
+    plt.savefig (path + fname)
+    plt.close()
 
 
 

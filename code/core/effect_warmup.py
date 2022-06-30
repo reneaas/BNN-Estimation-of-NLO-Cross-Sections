@@ -72,7 +72,7 @@ def main():
 
     step = 2
     root_dir = "./models/"
-    kernel = "nuts"
+    kernel = "hmc"
     model_fnames = [
         root_dir + f"kernel_{kernel}_results_1000_burnin_{int(2 ** i)}_epochs_2500_leapfrogsteps_512_nodes_{layers}.npz"
         for i in range(5, 14, step)
@@ -169,8 +169,9 @@ def main():
     # Target space calculations
 
     y_test = 10 ** y_test
-    model_predictions = [10 ** y_pred for y_pred in model_predictions]
-    mean_predictions = [np.mean(p, axis=0) for p in model_predictions]
+    #model_predictions = [10 ** y_pred for y_pred in model_predictions]
+    mean_predictions = [10 ** y for y in mean_predictions]
+    # mean_predictions = [np.mean(10 * p, axis=0) for p in model_predictions]
     r2_scores = [
         r2_score(y_true=y_test, y_pred=y_pred) for y_pred in mean_predictions
     ]

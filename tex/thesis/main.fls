@@ -2055,6 +2055,11 @@ INPUT /Users/reneaas/Documents/skole/master/thesis/master_thesis/tex/thesis/figu
 INPUT /Users/reneaas/Documents/skole/master/thesis/master_thesis/tex/thesis/figures/cpu_vs_gpu/cpu_vs_gpu_performance.pdf
 INPUT /Users/reneaas/Documents/skole/master/thesis/master_thesis/tex/thesis/figures/cpu_vs_gpu/cpu_vs_gpu_performance.pdf
 INPUT /Users/reneaas/Documents/skole/master/thesis/master_thesis/tex/thesis/figures/cpu_vs_gpu/cpu_vs_gpu_performance.pdf
+INPUT /Users/reneaas/Documents/skole/master/thesis/master_thesis/tex/thesis/figures/cpu_vs_gpu/gpu_training_time.pdf
+INPUT /Users/reneaas/Documents/skole/master/thesis/master_thesis/tex/thesis/figures/cpu_vs_gpu/gpu_training_time.pdf
+INPUT /Users/reneaas/Documents/skole/master/thesis/master_thesis/tex/thesis/figures/cpu_vs_gpu/gpu_training_time.pdf
+INPUT /Users/reneaas/Documents/skole/master/thesis/master_thesis/tex/thesis/figures/cpu_vs_gpu/gpu_training_time.pdf
+INPUT /Users/reneaas/Documents/skole/master/thesis/master_thesis/tex/thesis/figures/cpu_vs_gpu/gpu_training_time.pdf
 INPUT /Users/reneaas/Documents/skole/master/thesis/master_thesis/tex/thesis/figures/prediction_time/prediction_time.pdf
 INPUT /Users/reneaas/Documents/skole/master/thesis/master_thesis/tex/thesis/figures/prediction_time/prediction_time.pdf
 INPUT /Users/reneaas/Documents/skole/master/thesis/master_thesis/tex/thesis/figures/prediction_time/prediction_time.pdf
@@ -2176,9 +2181,9 @@ OUTPUT /Users/reneaas/Documents/skole/master/thesis/master_thesis/tex/thesis/mai
 INPUT /Users/reneaas/Documents/skole/master/thesis/master_thesis/tex/thesis/main.aux
 INPUT /Users/reneaas/Documents/skole/master/thesis/master_thesis/tex/thesis/main.out
 INPUT /Users/reneaas/Documents/skole/master/thesis/master_thesis/tex/thesis/main.out
+INPUT /usr/local/texlive/2021/texmf-dist/fonts/enc/dvips/lm/lm-rmtt.enc
 INPUT /usr/local/texlive/2021/texmf-dist/fonts/enc/dvips/lm/lm-rm.enc
 INPUT /usr/local/texlive/2021/texmf-dist/fonts/enc/dvips/lm/lm-mathsy.enc
-INPUT /usr/local/texlive/2021/texmf-dist/fonts/enc/dvips/lm/lm-rmtt.enc
 INPUT /usr/local/texlive/2021/texmf-dist/fonts/enc/dvips/lm/lm-mathit.enc
 INPUT /usr/local/texlive/2021/texmf-dist/fonts/enc/dvips/lm/lm-rmsc.enc
 INPUT /usr/local/texlive/2021/texmf-dist/fonts/enc/dvips/lm/lm-mathex.enc

@@ -209,6 +209,45 @@ def main():
     plt.savefig(fname)
     plt.show()
 
+    # Standardized residuals
+
+    for sampler in samplers:
+        sampler_data = samplers.get(sampler)
+        sampler_name = sampler_data.get("name")
+        hidden_layer_nodes = sampler_data.get("hidden layer nodes")
+
+
+        predictions = sampler_data.get(f"predictions log space {dataset}")
+        
+        sample_mean = [np.mean(y, axis=0) for y in predictions]
+        sample_std = [np.std(y, axis=0) for y in predictions]
+
+        standardized_residuals = [
+            (y_pred - y_test) / std for y_pred, std in zip(sample_mean, sample_std)
+        ]
+
+        min_x, max_x = -5, 5
+        for residual, nodes in zip(standardized_residuals, hidden_layer_nodes):
+            plt.hist(residual, histtype="step", bins=100, label=f"{int(nodes)}")
+
+        x = np.linspace(min_x, max_x, 1001)
+        normal_dist = np.exp(-0.5 * x ** 2) / np.sqrt(2 * np.pi)
+        plt.plot(x, normal_dist, color="black", linestyle="--", label="$\mathcal{N}(0, 1)$")
+        plt.xlim((min_x, max_x))
+        plt.xlabel("Standardized Residual")
+        plt.ylabel("Density")
+
+        dir = "/Users/reneaas/Documents/skole/master/thesis/master_thesis/tex/thesis/figures/standardized_residuals/effect_of_num_params/"
+        fname = dir + f"standardized_residual_{sampler_name}.pdf"
+        plt.savefig(fname)
+        plt.show()
+        plt.close()
+
+
+
+        
+
+
 
         
 

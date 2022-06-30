@@ -5,6 +5,7 @@ import pandas as pd
 plt.rc("text", usetex=True)
 import time 
 import tensorflow as tf
+from tqdm import trange
 
 from bnn.bnn import BayesianNeuralNetwork
 from slha_loader.slha_loader import SLHALoader
@@ -28,7 +29,7 @@ def main():
     num_trials = 1000
     for name in model_names:
         tmp = []
-        for _ in range(num_trials):
+        for _ in trange(num_trials):
             start = time.perf_counter()
             model = load_model(fname=name)
             end = time.perf_counter()
@@ -37,14 +38,20 @@ def main():
         time_measurements.append(tmp)
 
     for i, (name, t) in enumerate(zip(model_names, time_measurements)):
-        plt.hist(t, histtype="step", bins=25, label=f"Model {i+1}")
+        plt.hist(t, histtype="step", bins=100, label=f"Model {i+1}", density=True)
     plt.xscale("log", base=10)
     plt.xlabel("Loading Times [s]")
+    plt.ylabel("Density")
     plt.legend()
 
     dir = "/Users/reneaas/Documents/skole/master/thesis/master_thesis/tex/thesis/figures/computational_cost/"
     fname = "loading_times.pdf"
     plt.savefig(dir + fname)
+
+
+    plt.close()
+    plt.hist(time_measurements[0], histtype="step", bins=100)
+    plt.show()
     
 
 

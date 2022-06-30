@@ -152,15 +152,20 @@ def main():
 
     # In target space
 
-    model_predictions = [10 ** y_pred for y_pred in model_predictions]
-    mean_predictions = [np.mean(y_pred, axis=0) for y_pred in model_predictions]
-    predictions_std = [np.std(y_pred, axis=0) for y_pred in model_predictions]
+    # Propagate error
+    predictions_std = [
+        10 ** y * np.log(10) * std for y, std in zip(mean_predictions, predictions_std)
+    ]
+    mean_predictions = [10 ** y for y in mean_predictions]
     y_test = 10 ** y_test
+
+
 
 
     standardized_residuals = [
         (y_test - y_pred) / std for y_pred, std in zip(mean_predictions, predictions_std)
     ]
+
     print(f"{np.mean(standardized_residuals, axis=1)=}")
     print(f"{np.std(standardized_residuals, axis=1)=}")
 
@@ -201,8 +206,8 @@ def main():
         path,
         "standardized_residual_target_space.pdf",
     ])
-    plt.savefig(figname)
-    # plt.show()
+    # plt.savefig(figname)
+    plt.show()
 
 if __name__ == "__main__":
     with tf.device("/CPU:0"):
