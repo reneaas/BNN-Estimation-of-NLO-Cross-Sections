@@ -221,6 +221,11 @@ def main():
         
         sample_mean = [np.mean(y, axis=0) for y in predictions]
         sample_std = [np.std(y, axis=0) for y in predictions]
+        
+
+        hidden_layer_nodes = hidden_layer_nodes[::2]
+        sample_mean = sample_mean[::2]
+        sample_std = sample_std[::2]
 
         standardized_residuals = [
             (y_pred - y_test) / std for y_pred, std in zip(sample_mean, sample_std)
@@ -228,7 +233,7 @@ def main():
 
         min_x, max_x = -5, 5
         for residual, nodes in zip(standardized_residuals, hidden_layer_nodes):
-            plt.hist(residual, histtype="step", bins=100, label=f"{int(nodes)}")
+            plt.hist(residual, histtype="step", bins=100, label=f"{int(nodes)}", density=True)
 
         x = np.linspace(min_x, max_x, 1001)
         normal_dist = np.exp(-0.5 * x ** 2) / np.sqrt(2 * np.pi)
@@ -239,6 +244,7 @@ def main():
 
         dir = "/Users/reneaas/Documents/skole/master/thesis/master_thesis/tex/thesis/figures/standardized_residuals/effect_of_num_params/"
         fname = dir + f"standardized_residual_{sampler_name}.pdf"
+        plt.legend()
         plt.savefig(fname)
         plt.show()
         plt.close()
