@@ -57,7 +57,7 @@ def sample_chain(*args, **kwargs):
 @partial(jax.jit, static_argnames=("target_log_prob_fn"))
 def run_chain(key, current_state, target_log_prob_fn):
     kernel = tfp.mcmc.HamiltonianMonteCarlo(
-        num_leapfrog_steps=500,
+        num_leapfrog_steps=512,
         step_size=0.001,
         target_log_prob_fn=target_log_prob_fn,
     )

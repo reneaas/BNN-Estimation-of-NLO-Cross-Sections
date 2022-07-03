@@ -1,12 +1,12 @@
 # Fdb version 3
-["bibtex main"] 1656631803 "main.aux" "main.bbl" "main" 1656631835
+["bibtex main"] 1656631803 "main.aux" "main.bbl" "main" 1656682638
   "./JHEP.bst" 1651235620 19415 119cff932b2ee8773ea988cf488e8896 ""
   "bibliography.bib" 1656631647 18871 bfa645e4681e7f041d0249d5cb0f2b59 ""
   "main.aux" 1656631826 51046 7a5846516f213bf2f25cbb05b44ceb35 "pdflatex"
   (generated)
   "main.blg"
   "main.bbl"
-["pdflatex"] 1656631823 "/Users/reneaas/Documents/skole/master/thesis/master_thesis/tex/thesis/main.tex" "/Users/reneaas/Documents/skole/master/thesis/master_thesis/tex/thesis/main.pdf" "main" 1656631835
+["pdflatex"] 1656631823 "/Users/reneaas/Documents/skole/master/thesis/master_thesis/tex/thesis/main.tex" "/Users/reneaas/Documents/skole/master/thesis/master_thesis/tex/thesis/main.pdf" "main" 1656682638
   "/Users/reneaas/Documents/skole/master/thesis/master_thesis/tex/thesis/main.aux" 1656631826 51046 7a5846516f213bf2f25cbb05b44ceb35 ""
   "/Users/reneaas/Documents/skole/master/thesis/master_thesis/tex/thesis/main.tex" 1655916467 3795 7736b68df9303f362f5ed6555dc18d38 ""
   "/usr/local/texlive/2021/texmf-dist/fonts/enc/dvips/lm/lm-ec.enc" 1254269338 2375 baa924870cfb487815765f9094cf3728 ""
@@ -387,14 +387,14 @@
   "main.tex" 1655916467 3795 7736b68df9303f362f5ed6555dc18d38 ""
   "main.toc" 1656631826 6843 a407f7e84f6c8cc69a805fb383c132f3 "pdflatex"
   (generated)
-  "main.loa"
-  "main.log"
-  "/Users/reneaas/Documents/skole/master/thesis/master_thesis/tex/thesis/main.pdf"
-  "main.lof"
   "main.lot"
   "main.toc"
-  "/Users/reneaas/Documents/skole/master/thesis/master_thesis/tex/thesis/main.log"
-  "main.aux"
-  "main.out"
-  "main.thm"
+  "main.loa"
   "main.pdf"
+  "/Users/reneaas/Documents/skole/master/thesis/master_thesis/tex/thesis/main.log"
+  "main.thm"
+  "main.log"
+  "main.out"
+  "main.aux"
+  "/Users/reneaas/Documents/skole/master/thesis/master_thesis/tex/thesis/main.pdf"
+  "main.lof"
