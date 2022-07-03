@@ -42,6 +42,13 @@ def load_dataset(particle_ids):
 def main():
     data = load_dataset(particle_ids=["1000022"] * 2)
     x_train, y_train = data.get("train")
+    x_val, y_val = data.get("val")
+    x_test, y_test = data.get("test")
+
+    x = np.concatenate((x_train, x_val, x_test), axis=0)
+    y = np.concatenate((y_train, y_val, y_test), axis=0)
+    print(f"{x.shape = }")
+    print(f"{y.shape = }")
 
     xlabels = [
         r"$m_{\tilde{\chi}_1^0}$",
@@ -70,8 +77,8 @@ def main():
     
     dir = "/Users/reneaas/Documents/skole/master/thesis/master_thesis/tex/thesis/figures/dataset/"
     fname = dir + "masses.pdf"
-    plt.savefig(fname)
-    # plt.show()
+    # plt.savefig(fname)
+    plt.show()
 
 
 

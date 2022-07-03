@@ -8,11 +8,12 @@ import sys
 from bnn.bnn import BayesianNeuralNetwork
 from slha_loader.slha_loader import SLHALoader
 from utils.preprocessing import split_data
+sns.set(font_scale=1.5)
 
 
 def main():
     # model_name = r"models/2_small_hidden_layers.npz"
-    model_name = "models/3_hidden_layers_tanh.npz"
+    model_name = "models/4_hidden_layers_tanh.npz"
 
     bnn = BayesianNeuralNetwork()
     bnn.load_model(fname=model_name)
@@ -41,7 +42,9 @@ def main():
         ],
     }
 
-    for ids, labels in zip(weights_data.get("ids"), weights_data.get("labels")):
+    dir = "/Users/reneaas/Documents/skole/master/thesis/master_thesis/tex/thesis/figures/posterior_distribution/"
+
+    for n, (ids, labels) in enumerate(zip(weights_data.get("ids"), weights_data.get("labels"))):
 
         first_axis, second_axis = ids
         xlabel, ylabel = labels
@@ -69,8 +72,10 @@ def main():
     
 
         s = sns.jointplot(data=df, x=xlabel, y=ylabel, kind="kde")
+        fname = dir + f"posterior_weights_{n}.pdf"
+        plt.savefig(fname)
+        plt.close()
         # s.set_xlabel(xlabel, fontsize=25)
-        plt.show()
 
         
     sys.exit()

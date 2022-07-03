@@ -12,7 +12,7 @@ gpu_std_config = {
 }
 
 gpu_num_samples = (
-    gpu_std_config.get("num_results") * gpu_std_config.get("num_steps_between_results") 
+    gpu_std_config.get("num_results") * (1 + gpu_std_config.get("num_steps_between_results"))
     + gpu_std_config.get("num_burnin_steps")
 )
 
@@ -28,7 +28,7 @@ cpu_std_config = {
 }
 
 cpu_num_samples = (
-    cpu_std_config.get("num_results") * cpu_std_config.get("num_steps_between_results") 
+    cpu_std_config.get("num_results") * (1 + cpu_std_config.get("num_steps_between_results"))
     + cpu_std_config.get("num_burnin_steps")
 )
 
