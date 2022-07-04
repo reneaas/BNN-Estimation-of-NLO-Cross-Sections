@@ -70,8 +70,8 @@
 \contentsline {subsubsection}{\numberline {8.2.3.2}The Effect of Pretraining}{56}{subsubsection.8.2.3.2}%
 \contentsline {subsubsection}{\numberline {8.2.3.3}Effect of Number of Parameters}{58}{subsubsection.8.2.3.3}%
 \contentsline {subsection}{\numberline {8.2.4}Predictive Distributions}{61}{subsection.8.2.4}%
-\contentsline {chapter}{Conclusion}{63}{chapter*.35}%
+\contentsline {chapter}{Conclusion}{63}{chapter*.34}%
 \contentsline {section}{\numberline {8.3}Closing Remarks and Future Work}{63}{section.8.3}%
-\contentsline {chapter}{Appendices}{65}{section*.36}%
-\contentsline {chapter}{Appendix A}{67}{appendix*.37}%
+\contentsline {chapter}{Appendices}{65}{section*.35}%
+\contentsline {chapter}{Appendix A}{67}{appendix*.36}%
 \contentsline {section}{\numberline {A.1}Appendix 1 title }{67}{section.Alph0.1}%
