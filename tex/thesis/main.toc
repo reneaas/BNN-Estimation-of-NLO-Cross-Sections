@@ -56,6 +56,7 @@
 \contentsline {subsection}{\numberline {7.2.2}Performance Metrics}{42}{subsection.7.2.2}%
 \contentsline {subsubsection}{\numberline {7.2.2.1}Coefficent of Determination}{42}{subsubsection.7.2.2.1}%
 \contentsline {subsubsection}{\numberline {7.2.2.2}Standardized Residuals}{43}{subsubsection.7.2.2.2}%
+\contentsline {subsection}{\numberline {7.2.3}Potential Scale Reduction}{43}{subsection.7.2.3}%
 \contentsline {chapter}{\numberline {8}Numerical Experiments}{45}{chapter.8}%
 \contentsline {section}{\numberline {8.1}Training Procedure and Selection of Models and Hyperparameters}{45}{section.8.1}%
 \contentsline {section}{\numberline {8.2}Results and Discussion}{46}{section.8.2}%
@@ -68,9 +69,9 @@
 \contentsline {subsubsection}{\numberline {8.2.3.1}The Effect of Number of Warm-up Steps}{53}{subsubsection.8.2.3.1}%
 \contentsline {subsubsection}{\numberline {8.2.3.2}The Effect of Pretraining}{56}{subsubsection.8.2.3.2}%
 \contentsline {subsubsection}{\numberline {8.2.3.3}Effect of Number of Parameters}{58}{subsubsection.8.2.3.3}%
-\contentsline {subsection}{\numberline {8.2.4}Predictive Distributions}{59}{subsection.8.2.4}%
-\contentsline {chapter}{Conclusion}{65}{chapter*.35}%
-\contentsline {section}{\numberline {8.3}Closing Remarks and Future Work}{65}{section.8.3}%
-\contentsline {chapter}{Appendices}{67}{section*.36}%
-\contentsline {chapter}{Appendix A}{69}{appendix*.37}%
-\contentsline {section}{\numberline {A.1}Appendix 1 title }{69}{section.Alph0.1}%
+\contentsline {subsection}{\numberline {8.2.4}Predictive Distributions}{61}{subsection.8.2.4}%
+\contentsline {chapter}{Conclusion}{63}{chapter*.35}%
+\contentsline {section}{\numberline {8.3}Closing Remarks and Future Work}{63}{section.8.3}%
+\contentsline {chapter}{Appendices}{65}{section*.36}%
+\contentsline {chapter}{Appendix A}{67}{appendix*.37}%
+\contentsline {section}{\numberline {A.1}Appendix 1 title }{67}{section.Alph0.1}%

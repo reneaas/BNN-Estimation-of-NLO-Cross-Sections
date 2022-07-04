@@ -140,4 +140,8 @@ S.~Brooks, A.~Gelman, G.~Jones and X.-L. Meng, eds., \emph{{H}andbook of
 \newblock Chapman and Hall/{CRC}, may, 2011,
   \href{http://dx.doi.org/10.1201/b10905}{10.1201/b10905}.
 
+\bibitem{jax}
+I.~Babuschkin, K.~Baumli, A.~Bell, S.~Bhupatiraju, J.~Bruce, P.~Buchlovsky
+  et~al., \emph{The {D}eep{M}ind {JAX} {E}cosystem},  2020.
+
 \end{thebibliography}\endgroup

@@ -146,3 +146,37 @@ As we discussed in chapter \ref{chap:bayesian_ml}, the fundamental assumption ma
 \end{equation}
 for some true function $f(x)$ and a random noise $\delta$, often taken to be distributed according to a Gaussian distribution. But the noise in the data produced by \texttt{Prospino} in the sample generation is neglible, which means that $y \approx f(x)$. The regression error obtained through the sample variance of the model predictions must therefore be dominated by the variance of the predictive distribution computed by the model itself. Let $\sigma_z^2$ denote the variance of the distribution of the standardized residual. If $\sigma_z > 1$, the model will be considered overconfident in its predictions since the sample variance of the model's predictions are smaller than the variance of the targets around the mean prediction. On the other hand, if $\sigma_z \leq 1$, we consider the model to yield reliable uncertainty estimates. In this case, the model is not considered to be ``underconfident'' but rather ``conservative''. As a visual aid, we will draw in the standard Normal distribution $\mathcal{N}(0, 1)$ with the distibutions obtained with eq.~\eqref{eq:standardized_residuals} for reference. If the distribution lies largely on the ``inside'' of $\mathcal{N}(0, 1)$, we can consider it as a conservative model to an approximation. But note that the distribution may have longer ``tails'' than the usual Normal distribution and thus 
 $\sigma_z > 1$ is possible even if the majority of the distribution lies inside the Normal distribution.
+
+\subsection{Potential Scale Reduction}
+The potential scale reduction $\hat{R}$ \cite{rhat} is a quantity used for convergence diagnostic purposes of Markov chains. Using it directly on the posterior weights of Bayesian neural networks is difficult due to unidenfiability of neural network parameters. The diagnostic may indicate that the samples of a neural network has not converged to its stationary distribution as a result. It is therefore better used on a space of scalar functions $f(\theta)$ of the model parameters $\theta$.
+Consider $M$ independent Markov chains numbered by $m \in \{1, \ldots, M\}$ and let each chain consist of $N$ samples numbered by $n \in \{1, \ldots, N\}$. 
+Let us denote $\theta_{mn}$ as the $n$-th sample of the $m$-th Markov chain.
+Furthermore, we denote $f_{mn} \equiv f(\theta_{mn})$. Then the potential scale reduction is defined by the following equations.
+\begin{equation}
+    \bar{f}_m \equiv \frac{1}{N}\sum_{n=1}^N f_{mn},
+\end{equation}
+which denotes the sample mean of the $m$-th chain. Let us define the sample mean across all chains as
+\begin{equation}
+    \bar{f} \equiv \frac{1}{MN}\sum_{m=1}^M\sum_{n=1}^N f_{mn}.
+\end{equation}
+Then the sample variance \textit{across} the chains is given as
+\begin{equation}
+    \frac{B}{N} \equiv \frac{1}{M-1} \sum_{m=1}^M (\bar{f}_m - \bar{f})^2.
+\end{equation}
+The sample mean of the sample variance \textit{within} the chains is
+\begin{equation}
+    W \equiv \frac{1}{M}\sum_{m=1}^M \frac{1}{N-1}\sum_{n=1}^N(f_{mn} - \bar{f}_m)^2 = \frac{1}{M(N-1)}\sum_{m=1}^M \sum_{n=1}^N (f_{mn} - \bar{f}_m)^2.
+\end{equation}
+Define further
+\begin{equation}
+    \sigma_+^2 \equiv \frac{N-1}{N}W + \frac{B}{N},
+\end{equation}
+which if the chains are initiated \textit{from} the stationary distribution, will yield an unbiased estimate of the variance of the distribution.
+Then the potential scale reduction is given by 
+\begin{equation}
+    \hat{R} \equiv \frac{M + 1}{M}\frac{\sigma_+^2}{W} - \frac{N - 1}{MN}.
+\end{equation}
+The interpretation of $\hat{R}$ is as follows. If $\hat{R}$ is larger than one, then more simulations can be performed to further bring each chain closer to the stationary distribution. If $\hat{R}$ is close to one, then each $m$ chains of $n$ samples are close to the stationary distribution. A common heuristic is to assume the chains have converged sufficiently if $\hat{R} < 1.1$ \cite{convergence_diagnostics}.
+
+
+

@@ -452,6 +452,7 @@ class BayesianNeuralNetwork(_BNNBase):
         trace_fn=None,
         parallel_iterations=10,
         fname=None,
+        restack=True,
     ):
         """Produces a MCMC chain given a transition kernel.
 
@@ -499,8 +500,10 @@ class BayesianNeuralNetwork(_BNNBase):
             chain, trace = chain
 
         # Restack the chain and assign them as the weights of the model.
-        self._weights = self._restack_chain(chain)
-
+        if restack is True:
+            self._weights = self._restack_chain(chain)
+        else:
+            self._weights = chain
         if fname is not None:
             self.save_model(fname)
 
