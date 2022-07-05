@@ -4,41 +4,41 @@ The top-level auxiliary file: main.aux
 The style file: JHEP.bst
 Database file #1: bibliography.bib
 Warning--entry type for "jax" isn't style-file defined
---line 1 of file bibliography.bib
+--line 32 of file bibliography.bib
 Warning--I'm ignoring r2_score's extra "note" field
---line 64 of file bibliography.bib
+--line 88 of file bibliography.bib
 Warning--I'm ignoring r2_score's extra "note" field
---line 65 of file bibliography.bib
-You've used 26 entries,
+--line 89 of file bibliography.bib
+You've used 28 entries,
             2188 wiz_defined-function locations,
-            685 strings with 9339 characters,
-and the built_in function-call counts, 6585 in all, are:
-= -- 601
-> -- 379
+            695 strings with 9793 characters,
+and the built_in function-call counts, 6963 in all, are:
+= -- 628
+> -- 414
 < -- 0
-+ -- 109
-- -- 83
-* -- 503
-:= -- 970
-add.period$ -- 36
-call.type$ -- 26
-change.case$ -- 21
++ -- 119
+- -- 91
+* -- 525
+:= -- 1028
+add.period$ -- 40
+call.type$ -- 28
+change.case$ -- 23
 chr.to.int$ -- 0
-cite$ -- 26
-duplicate$ -- 284
-empty$ -- 653
-format.name$ -- 83
-if$ -- 1680
+cite$ -- 28
+duplicate$ -- 294
+empty$ -- 693
+format.name$ -- 91
+if$ -- 1774
 int.to.chr$ -- 0
-int.to.str$ -- 26
+int.to.str$ -- 28
 missing$ -- 56
-newline$ -- 91
-num.names$ -- 28
-pop$ -- 131
+newline$ -- 99
+num.names$ -- 30
+pop$ -- 145
 preamble$ -- 1
 purify$ -- 0
 quote$ -- 0
-skip$ -- 166
+skip$ -- 174
 stack$ -- 0
 substring$ -- 227
 swap$ -- 83
@@ -47,7 +47,7 @@ text.prefix$ -- 0
 top$ -- 0
 type$ -- 0
 warning$ -- 0
-while$ -- 45
-width$ -- 28
-write$ -- 249
+while$ -- 47
+width$ -- 30
+write$ -- 267
 (There were 3 warnings)

@@ -117,6 +117,17 @@ P.~Ramachandran, B.~Zoph and Q.~V. Le, \emph{Searching for activation
   functions}, {\emph{CoRR} {\bf abs/1710.05941} (2017) },
   [\href{http://arxiv.org/abs/1710.05941}{{\tt 1710.05941}}].
 
+\bibitem{tfp}
+J.~Lao, C.~Suter, I.~Langmore, C.~Chimisov, A.~Saxena, P.~Sountsov et~al.,
+  \emph{tfp.mcmc: Modern markov chain monte carlo tools built for modern
+  hardware},  2020.
+\newblock 10.48550/ARXIV.2002.01184.
+
+\bibitem{rene_alexander_ask_2022_6800167}
+R.~A. Ask, \emph{{Bayesian Neural Network Estimation of Next-To- Leading-Order
+  Cross Sections}},  July, 2022.
+\newblock 10.5281/zenodo.6800167.
+
 \bibitem{r2_score}
 D.~Chicco, M.~J. Warrens and G.~Jurman, \emph{{The coefficient of determination
   R-squared is more informative than SMAPE, MAE, MAPE, MSE and RMSE in

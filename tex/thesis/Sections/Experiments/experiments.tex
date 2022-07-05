@@ -83,12 +83,12 @@ The execution times appear proportional to the number of input points provided f
 \begin{figure}[H]
     \centering
     \includegraphics[scale=0.7]{figures/prediction_time/prediction_time.pdf}
-    \caption{The figure shows the average prediction time given up to several simultaneous inputs $x$ using the models in table \ref{tab:deep_models}. The wall clock time of the executions shown are measured in milliseconds and are averaged over 1000 trials per case. The measured wall clock time includes computation of the sample mean and sample error of the predictive distribution produced by the BNN models. The dots indicate the actual measured values. The colored graphs indicate how many simultaneous input points that were used. The measurements were done using an 8-core M1 CPU (Apple Silicon).
+    \caption{The figure shows the average prediction time given up to several simultaneous inputs $x$ using the models in table \ref{tab:deep_models}. The wall clock time of the executions shown are measured in milliseconds and are averaged over 1000 trials per case. The measured wall clock time includes computation of the sample mean and sample error of the predictive distributions produced by the BNN models. The dots indicate the actual measured values. The colored graphs indicate how many simultaneous input points that were used. The measurements were done using an 8-core M1 CPU (Apple Silicon).
     }
     \label{fig:prediction_time}
 \end{figure}
 
-The performance degradation observed in figure \ref{fig:prediction_time} that occur as we increase the number of simultaneous input points is inherently due to the limited vectorization capability of the CPU's computing units when performing matrix multiplications in the forward pass of the individual neural network models. The computation itself is performed with all 1000 sampled networks simultaneously, and so one might hypothesize that more specialized computing units may be able to handle several input points while applying all sampled networks at the same time. As it turns out, GPUs excel at executing matrix multiplication. In figure \ref{fig:prediction_time_gpu} we can see the execution times achieved using the GPU on an M1 Apple Silicon SoC to perform the same computations as before. In this case the order of magnitude remains more or less the same in all the tests. Thus, computing predictions on several simultaneous input points can be of a great benefit if the execution is employed on a GPU. Note, however, that the measured execution time of ``model 1'' for a single point is slightly slower than for more points which likely is due to the overhead introduced by using the GPU for such a simple model. Care should thus be taken when considering what type of hardware the computations should be performed with.
+The performance degradation observed in figure \ref{fig:prediction_time} that occur as we increase the number of simultaneous input points is inherently due to the limited vectorization capability of the CPU's computing units when performing matrix multiplications in the forward pass of through all neural network samples simultaneously. The computation itself is performed with all 1000 sampled networks simultaneously, and so one might hypothesize that more specialized computing units may be able to handle several input points while applying all sampled networks at the same time. As it turns out, GPUs excel at executing matrix multiplication. In figure \ref{fig:prediction_time_gpu} we can see the execution times achieved using the GPU on an M1 Apple Silicon SoC to perform the same computations as before. In this case the order of magnitude remains more or less the same in all the tests. Thus, computing predictions on several simultaneous input points can be of a great benefit if the execution is employed on a GPU. Note, however, that the measured execution time of ``model 1'' for a single point is slightly slower than for more points which likely is due to the overhead introduced by using the GPU for such a simple model. Care should thus be taken when considering what type of hardware the computations should be performed with.
 
 
 \begin{figure}[H]
@@ -255,7 +255,7 @@ We trained a BNN model with the architechture 5-20-20-1 with $\tanh(x)$ as the a
     \centering
     \includegraphics[scale=0.7]{figures/r2_scores/r2_score_vs_pretraining.pdf}
     \caption{The figure shows the computed $R^2$-scores of a model with the architecture 5-20-20-1 with $\tanh(x)$ as the
-    hidden activation function. In this case the varying number of the number of epochs run with pretraining starting from 32 all the way up to 8192. The batch size used was 32 with the ADAM optimizer. The number of warm-up steps was 1000 (200 of which were burn-in steps and 800 were adaptation steps). We fixed the Leapfrog steps to $L = 512$ using the HMC sampler. As usual we sampled 1000 neural networks with 10 steps between each sample.
+    hidden activation function. In this case the varying number is the number of epochs run with pretraining starting from 32 all the way up to 8192. The batch size used was 32 with the ADAM optimizer. The number of warm-up steps was 1000 (200 of which were burn-in steps and 800 were adaptation steps). We fixed the Leapfrog steps to $L = 512$ using the HMC sampler. As usual we sampled 1000 neural networks with 10 steps between each sample.
     }
     \label{fig:r2_score_vs_pretraining}
 \end{figure}
@@ -266,7 +266,7 @@ show the computed standardized residuals in log space. The figure demonstrates a
     \centering
     \includegraphics[scale=0.7]{figures/standardized_residuals/effect_of_pretraining/standardized_residuals_hmc_vs_pretraining_steps.pdf}
     \caption{The figure shows the standardized residuals of a model with the architecture 5-20-20-1 with $\tanh(x)$ as the
-    hidden activation function. In this case the varying number of the number of epochs run with pretraining starting from 32 all the way up to 8192. The batch size used was 32, the number of warm-up steps was 1000 (200 of which were burn-in steps and 800 were adaptation steps). We fixed the Leapfrog steps to $L = 512$ using the HMC sampler. The ADAM optimizer was used for the pretraining phase. As usual we sampled 1000 neural networks with 10 steps between each sample. The colors indicate the number of pretraining epochs performed. The dotted line is the standard Normal distribution.
+    hidden activation function. In this case the varying number is the number of epochs run with pretraining starting from 32 all the way up to 8192. The batch size used was 32, the number of warm-up steps was 1000 (200 of which were burn-in steps and 800 were adaptation steps). We fixed the Leapfrog steps to $L = 512$ using the HMC sampler. The ADAM optimizer was used for the pretraining phase. As usual we sampled 1000 neural networks with 10 steps between each sample. The colors indicate the number of pretraining epochs performed. The dotted line is the standard Normal distribution.
     }
     \label{fig:std_residual_vs_pretraining}
 \end{figure}
@@ -295,7 +295,7 @@ In figure \ref{fig:standardized_residual_vs_params}, we show the computed standa
     \includegraphics[scale=0.7]{figures/standardized_residuals/effect_of_num_params/standardized_residual_HMC.pdf}
     \includegraphics[scale=0.7]{figures/standardized_residuals/effect_of_num_params/standardized_residual_NUTS.pdf}
     \caption{
-        The figure shows the standardized residuals of models with an architecture 5-$n$-1 with $\tanh(x)$ as the hidden layer activation. The models were trained with 1000 warm-up steps (20\% burn-in and 80\% adaptation), drawing 1000 neural networks with 10 steps between each drawn sample. We used 2500 pretraining epochs with a batch size of 32 using the ADAM optimizer. The figure on top shows results of models trained with the HMC sampler where we fixed the number of Leapfrog steps to $L = 512$. The figure on the bottom shows the results of models trained with NUTS using a maximum of $L = 4096$ Leapfrog steps. The black dotted line shows the standard Normal distribution drawn in.
+        The figure shows the standardized residuals of models with an architecture 5-$n$-1 with $\tanh(x)$ as the hidden layer activation. The models were trained with 1000 warm-up steps (20\% burn-in and 80\% adaptation), drawing 1000 neural networks with 10 steps between each drawn sample. We used 2500 pretraining epochs with a batch size of 32 using the ADAM optimizer. The figure on top shows results of models trained with the HMC sampler where we fixed the number of Leapfrog steps to $L = 512$. The figure on the bottom shows the results of models trained with NUTS using a maximum of $L = 4096$ Leapfrog steps. The colors indicate the number of hidden layers nodes $n$ are used. The black dotted line shows the standard Normal distribution drawn in.
     }
     \label{fig:standardized_residual_vs_params}
 \end{figure}
@@ -311,7 +311,7 @@ In figure \ref{fig:predictive_distributions}, we show the predictive distributio
     \includegraphics[scale=0.5]{figures/predictive_distributions/predictive_distribution_point_idx_360.pdf}
     \includegraphics[scale=0.5]{figures/predictive_distributions/predictive_distribution_point_idx_2052.pdf}
     \caption{
-        The figure shows the predictive distribution estimated by use of model 3 in table \ref{tab:deep_models} for two randomly chosen points from the test set. The red line shows the true target and the black line shows the predicted sample mean obtained from the distribution. The figure on top demonstrates a case where the sample mean is approximately the same as the target, while the figure at the bottom demonstrates a case where the true target lies entirely outside the predictive distrbution. 
+        The figure shows the predictive distribution estimated by use of model 3 in table \ref{tab:deep_models} for two targets taken from the test set. The red line shows the true target and the black line shows the predicted sample mean obtained from the distribution. The figure on top demonstrates a case where the sample mean is approximately the same as the target, while the figure at the bottom demonstrates a case where the true target lies entirely outside the predictive distrbution. 
     }
     \label{fig:predictive_distributions}
 \end{figure}
@@ -325,8 +325,8 @@ We illustrate the results of this analysis in figure \ref{fig:confidence} perfor
     \centering
     \includegraphics[scale=0.7]{figures/confidence_estimation/good_vs_bad_cases_confidence.pdf}
     \caption{
-        The figure shows the predictive distribution estimated by use of model 3 in table \ref{tab:deep_models}
-        computed on all datapoints in the training, validation and test data. The black line shows the 95\% line. The crosses indicate measured data with training data shown in blue, validation data shown in orange and test data shown in green. The $y$-axis shows the percentage of all targets lie on the interval $[\mu - k\sigma, \mu + k\sigma]$ for $k=1,2,3,4,5$ where $\mu$ is the sample mean and $\sigma^2$ is the sample variance of the predictive distribution.
+        The figure shows the results of the predictive distributions estimated by use of model 3 in table \ref{tab:deep_models}
+        computed on all datapoints in the training, validation and test data. The $y$-axis shows the percentage of all targets that lie on the interval $[\mu - k\sigma, \mu + k\sigma]$ for $k=1,2,3,4,5$ where $\mu$ is the sample mean and $\sigma^2$ is the sample variance of the predictive distribution. The crosses indicate evaluated points with training data shown in blue, validation data shown in orange and test data shown in green. The black dotted line shows the 68\% ($\pm \sigma$) expectation, the red dotted line shows the 95\% ($\pm 2\sigma$) expectation and the blue dotted line shows the 99.7\% ($\pm 3 \sigma$) expectation of a Gaussian distribution.
     }
     \label{fig:confidence}
 \end{figure}

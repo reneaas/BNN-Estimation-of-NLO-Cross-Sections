@@ -27,7 +27,7 @@ from utils.trace_functions import (
 num_chains = 10
 
 
-fname = "./models/multi_chain_model_hmc2.npz"
+fname = "./models/multi_chain_model_hmc4.npz"
 
 bnn = BayesianNeuralNetwork()
 bnn.load_model(fname=fname)
@@ -49,12 +49,12 @@ plt.show()
 # print(f"{rhat = }")
 
 # Plot histograms over the weights from two different distributions
-X = weights[0][:, 0, 1, 2].numpy()
-Y = weights[0][:, 2, 1, 2].numpy()
-print(f"{X.shape = }")
-print(f"{Y.shape = }")
-for i in range(num_chains):
-    sns.kdeplot(weights[0][:, i, 1, 2].numpy())
+# X = weights[0][:, 0, 1, 2].numpy()
+# Y = weights[0][:, 2, 1, 2].numpy()
+# print(f"{X.shape = }")
+# print(f"{Y.shape = }")
+# for i in range(num_chains):
+#     sns.kdeplot(weights[0][:, i, 1, 2].numpy())
 # sns.kdeplot(X, color="blue")
 
 # plt.hist(X, histtype="step", bins=100)
@@ -62,7 +62,7 @@ for i in range(num_chains):
 # plt.hist(Y, histtype="step", bins=100)
 # sns.kdeplot(Y, color="red")
 # sns.jointplot(data=df, x=xlabel, y=ylabel, kind="kde")
-plt.show()
+# plt.show()
 
 
 particle_ids = ["1000022", "1000022"]
@@ -84,19 +84,27 @@ features = features[idx]
 data = split_data(features=features, targets=targets)
 x_train, y_train = data["train"]
 
-x_test, y_test = data.get("test")
+x_test, y_test = data.get("train")
 x_test = tf.convert_to_tensor(x_test, dtype=tf.float32)
+
+y_pred = np.zeros(shape=(4096, num_chains, y_test.shape[0]))
 with tf.device("/CPU:0"):
+    # for i in tqdm.trange(x_test.shape[0]):
+    #     x = x_test[i]
+    #     x = tf.convert_to_tensor(x[None, ...], dtype=tf.float32)
+    #     y = bnn(x).numpy().squeeze(-1)
+    #     y_pred[..., i] = y.squeeze(-1)
     y_pred = bnn(x_test).numpy().squeeze(-1)
 print(f"{y_pred.shape = }")
 y_pred = y_pred[:, ...]
 y_pred = tf.convert_to_tensor(y_pred, dtype=tf.float32)
+print(f"Computing rhat....")
 rhat = tfp.mcmc.potential_scale_reduction(y_pred)
 rhat = rhat.numpy()
 print(np.where(rhat < 1.1))
 print(f"{rhat.shape = }")
 print(f"y {rhat = }")
-plt.hist(rhat, histtype="step", bins=250, cumulative=True, density=density)
+plt.hist(rhat, histtype="step", bins=250, cumulative=False, density=density)
 plt.axvline(1.1, linestyle="--", color="red")
 plt.xlabel(r"$\hat{R}$")
 plt.ylabel("Density")

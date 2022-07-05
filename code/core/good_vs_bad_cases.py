@@ -124,18 +124,21 @@ def sample_std():
 
 
 if __name__ == "__main__":
-    sample_std()
-    # data_types = ["train", "val", "test"]
-    # for d in data_types:
-    #     stddevs, cumulative_confidence = confidence_interval(data_type=d)
-    #     plt.plot(stddevs, cumulative_confidence, label=d)
-    #     plt.scatter(stddevs, cumulative_confidence, marker="x")
-    #     plt.axhline(y=0.95, linestyle="--", color="black")
+    # sample_std()
+    data_types = ["train", "val", "test"]
+    for d in data_types:
+        stddevs, cumulative_confidence = confidence_interval(data_type=d)
+        plt.plot(stddevs, cumulative_confidence, label=d)
+        plt.scatter(stddevs, cumulative_confidence, marker="x")
 
-    # plt.xlabel("$k$")
-    # plt.ylabel("Percentage of Predictions")
-    # plt.legend()
-    # dir = "/Users/reneaas/Documents/skole/master/thesis/master_thesis/tex/thesis/figures/confidence_estimation/"
-    # fname = dir + "good_vs_bad_cases_confidence.pdf"
-    # plt.savefig(fname)
-    # plt.close()
+    plt.axhline(y=0.68, linestyle="--", color="black")
+    plt.axhline(y=0.96, linestyle="--", color="red")
+    plt.axhline(y=0.997, linestyle="--", color="blue")
+
+    plt.xlabel("$k$")
+    plt.ylabel("Percentage of Predictions")
+    plt.legend()
+    dir = "/Users/reneaas/Documents/skole/master/thesis/master_thesis/tex/thesis/figures/confidence_estimation/"
+    fname = dir + "good_vs_bad_cases_confidence.pdf"
+    plt.savefig(fname)
+    plt.close()

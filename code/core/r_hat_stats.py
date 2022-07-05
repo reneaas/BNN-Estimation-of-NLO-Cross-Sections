@@ -49,8 +49,8 @@ def main():
     input_size = x_train.shape[-1]
     layers = [input_size, 20, 20, 1]
     activations = "tanh"
-    num_burnin_steps = 512
-    num_results = 4096
+    num_burnin_steps = 1024
+    num_results = 2048
 
     bnn = BayesianNeuralNetwork(
         layers=layers,
@@ -67,7 +67,7 @@ def main():
     loss = bnn.mle_fit(
         x_train=x_train,
         y_train=y_train,
-        epochs=4096,
+        epochs=16,
         lr=1e-3,
         batch_size=32,
     )
@@ -78,19 +78,19 @@ def main():
 
     trace_fn = lambda _, pkr: trace_fn_adaptive_hmc(_, pkr)
     inner_kernel = tfp.mcmc.HamiltonianMonteCarlo(
-        num_leapfrog_steps=512,
+        num_leapfrog_steps=64,
         step_size=[tf.fill(w.shape, 0.001) for w in bnn.weights],
         target_log_prob_fn=bnn.get_target_log_prob_fn(x=x_train, y=y_train),
     )
 
     kernel = tfp.mcmc.DualAveragingStepSizeAdaptation(
         inner_kernel=inner_kernel,
-        num_adaptation_steps=num_burnin_steps,
-        target_accept_prob=0.65,
+        num_adaptation_steps=int(0.8 * num_burnin_steps),
+        target_accept_prob=0.75,
     )
 
 
-    fname = "./models/multi_chain_model_hmc3.npz"
+    fname = "./models/multi_chain_model_hmc5.npz"
     start = time.perf_counter()
     chain, trace = bnn.sample_chain(
         kernel=kernel,

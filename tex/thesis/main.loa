@@ -3,6 +3,7 @@
 \contentsline {algorithm}{\numberline {4.1}{\ignorespaces Leapfrog Integration\relax }}{20}{figure.caption.10}%
 \contentsline {algorithm}{\numberline {4.2}{\ignorespaces Vectorized Leapfrog Integration\relax }}{21}{figure.caption.11}%
 \contentsline {algorithm}{\numberline {4.3}{\ignorespaces Hamiltonian Monte Carlo\relax }}{23}{figure.caption.12}%
-\contentsline {algorithm}{\numberline {5.1}{\ignorespaces The NUTS Sampler\relax }}{28}{figure.caption.14}%
-\contentsline {algorithm}{\numberline {6.1}{\ignorespaces Backpropagation: Forward pass\relax }}{33}{figure.caption.15}%
-\contentsline {algorithm}{\numberline {6.2}{\ignorespaces Backpropagation: Backward pass\relax }}{33}{figure.caption.16}%
+\contentsline {algorithm}{\numberline {5.1}{\ignorespaces The NUTS Sampler\relax }}{29}{figure.caption.14}%
+\contentsline {algorithm}{\numberline {5.2}{\ignorespaces Dual Averaging Step Size Adaptation\relax }}{31}{figure.caption.15}%
+\contentsline {algorithm}{\numberline {6.1}{\ignorespaces Backpropagation: Forward pass\relax }}{35}{figure.caption.16}%
+\contentsline {algorithm}{\numberline {6.2}{\ignorespaces Backpropagation: Backward pass\relax }}{35}{figure.caption.17}%

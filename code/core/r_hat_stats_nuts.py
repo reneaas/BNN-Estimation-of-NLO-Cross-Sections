@@ -47,10 +47,10 @@ def main():
     x_train = tf.convert_to_tensor(x_train, dtype=tf.float32)
     y_train = tf.convert_to_tensor(y_train, dtype=tf.float32)
     input_size = x_train.shape[-1]
-    layers = [input_size, 20, 20, 1]
+    layers = [input_size, 10, 10, 1]
     activations = "tanh"
-    num_burnin_steps = 128
-    num_results = 128
+    num_burnin_steps = 1024
+    num_results = 8192
 
     bnn = BayesianNeuralNetwork(
         layers=layers,
@@ -75,8 +75,6 @@ def main():
     timeused = end - start
     print(f"{timeused = } seconds (on MLE to find point estimate)")
 
-
-    trace_fn = lambda _, pkr: trace_fn_adaptive_hmc(_, pkr)
   
 
     inner_kernel = tfp.mcmc.NoUTurnSampler(
@@ -87,25 +85,25 @@ def main():
 
     kernel = tfp.mcmc.DualAveragingStepSizeAdaptation(
         inner_kernel=inner_kernel,
-        num_adaptation_steps=num_burnin_steps,
-        target_accept_prob=0.65,
+        num_adaptation_steps=int(0.8 * num_burnin_steps),
+        target_accept_prob=0.75,
     )
 
 
-    fname = "./models/multi_chain_model_nuts.npz"
+    fname = "./models/multi_chain_model_hmc4.npz"
     start = time.perf_counter()
-    chain, trace = bnn.sample_chain(
+    chain = bnn.sample_chain(
         kernel=kernel,
         num_results=num_results,
         num_burnin_steps=num_burnin_steps,
         fname=fname,
-        trace_fn=trace_fn,
+        trace_fn=None,
         num_steps_between_results=0,
         restack=False,
     )
 
-    accept_ratio = sum(trace.get("is_accepted").numpy()) / num_results
-    print(f"{accept_ratio = }")
+    # accept_ratio = sum(trace.get("is_accepted").numpy()) / num_results
+    # print(f"{accept_ratio = }")
     end = time.perf_counter()
     timeused = end - start
     print(f"{timeused = } on sampling")
