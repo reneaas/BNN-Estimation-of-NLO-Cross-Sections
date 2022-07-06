@@ -61,10 +61,10 @@ the states produced during the doubling process is likely to lie in a low probab
 where $\Lambda \sim \text{Uniform}(0, 1)$ is sampled in the beginning of the tree building (and is the slice variable used during Metropolis correction to accept or reject a state) and $\Delta_\text{max}$ is a tolerance which the authors of the original paper recommends to be set to $\Delta_\text{max} = 1000$ to allow the tree building to continue if the error introduced by the Leapfrog integrator is moderate. Equation~\eqref{eq:nuts_error_condition} essentially states that if the energy difference becomes too large, we terminate the tree building. The tree produced during this final doubling must be discarded and the final tree becomes the tree prior to doubling. The reasoning is the same as before; we cannot initiate the Leapfrog integrator from the states in this tree and rebuild $\mathcal{B}$ as the stopping condition in eq.~\eqref{eq:nuts_error_condition} is met before the full tree can be rebuilt.
 
 Once the tree $\mathcal{B}$ is built, the NUTS sampler selects a \textit{candidate set} $\mathcal{C}$ from the tree where all of its elements, which we define as \textit{candidate states}, must satisfy
-\begin{equation}\label{eq:nuts_acceptance}
+\begin{equation}\label{eq:acceptable_states_criterion}
     \frac{\pi(q', p')}{\pi(q, p)} = \exp\{-[H(q', p') - H(q, p) ]\} > \Lambda,
 \end{equation}
-which is the same Metropolis correction that is employed in HMC \cite{nuts_joonha_park}. The next state in the Markov chain is drawn randomly from $\mathcal{C}$. The selected state $(q', p')$ is projected onto $q'$ which is the parameter of interest that is next in line in the Markov chain. We have defined a function {\tt NUTSstep} in algorithm \ref{algo:nuts} which generates the next state $q'$ in the Markov chain given a prior state $q$, a Hamiltonian $H$ and a step size $\epsilon$.
+which is the same Metropolis correction that is employed in HMC \cite{nuts_joonha_park}. Again $(q, p)$ represents the initial node of the tree doubling. The next state in the Markov chain is drawn randomly from $\mathcal{C}$. The selected state $(q', p')$ is projected onto $q'$ which is the parameter of interest that is next in line in the Markov chain. We have defined a function {\tt NUTSstep} in algorithm \ref{algo:nuts} which generates the next state $q'$ in the Markov chain given a prior state $q$, a Hamiltonian $H$ and a step size $\epsilon$.
 
 \begin{figure}
 	\begin{algorithm}[H]
@@ -118,13 +118,13 @@ Another added computational cost is the memory footprint introduced by storing t
 where $\abs{\cdot}$ denotes the \textit{cardinality} or the number of elements in the set and $\mathcal{C}_\text{subtree} \subseteq \mathcal{C}$ is the candidate states in a subtree of the subset of the full tree corresponding to the candidate set. Equation~\eqref{eq:uniform_dist_over_C} states that the uniform probability over $\mathcal{C}$ can be rewritten as the probability of selecting a subtree $\mathcal{C}_\text{subtree}$ from $\mathcal{C}$ times the probability of drawing a state at random from that subtree. A tree of height $j$ consists of two subtrees of height $j - 1$. From each subtree for $j > 0$, draw a state $(q, p)$ from each subtree with probability $1 / \abs{\mathcal{C}_\text{subtree}}$ to represent that tree and a give it a weight proportional to how many states of the total candidate set that belonged to that particular subtree. Starting from the initial tree of height $j > 0$, this can be performed during the doubling process for each new subtree that is generated to avoid explicit storage.  The storage requirement is thus brought down to an order of $\mathcal{O}(j)$ position-momentum states, which significantly reduces the memory footprint.
 
 \section{Adapting the Step Size}
-Now that we have established a means of adapting the number of Leapfrog steps $L$, we turn our attention to adapting the step size $\epsilon$. We will employ a dual-averaging algorithm as in \cite{nuts}, which is a version of the stochastic convex optimization algorithm presented by Nestrov in \cite{Nesterov2009}. The algorithm we use is better suited for the MCMC methods used in this thesis.
+Now that we have established a means of adapting the number of Leapfrog steps $L$, we turn our attention to adapting the step size $\epsilon$. We will employ a dual-averaging algorithm as in \cite{nuts}, which is a version of the stochastic convex optimization algorithm presented by Nestrov in \cite{Nesterov2009}. The algorithm we will explore is better suited for the MCMC methods used in this thesis.
 
 Let $f_t$ be a quantity calculated from the Markov chain at iteration $t$ for $t\geq 1$. For our purposes, this quantity will be related to the acceptance probability $a_t$ at iteration $t$ computed using eq.~\eqref{eq:hmc_acceptance} from the HMC sampler and a target acceptance probability $\delta$ through
 \begin{equation}
     f_t = \delta - a_t.
 \end{equation}
-Let $x \in \mathbb{R}$ be a tunable parameter of the MCMC algorithm. This parameter will in our case be a function of the step size $\epsilon$, which is the parameter we want to tune. But for numerical stability, we will use $x = \ln \epsilon$. Define the expectation of $f_t$ as 
+Let $x \in \mathbb{R}$ be a tunable parameter of the MCMC algorithm. This parameter will in our case be a function of the step size $\epsilon$, which is the parameter we want to tune. But for numerical stability, we will use $x = \log \epsilon$. Define the expectation of $f_t$ as 
 \begin{equation}
     f(x) = \lim_{T\to\infty} \frac{1}{T}\sum_{t=1}^T \mathbb{E}[f_t|x].
 \end{equation} 
@@ -152,10 +152,11 @@ The update scheme in eq.~\eqref{eq:update_scheme} will converge $x_t$ towards a 
 \end{equation}
 as long as $f_t$ is bounded. As long as $x_t$ is bounded (which we just established) and $f(x)$ is a nondecreasing function of $x$, it can be shown that the update scheme in eq.~\eqref{eq:update_scheme} guarantees that $f(\bar{x}_t) \to 0$ as $t \to \infty$.
 
-The reasoning for using dual-averaging of $\bar{x}_t$ as opposed to just averaging $x_t$ directly is that the Markov chain is finite and the dual-averaged $\bar{x}_t$ with $k < 1$ in the step size schedule from eq.~\eqref{eq:step_size_schedule} gives more weight to more recent iterations in the chain. This is desirable since the ideal step size during the initial Markov chain may be widely different from the ideal step size once the Markov chain converges to the stationary distribution. For any $k \in (1/2, 1]$ it can be shown that $\bar{x}_t$ eventually converges to the average of $x_t$ for a long enough chain. Thus for a finite number of adaptation steps $M$, we obtain an optimal value of the step size through
+The reasoning for using dual-averaging of $\bar{x}_t$ as opposed to just averaging $x_t$ directly is that the Markov chain is finite and the dual-averaged $\bar{x}_t$ with $k < 1$ in the step size schedule from eq.~\eqref{eq:step_size_schedule} gives more weight to more recent iterations in the chain. This is desirable since the ideal step size during the initial Markov chain may be widely different from the ideal step size once the Markov chain converges to the stationary distribution. For any $k \in (1/2, 1]$, it can be shown that $\bar{x}_t$ eventually converges to the average of $x_t$ for a long enough chain. Thus for a finite number of adaptation steps $T$, we obtain an optimal value of the step size through
 \begin{equation}\label{eq:optimal_step_size}
-    \epsilon_\text{opt} = \log^{-1}(\bar{x}_M).
+    \epsilon_\text{opt} = \log^{-1}(\bar{x}_T),
 \end{equation}
+for which $f(\bar{x}_T) \approx 0$, as desired.
 
 To adapt the step size in standard HMC, we define $f_t$ as 
 \begin{equation}\label{eq:f_hmc}
