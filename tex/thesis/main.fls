@@ -1686,6 +1686,7 @@ INPUT /usr/local/texlive/2021/texmf-dist/tex/latex/tikz-qtree/tikz-qtree.tex
 INPUT /usr/local/texlive/2021/texmf-dist/tex/latex/tikz-qtree/tikz-qtree.tex
 INPUT /usr/local/texlive/2021/texmf-dist/tex/latex/tikz-qtree/tikz-qtree.tex
 INPUT /usr/local/texlive/2021/texmf-dist/tex/latex/pgf/frontendlayer/tikz.sty
+INPUT /usr/local/texlive/2021/texmf-dist/tex/latex/url/url.sty
 INPUT /usr/local/texlive/2021/texmf-dist/tex/generic/pgf/frontendlayer/tikz/libraries/tikzlibrarycalc.code.tex
 INPUT /usr/local/texlive/2021/texmf-dist/tex/generic/pgf/frontendlayer/tikz/libraries/tikzlibrarycalc.code.tex
 INPUT /usr/local/texlive/2021/texmf-dist/tex/latex/lm/ot1lmr.fd
@@ -1879,6 +1880,8 @@ INPUT /Users/reneaas/Documents/skole/master/thesis/master_thesis/tex/thesis/Sect
 INPUT /Users/reneaas/Documents/skole/master/thesis/master_thesis/tex/thesis/Sections/Abstract/Abstract.tex
 INPUT /usr/local/texlive/2021/texmf-dist/fonts/tfm/public/lm/rm-lmr17.tfm
 INPUT /usr/local/texlive/2021/texmf-dist/fonts/tfm/public/lm/rm-lmbx12.tfm
+INPUT /usr/local/texlive/2021/texmf-dist/fonts/tfm/public/lm/rm-lmr12.tfm
+INPUT /usr/local/texlive/2021/texmf-dist/fonts/tfm/public/lm/rm-lmbx12.tfm
 INPUT /Users/reneaas/Documents/skole/master/thesis/master_thesis/tex/thesis/Sections/Acknow.tex
 INPUT /Users/reneaas/Documents/skole/master/thesis/master_thesis/tex/thesis/Sections/Acknow.tex
 INPUT /Users/reneaas/Documents/skole/master/thesis/master_thesis/tex/thesis/Sections/Acknow.tex
@@ -1933,8 +1936,6 @@ INPUT /Users/reneaas/Documents/skole/master/thesis/master_thesis/tex/thesis/Sect
 INPUT /Users/reneaas/Documents/skole/master/thesis/master_thesis/tex/thesis/Sections/methods/physics_problem.tex
 INPUT /Users/reneaas/Documents/skole/master/thesis/master_thesis/tex/thesis/Sections/methods/physics_problem.tex
 INPUT /Users/reneaas/Documents/skole/master/thesis/master_thesis/tex/thesis/Sections/methods/physics_problem.tex
-INPUT /usr/local/texlive/2021/texmf-dist/fonts/tfm/public/lm/rm-lmr12.tfm
-INPUT /usr/local/texlive/2021/texmf-dist/fonts/tfm/public/lm/rm-lmbx12.tfm
 INPUT /Users/reneaas/Documents/skole/master/thesis/master_thesis/tex/thesis/Sections/methods/bayesian_ml.tex
 INPUT /Users/reneaas/Documents/skole/master/thesis/master_thesis/tex/thesis/Sections/methods/bayesian_ml.tex
 INPUT /Users/reneaas/Documents/skole/master/thesis/master_thesis/tex/thesis/Sections/methods/bayesian_ml.tex
@@ -2182,6 +2183,7 @@ INPUT /Users/reneaas/Documents/skole/master/thesis/master_thesis/tex/thesis/main
 INPUT /Users/reneaas/Documents/skole/master/thesis/master_thesis/tex/thesis/main.bbl
 INPUT /Users/reneaas/Documents/skole/master/thesis/master_thesis/tex/thesis/main.bbl
 INPUT /usr/local/texlive/2021/texmf-dist/fonts/tfm/public/lm/rm-lmri9.tfm
+INPUT /usr/local/texlive/2021/texmf-dist/fonts/tfm/public/lm/rm-lmcsc10.tfm
 OUTPUT /Users/reneaas/Documents/skole/master/thesis/master_thesis/tex/thesis/main.thm
 INPUT /Users/reneaas/Documents/skole/master/thesis/master_thesis/tex/thesis/main.aux
 INPUT /Users/reneaas/Documents/skole/master/thesis/master_thesis/tex/thesis/main.out

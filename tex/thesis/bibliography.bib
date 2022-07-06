@@ -1,42 +1,47 @@
-@misc{rene_alexander_ask_2022_6800167,
-  author       = {René Alexander Ask},
-  title        = {{Bayesian Neural Network Estimation of Next-To- 
-                   Leading-Order Cross Sections}},
-  month        = jul,
-  year         = 2022,
-  publisher    = {Zenodo},
-  doi          = {10.5281/zenodo.6800167},
-  url          = {https://doi.org/10.5281/zenodo.6800167}
-}
 
-@misc{tfp,
-  doi = {10.48550/ARXIV.2002.01184},
-  
-  url = {https://arxiv.org/abs/2002.01184},
-  
-  author = {Lao, Junpeng and Suter, Christopher and Langmore, Ian and Chimisov, Cyril and Saxena, Ashish and Sountsov, Pavel and Moore, Dave and Saurous, Rif A. and Hoffman, Matthew D. and Dillon, Joshua V.},
-  
-  keywords = {Computation (stat.CO), Programming Languages (cs.PL), Machine Learning (stat.ML), FOS: Computer and information sciences, FOS: Computer and information sciences},
-  
-  title = {tfp.mcmc: Modern Markov Chain Monte Carlo Tools Built for Modern Hardware},
-  
-  publisher = {arXiv},
-  
-  year = {2020},
-  
-  copyright = {Creative Commons Attribution 4.0 International}
+
+@InProceedings{chees-hmc,
+  title = 	 { An Adaptive-MCMC Scheme for Setting Trajectory Lengths in Hamiltonian Monte Carlo },
+  author =       {Hoffman, Matthew and Radul, Alexey and Sountsov, Pavel},
+  booktitle = 	 {Proceedings of The 24th International Conference on Artificial Intelligence and Statistics},
+  pages = 	 {3907--3915},
+  year = 	 {2021},
+  editor = 	 {Banerjee, Arindam and Fukumizu, Kenji},
+  volume = 	 {130},
+  series = 	 {Proceedings of Machine Learning Research},
+  month = 	 {13--15 Apr},
+  publisher =    {PMLR},
+  pdf = 	 {http://proceedings.mlr.press/v130/hoffman21a/hoffman21a.pdf},
+  url = 	 {https://proceedings.mlr.press/v130/hoffman21a.html},
+  abstract = 	 { Hamiltonian Monte Carlo (HMC) is a powerful MCMC algorithm based on simulating Hamiltonian dynamics. Its performance depends strongly on choosing appropriate values for two parameters: the step size used in the simulation, and how long the simulation runs for. The step-size parameter can be tuned using standard adaptive-MCMC strategies, but it is less obvious how to tune the simulation-length parameter. The no-U-turn sampler (NUTS) eliminates this problematic simulation-length parameter, but NUTS’s relatively complex control flow makes it difficult to efficiently run many parallel chains on accelerators such as GPUs. NUTS also spends some extra gradient evaluations relative to HMC in order to decide how long to run each iteration without violating detailed balance. We propose ChEES-HMC, a simple adaptive-MCMC scheme for automatically tuning HMC’s simulation-length parameter, which minimizes a proxy for the autocorrelation of the state’s second moments. We evaluate ChEES-HMC and NUTS on many tasks, and find that ChEES-HMC typically yields larger effective sample sizes per gradient evaluation than NUTS does. When running many chains on a GPU, ChEES-HMC can also run significantly more gradient evaluations per second than NUTS, allowing it to quickly provide accurate estimates of posterior expectations. }
 }
 
 
-
-@software{jax,
-  title = {The {D}eep{M}ind {JAX} {E}cosystem},
+@misc{jax,
   author = {Babuschkin, Igor and Baumli, Kate and Bell, Alison and Bhupatiraju, Surya and Bruce, Jake and Buchlovsky, Peter and Budden, David and Cai, Trevor and Clark, Aidan and Danihelka, Ivo and Fantacci, Claudio and Godwin, Jonathan and Jones, Chris and Hennigan, Tom and Hessel, Matteo and Kapturowski, Steven and Keck, Thomas and Kemaev, Iurii and King, Michael and Martens, Lena and Mikulik, Vladimir and Norman, Tamara and Quan, John and Papamakarios, George and Ring, Roman and Ruiz, Francisco and Sanchez, Alvaro and Schneider, Rosalia and Sezener, Eren and Spencer, Stephen and Srinivasan, Srivatsan and Stokowiec, Wojciech and Viola, Fabio},
-  url = {http://github.com/deepmind},
-  year = {2020},
+  howpublished = {\url{http://github.com/deepmind}},
+  title = {The {D}eep{M}ind {JAX} {E}cosystem},
+  year         = {2020}
 }
+
 
 @article{colliderbit,
+    author = "Bal\'azs, Csaba and others",
+    collaboration = "GAMBIT",
+    title = "{ColliderBit: a GAMBIT module for the calculation of high-energy collider observables and likelihoods}",
+    eprint = "1705.07919",
+    archivePrefix = "arXiv",
+    primaryClass = "hep-ph",
+    reportNumber = "gambit-code-2017",
+    doi = "10.1140/epjc/s10052-017-5285-8",
+    journal = "Eur. Phys. J. C",
+    volume = "77",
+    number = "11",
+    pages = "795",
+    year = "2017"
+}
+
+@article{colliderbit_old,
 	doi = {10.1140/epjc/s10052-017-5285-8},
   
 	url = {https://doi.org/10.1140%2Fepjc%2Fs10052-017-5285-8},
@@ -58,15 +63,19 @@
 	journal = {The European Physical Journal C}
 }
 
-@misc{universal_function_approximator,
-  doi = {10.48550/ARXIV.2102.10993},
-  url = {https://arxiv.org/abs/2102.10993},
-  author = {Nishijima, Takato},
-  keywords = {Machine Learning (cs.LG), Artificial Intelligence (cs.AI), FOS: Computer and information sciences, FOS: Computer and information sciences},
-  title = {{Universal Approximation Theorem for Neural Networks}},
-  publisher = {arXiv},
-  year = {2021},
-  copyright = {arXiv.org perpetual, non-exclusive license}
+@article{universal_function_approximator,
+title = {Multilayer feedforward networks are universal approximators},
+journal = {Neural Networks},
+volume = {2},
+number = {5},
+pages = {359-366},
+year = {1989},
+issn = {0893-6080},
+doi = {https://doi.org/10.1016/0893-6080(89)90020-8},
+url = {https://www.sciencedirect.com/science/article/pii/0893608089900208},
+author = {Kurt Hornik and Maxwell Stinchcombe and Halbert White},
+keywords = {Feedforward networks, Universal approximation, Mapping networks, Network representation capability, Stone-Weierstrass Theorem, Squashing functions, Sigma-Pi networks, Back-propagation networks},
+abstract = {This paper rigorously establishes that standard multilayer feedforward networks with as few as one hidden layer using arbitrary squashing functions are capable of approximating any Borel measurable function from one finite dimensional space to another to any desired degree of accuracy, provided sufficiently many hidden units are available. In this sense, multilayer feedforward networks are a class of universal approximators.}
 }
 
 
@@ -96,24 +105,6 @@ language={eng}
 
 
 
-@misc{nuts_joonha_park,
-  doi = {10.48550/ARXIV.1907.06544},
-  
-  url = {https://arxiv.org/abs/1907.06544},
-  
-  author = {Park, Joonha and Atchadé, Yves F.},
-  
-  keywords = {Computation (stat.CO), Machine Learning (stat.ML), FOS: Computer and information sciences, FOS: Computer and information sciences},
-  
-  title = {{Markov Chain Monte Carlo Algorithms with Sequential Proposals}},
-  
-  publisher = {arXiv},
-  
-  year = {2019},
-  
-  copyright = {arXiv.org perpetual, non-exclusive license}
-}
-
 
 @article{VEGAS,
 title = {A new algorithm for adaptive multidimensional integration},
@@ -129,64 +120,30 @@ author = {G {Peter Lepage}},
 abstract = {A new general purpose algorithm for multidimensional integration is described. It is an iterative and adaptive Monte Carlo scheme. The new algorithm is compared with several others currently in use, and shown to be considerably more efficient than all of these for a number of sample integrals of high dimension (n ⪆ 4).}
 }
 
-
-
 @article{xsec,
-	doi = {10.1140/epjc/s10052-020-08635-y},
-  
-	url = {https://doi.org/10.1140%2Fepjc%2Fs10052-020-08635-y},
-  
-	year = 2020,
-	month = {dec},
-  
-	publisher = {Springer Science and Business Media {LLC}
-},
-  
-	volume = {80},
-  
-	number = {12},
-  
-	author = {Andy Buckley and Anders Kvellestad and Are Raklev and Pat Scott and Jon Vegard Sparre and Jeriek Van den Abeele and Ingrid A. Vazquez-Holm},
-  
-	title = {Xsec: the cross-section evaluation code},
-  
-	journal = {The European Physical Journal C}
-}
-
-@misc{prospino,
-  doi = {10.48550/ARXIV.HEP-PH/9611232},
-  
-  url = {https://arxiv.org/abs/hep-ph/9611232},
-  
-  author = {Beenakker, W. and Hoepker, R. and Spira, M.},
-  
-  keywords = {High Energy Physics - Phenomenology (hep-ph), FOS: Physical sciences, FOS: Physical sciences},
-  
-  title = {PROSPINO: A Program for the Production of Supersymmetric Particles in Next-to-leading Order QCD},
-  
-  publisher = {arXiv},
-  
-  year = {1996},
-  
-  copyright = {Assumed arXiv.org perpetual, non-exclusive license to distribute this article for submissions made before January 2004}
+    author = "Buckley, Andy and Kvellestad, Anders and Raklev, Are and Scott, Pat and Sparre, Jon Vegard and Van Den Abeele, Jeriek and Vazquez-Holm, Ingrid A.",
+    title = "{Xsec: the cross-section evaluation code}",
+    eprint = "2006.16273",
+    archivePrefix = "arXiv",
+    primaryClass = "hep-ph",
+    reportNumber = "SAGEX-20-17-E",
+    doi = "10.1140/epjc/s10052-020-08635-y",
+    journal = "Eur. Phys. J. C",
+    volume = "80",
+    number = "12",
+    pages = "1106",
+    year = "2020"
 }
 
 
-@article{google_bnn_posteriors,
-  author    = {Pavel Izmailov and
-               Sharad Vikram and
-               Matthew D. Hoffman and
-               Andrew Gordon Wilson},
-  title     = {{W}hat {A}re {B}ayesian {N}eural {N}etwork {P}osteriors {R}eally {L}ike?},
-  journal   = {CoRR},
-  volume    = {abs/2104.14421},
-  year      = {2021},
-  url       = {https://arxiv.org/abs/2104.14421},
-  eprinttype = {arXiv},
-  eprint    = {2104.14421},
-  timestamp = {Tue, 04 May 2021 15:12:43 +0200},
-  biburl    = {https://dblp.org/rec/journals/corr/abs-2104-14421.bib},
-  bibsource = {dblp computer science bibliography, https://dblp.org}
+
+@article{prospino,
+    author = "Beenakker, W. and Hopker, R. and Spira, M.",
+    title = "{PROSPINO: A Program for the production of supersymmetric particles in next-to-leading order QCD}",
+    eprint = "hep-ph/9611232",
+    archivePrefix = "arXiv",
+    month = "11",
+    year = "1996"
 }
 
 @misc{xla,
@@ -194,6 +151,9 @@ title	= {{X}{L}{A} : {C}ompiling {M}achine {L}earning for {P}eak {P}erformance},
 author	= {Amit Sabne},
 year	= {2020}
 }
+
+
+
 
 
 @book{neal2011,
@@ -280,23 +240,103 @@ url={https://doi.org/10.1007/s10107-007-0149-x}
     eprint = {https://academic.oup.com/biomet/article-pdf/57/1/97/23940249/57-1-97.pdf},
 }
 
-@misc{conceptual_intro_hmc,
-  doi = {10.48550/ARXIV.1701.02434},
-  
-  url = {https://arxiv.org/abs/1701.02434},
-  
-  author = {Betancourt, Michael},
-  
-  keywords = {Methodology (stat.ME), FOS: Computer and information sciences, FOS: Computer and information sciences},
-  
-  title = {{A} {C}onceptual {I}ntroduction to {H}amiltonian {M}onte {C}arlo},
-  
-  publisher = {arXiv},
-  
-  year = {2017},
-  
-  copyright = {arXiv.org perpetual, non-exclusive license}
+@article{swish,
+  author    = {Prajit Ramachandran and
+               Barret Zoph and
+               Quoc V. Le},
+  title     = {Searching for Activation Functions},
+  journal   = {CoRR},
+  year      = {2017},
+  url       = {http://arxiv.org/abs/1710.05941},
+  eprinttype = {arXiv},
+  eprint    = {1710.05941},
+  timestamp = {Mon, 13 Aug 2018 16:48:44 +0200},
+  biburl    = {https://dblp.org/rec/journals/corr/abs-1710-05941.bib},
+  bibsource = {dblp computer science bibliography, https://dblp.org}
 }
+
+@article{google_bnn_posteriors,
+  author    = {Pavel Izmailov and
+               Sharad Vikram and
+               Matthew D. Hoffman and
+               Andrew Gordon Wilson},
+  title     = {{W}hat {A}re {B}ayesian {N}eural {N}etwork {P}osteriors {R}eally {L}ike?},
+  journal   = {CoRR},
+  year      = {2021},
+  url       = {https://arxiv.org/abs/2104.14421},
+  eprinttype = {arXiv},
+  eprint    = {2104.14421},
+  timestamp = {Tue, 04 May 2021 15:12:43 +0200},
+  biburl    = {https://dblp.org/rec/journals/corr/abs-2104-14421.bib},
+  bibsource = {dblp computer science bibliography, https://dblp.org}
+}
+
+@article{nuts_joonha_park,
+  author = {Park, Joonha and Atchadé, Yves F.},
+  title = {{Markov Chain Monte Carlo Algorithms with Sequential Proposals}},
+  year = {2019},
+  url = {https://arxiv.org/abs/1907.06544},
+  eprinttype = {arXiv},
+  eprint = {1907.06544},
+}
+
+@article{tf_old,
+  author       = {Tensorflow Developers},
+  title        = {TensorFlow},
+  month        = may,
+  year         = 2022,
+  note         = {{Specific TensorFlow versions can be found in the 
+                   "Versions" list on the right side of this
+                   page.<br>See the full list of authors <a href="htt
+                   ps://github.com/tensorflow/tensorflow/graphs/contr
+                   ibutors">on GitHub</a>.}},
+  publisher    = {Zenodo},
+  version      = {v2.8.2},
+  doi          = {10.5281/zenodo.6574269},
+  url          = {https://doi.org/10.5281/zenodo.6574269},
+  eprint = {10.5281/zenodo.6574269},
+  
+}
+
+@misc{tf,
+  author = {{Tensorflow Developers, Google}},
+  title = {TensorFlow},
+  howpublished = {\url{https://doi.org/10.5281/zenodo.6574269}},
+  year = {2022},
+  month = may,
+}
+
+
+@misc{rene_alexander_ask_2022_6800167,
+  author       = {René Alexander Ask},
+  howpublished = {\url{https://doi.org/10.5281/zenodo.6800167}},
+  title        = {{Bayesian neural network implementation in Tensorflow}},
+  year         = {2022},
+  month = jul,
+}
+
+
+@article{tfp,
+  author = {Lao, Junpeng and Suter, Christopher and Langmore, Ian and Chimisov, Cyril and Saxena, Ashish and Sountsov, Pavel and Moore, Dave and Saurous, Rif A. and Hoffman, Matthew D. and Dillon, Joshua V.},
+  title = {tfp.mcmc: Modern Markov Chain Monte Carlo Tools Built for Modern Hardware},
+  year = {2020},
+  url = {https://arxiv.org/abs/2002.01184},
+  eprinttype = {arXiv},
+  eprint = {2002.01184},
+  publisher = {arXiv},
+}
+
+@article{conceptual_intro_hmc,
+  author = {Betancourt, Michael},
+  title = {A Conceptual Introduction to Hamiltonian Monte Carlo},
+  year = {2017},
+  url = {https://arxiv.org/abs/1701.02434},
+  eprinttype = {arXiv},
+  eprint = {1701.02434}
+}
+
+
+
 
 @article{geometric_ergodicity,
 	doi = {10.1214/154957804100000024},
@@ -320,14 +360,17 @@ url={https://doi.org/10.1007/s10107-007-0149-x}
 }
 
 
-@misc{nuts,
-      title={The {N}o-{U}-{T}urn {S}ampler: {A}daptively {S}etting {P}ath {L}engths in {H}amiltonian {M}onte {C}arlo}, 
-      author={Matthew D. Hoffman and Andrew Gelman},
-      year={2011},
-      eprint={1111.4246},
-      archivePrefix={arXiv},
-      primaryClass={stat.CO}
+@article{nuts,
+  author  = {Matthew D. Hoffman and Andrew Gelman},
+  title   = {The No-U-Turn Sampler: Adaptively Setting Path Lengths in Hamiltonian Monte Carlo},
+  journal = {Journal of Machine Learning Research},
+  year    = {2014},
+  volume  = {15},
+  number  = {47},
+  pages   = {1593--1623},
+  url     = {http://jmlr.org/papers/v15/hoffman14a.html}
 }
+
 
 @inbook{numerical_recipies,
 author={William H. Press et. al},
@@ -412,8 +455,7 @@ eprint = {https://doi.org/10.1063/1.1699114},
 }
 
 
-
-@misc{tf,
+@misc{tf_old,
 title={ {TensorFlow}: Large-Scale Machine Learning on Heterogeneous Systems},
 url={https://www.tensorflow.org/},
 note={Software available from tensorflow.org},
@@ -461,21 +503,6 @@ author={
   year={2015},
 }
 
-@article{swish,
-  author    = {Prajit Ramachandran and
-               Barret Zoph and
-               Quoc V. Le},
-  title     = {Searching for Activation Functions},
-  journal   = {CoRR},
-  volume    = {abs/1710.05941},
-  year      = {2017},
-  url       = {http://arxiv.org/abs/1710.05941},
-  eprinttype = {arXiv},
-  eprint    = {1710.05941},
-  timestamp = {Mon, 13 Aug 2018 16:48:44 +0200},
-  biburl    = {https://dblp.org/rec/journals/corr/abs-1710-05941.bib},
-  bibsource = {dblp computer science bibliography, https://dblp.org}
-}
 
 @inproceedings{relu,
   added-at = {2014-04-01T20:16:10.000+0200},
@@ -506,23 +533,16 @@ author={
   pages = "80",
 }
 
-@misc{ADAM,
-  doi = {10.48550/ARXIV.1412.6980},
-  
-  url = {https://arxiv.org/abs/1412.6980},
-  
-  author = {Kingma, Diederik P. and Ba, Jimmy},
-  
-  keywords = {Machine Learning (cs.LG), FOS: Computer and information sciences, FOS: Computer and information sciences},
-  
-  title = {Adam: A Method for Stochastic Optimization},
-  
-  publisher = {arXiv},
-  
-  year = {2014},
-  
-  copyright = {arXiv.org perpetual, non-exclusive license}
+@inproceedings{ADAM,
+    author = "Kingma, Diederik P. and Ba, Jimmy",
+    title = "{Adam: A Method for Stochastic Optimization}",
+    eprint = "1412.6980",
+    archivePrefix = "arXiv",
+    primaryClass = "cs.LG",
+    month = "12",
+    year = "2014"
 }
+
 
 @article{rhat,
 author = {Andrew Gelman and Donald B. Rubin},

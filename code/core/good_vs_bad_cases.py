@@ -13,7 +13,10 @@ import sys
 
 
 def load_models():
-    model_fname = "models/3_hidden_layers_tanh.npz"
+    # model_fname = "models/3_hidden_layers_tanh.npz"
+    # model_fname = "models/kernel_hmc_results_1000_burnin_2048_epochs_2500_leapfrogsteps_512_nodes_[5, 20, 20, 1].npz"
+    # model_fname = "models/kernel_nuts_results_1000_burnin_4096_epochs_2500_leapfrogsteps_512_nodes_[5, 20, 20, 1].npz"
+    model_fname = "models/multi_chain_model_hmc3.npz"
     bnn = BayesianNeuralNetwork()
     bnn.load_model(fname=model_fname)
     print(bnn)
@@ -140,5 +143,6 @@ if __name__ == "__main__":
     plt.legend()
     dir = "/Users/reneaas/Documents/skole/master/thesis/master_thesis/tex/thesis/figures/confidence_estimation/"
     fname = dir + "good_vs_bad_cases_confidence.pdf"
-    plt.savefig(fname)
+    # plt.savefig(fname)
+    plt.show()
     plt.close()

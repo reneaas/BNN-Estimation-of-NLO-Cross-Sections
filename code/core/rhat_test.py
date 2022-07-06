@@ -27,7 +27,7 @@ from utils.trace_functions import (
 num_chains = 10
 
 
-fname = "./models/multi_chain_model_hmc4.npz"
+fname = "./models/multi_chain_model_hmc3.npz"
 
 bnn = BayesianNeuralNetwork()
 bnn.load_model(fname=fname)
@@ -89,12 +89,12 @@ x_test = tf.convert_to_tensor(x_test, dtype=tf.float32)
 
 y_pred = np.zeros(shape=(4096, num_chains, y_test.shape[0]))
 with tf.device("/CPU:0"):
-    # for i in tqdm.trange(x_test.shape[0]):
-    #     x = x_test[i]
-    #     x = tf.convert_to_tensor(x[None, ...], dtype=tf.float32)
-    #     y = bnn(x).numpy().squeeze(-1)
-    #     y_pred[..., i] = y.squeeze(-1)
-    y_pred = bnn(x_test).numpy().squeeze(-1)
+    for i in tqdm.trange(x_test.shape[0]):
+        x = x_test[i]
+        x = tf.convert_to_tensor(x[None, ...], dtype=tf.float32)
+        y = bnn(x).numpy().squeeze(-1)
+        y_pred[..., i] = y.squeeze(-1)
+    # y_pred = bnn(x_test).numpy().squeeze(-1)
 print(f"{y_pred.shape = }")
 y_pred = y_pred[:, ...]
 y_pred = tf.convert_to_tensor(y_pred, dtype=tf.float32)
