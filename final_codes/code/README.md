@@ -1,4 +1,10 @@
-# Bayesian Neural Networks Trained with HMC
+# Bayesian Neural Networks Trained with Hamiltonian Monte Carlo
+
+We provide three implementations:
+
+1. [Object-oriented BNN in TensorFlow-Probability](./bnn/bnn.py)
+2. [Functional BNN in TensorFlow-Probability](./bnn_functional/bnn.py)
+3. [Functional BNN in Jax](./jax/jax_bnn.py)
 
 
 

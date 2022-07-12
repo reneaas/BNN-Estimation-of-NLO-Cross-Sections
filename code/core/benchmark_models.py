@@ -45,7 +45,7 @@ def main():
     model_names = model_names1 + model_names2
 
     model_names = [r"old_models/4_small_hidden_layers.npz"]
-    model_names = [r"models/kernel_nuts_results_1000_burnin_1000_epochs_2500_leapfrogsteps_512_nodes_[5, 2048, 1].npz"]
+    model_names = [r"models/kernel_hmc_results_1000_burnin_1000_epochs_2500_leapfrogsteps_512_nodes_[5, 8192, 1].npz"]
 
     print(*model_names)
 

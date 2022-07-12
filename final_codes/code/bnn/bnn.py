@@ -603,7 +603,7 @@ def main():
         num_leapfrog_steps=500,
         step_size=step_size,
     )
-    # Adaptive kernelx
+    # Adaptive kernel
     kernel = tfp.mcmc.DualAveragingStepSizeAdaptation(
         inner_kernel=inner_kernel,
         num_adaptation_steps=int(0.8 * num_burnin_steps),
