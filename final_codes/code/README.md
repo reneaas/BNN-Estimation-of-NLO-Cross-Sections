@@ -4,14 +4,17 @@ We provide three implementations:
 
 1. [Object-oriented BNN in TensorFlow-Probability](./bnn/bnn.py)
 2. [Functional BNN in TensorFlow-Probability](./bnn_functional/bnn.py)
-3. [Functional BNN in Jax](./jax/jax_bnn.py)
+3. [Functional BNN in TensorFlow-Probability using Jax as backend](./jax/jax_bnn.py)
+
+We provide an example code in (bnn_training_example.py)[bnn_training_example.py] using the 
+object-oriented implementation. 
 
 
+We will throughly describe the how to train
+Bayesian neural network (BNN) with Hamiltonian Monte Carlo (HMC) and its derivatives
+using the codes in this repo.
 
-This document will throughly describe the usage of the
-bayesian neural network (BNN) trained with Hamiltonian Monte Carlo (HMC) and its derivatives.
-
-## Basic bayesian learning with BNNs
+## Basic training of BNNs
 
 The BNN implemented here supports training for regression tasks.
 
@@ -47,8 +50,8 @@ This can be done with the following code example:
 
 ```python
 
-# Perform backpropagation to reach a high probability region of the posterior.
-num_epochs = 10000
+# Perform pretraining to obtain a point estimate close to a mode of the posterior density.
+num_epochs = 1024
 batch_size = 32
 bnn.mle_fit(
     x_train=x_train,

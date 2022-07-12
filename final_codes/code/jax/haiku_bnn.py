@@ -181,7 +181,7 @@ def main():
     log_likelihood_fn = hk.without_apply_rng(log_likelihood_fn)
     rng = jax.random.PRNGKey(42)
 
-    n_train = 10000
+    n_train = 2500
     x = np.random.normal(size=(n_train, 1), loc=0.0, scale=2.0)
     f = lambda x: x * np.cos(x) * np.sin(x)
     y = f(x)
@@ -206,7 +206,7 @@ def main():
     start = time.perf_counter()
     seed = 1000
     key = jax.random.PRNGKey(seed)
-    burnin_steps = 10
+    burnin_steps = 0
     for _ in trange(burnin_steps, desc="Burn-in progress"):
         params, key, is_accepted = hmc_step(
             x=x,
@@ -221,7 +221,7 @@ def main():
             key=key,
         )
 
-    num_results = 10
+    num_results = 1000
     chain = []
     num_accepted = 0
     for _ in trange(num_results, desc="Sampling"):
