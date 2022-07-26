@@ -205,7 +205,7 @@ class _BNNBase(object):
         assert isinstance(fname, str), TypeError(f"`fname` = {fname} is not of type `str`.")
         if fname.endswith(".npz") is False:
             raise ValueError(
-                f"""The filename does not end with .npz. Please choose a filename with .npz ending."""
+                """The filename does not end with .npz. Please choose a filename with .npz ending."""
             )
         if chain is None:
             kernel = self._weights[::2]

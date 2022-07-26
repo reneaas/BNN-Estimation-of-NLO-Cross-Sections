@@ -11,7 +11,7 @@ ids = [int(id) for id in ids]
 blocks = ["MASS", "NMIX", "VMIX", "UMIX"]
 
 
-def get_features(data, blocks: List[str], ids: Optional[List[str]] = None) -> Dict:
+def get_features(data, blocks: list[str], ids: Optional[list[str]] = None) -> dict:
     """Extracts features from a pyslha data object.
 
     Args:
@@ -42,7 +42,7 @@ def get_features(data, blocks: List[str], ids: Optional[List[str]] = None) -> Di
     return features
 
 
-def get_targets(data, col_idx: int = 8, block: str = "PROSPINO_OUTPUT") -> Dict:
+def get_targets(data, col_idx: int = 8, block: str = "PROSPINO_OUTPUT") -> dict:
     """Extracts targets from a pyslha object.
 
     Args:
@@ -63,11 +63,11 @@ def get_targets(data, col_idx: int = 8, block: str = "PROSPINO_OUTPUT") -> Dict:
     return targets
 
 
-def merge_list_of_dicts(dicts: List[Dict]) -> Dict:
+def merge_list_of_dicts(dicts: list[dict]) -> dict:
     """Merges a list of dictionaries to a single dictionary.
 
     Args:
-        dicts (list)    :   list of dictionaries to merge.
+        dicts (list[dict])    :   list of dictionaries to merge.
 
     Returns:
         merged_dict (dict)  :   Merged dictionary.
@@ -89,8 +89,8 @@ def sort_targets(targets):
 
 
 def get_data(
-    root_dir: str, blocks: List[str], ids: List[str], col_idxs: List[int] = [8, 7]
-) -> Tuple[Dict]:
+    root_dir: str, blocks: list[str], ids: list[str], col_idxs: list[int] = [8, 7]
+) -> tuple[dict]:
     """Extracts data from a set of .slha files.
 
     Args:
@@ -135,7 +135,7 @@ def get_data(
     return features, targets
 
 
-def merge_features(features, blocks: List[str]) -> Dict:
+def merge_features(features: dict, blocks: list[str]) -> dict:
     """Merge features with respect to the blocks in the .slha files.
 
     Args:
@@ -162,7 +162,7 @@ def merge_features(features, blocks: List[str]) -> Dict:
     return features
 
 
-def save_targets(targets):
+def save_targets(targets: dict) -> None:
     """Saves targets to a set of .npz file using the keys as filenames.
 
     Args:
@@ -178,7 +178,7 @@ def save_targets(targets):
     del targets
 
 
-def sort_nmix(features: Dict) -> Dict:
+def sort_nmix(features: dict) -> dict:
     """Sort NMIX according to particle ids
 
     Args:
@@ -193,7 +193,7 @@ def sort_nmix(features: Dict) -> Dict:
         "1000023",
         "1000025",
         "1000035",
-    ]  # neutralinos[i] = neutralino i.
+    ]
     nmix_dict = {}
     for i, id in enumerate(neutralinos):
         nmix_dict[id] = features["NMIX"][:, i, :]
@@ -201,7 +201,7 @@ def sort_nmix(features: Dict) -> Dict:
     return features
 
 
-def sort_vmix_umix(features: Dict) -> Dict:
+def sort_vmix_umix(features: dict) -> dict:
     """Sort VMIX and UMIX according to particle ids
 
     Args:
@@ -224,7 +224,7 @@ def sort_vmix_umix(features: Dict) -> Dict:
     return features
 
 
-def save_features(features: Dict) -> None:
+def save_features(features: dict) -> None:
     # Store masses
     features["MASS"] = pd.DataFrame(features["MASS"])
     features["MASS"].to_pickle("../features/mass.pkl")
@@ -255,7 +255,7 @@ def save_features(features: Dict) -> None:
         features["VMIX"][key].to_pickle(path)
 
 
-def save_targets(targets: Dict) -> None:
+def save_targets(targets: dict) -> None:
     for key in targets.keys():
         targets[key] = pd.DataFrame(targets[key])
 

@@ -54,6 +54,7 @@ def get_weights(layers):
 def sample_chain(*args, **kwargs):
     return tfp.mcmc.sample_chain(*args, **kwargs)
 
+
 @partial(jax.jit, static_argnames=("target_log_prob_fn"))
 def run_chain(key, current_state, target_log_prob_fn):
     kernel = tfp.mcmc.HamiltonianMonteCarlo(

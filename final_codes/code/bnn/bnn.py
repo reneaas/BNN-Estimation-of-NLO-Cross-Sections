@@ -102,7 +102,7 @@ class BayesianNeuralNetwork(_BNNBase):
         likelihood_noise=0.1,
         num_chains=1,
     ):
-        """Creates the bayesian neural network.
+        """Creates the Bayesian neural network.
 
         Args:
             layers (list, optional):
@@ -157,7 +157,7 @@ class BayesianNeuralNetwork(_BNNBase):
                 Input features of shape (num_points, num_features)
             weights (optional, list[tf.Tensor]):
                 List of weights of the network of shape (batch_size, n, m).
-                Default: `weights=None`. In this case, it defaults to the weights stored in the class.
+                Default: `weights=None`. In this case, it defaults to the weights stored in the instance.
 
         Returns:
             The computed outputs of the forward pass.
@@ -339,7 +339,7 @@ class BayesianNeuralNetwork(_BNNBase):
 
         Returns:
             The log likelihood of yhat as the mean value given target y.
-            Equivalent to the residual sum of squares (RSS). Returned shape [num_chains]
+            Equivalent to the negative residual sum of squares (RSS). Returned shape: (num_chains,)
         """
         yhat = self(x, weights)
         return (
@@ -369,80 +369,7 @@ class BayesianNeuralNetwork(_BNNBase):
             )
         return target_log_prob_fn
     
-    @tf.function
-    def sample_chain_parallel(
-        self,
-        kernel,
-        num_results,
-        num_burnin_steps,
-        num_steps_between_results=0,
-        trace_fn=None,
-        parallel_iterations=10,
-        fname=None,
-    ):
-        """Runs the sample chain over multiple GPUs"""
-        if not isinstance(kernel, tfp.mcmc.TransitionKernel):
-            raise TypeError(
-                f"""kernel = {kernel} is not a valid kernel. Please provide an
-                instance of tfp.mcmc.TransitionKernel.
-                """
-            )
-        physical_devices = tf.config.list_physical_devices("GPU")
-        print(f"Physical devices = {physical_devices}")
-        logical_devices = tf.config.list_logical_devices("GPU")
-        print(f"Logical devices = {logical_devices}")
-
-        strategy = tf.distribute.MirroredStrategy()
-        device_chains = strategy.run(
-            tfp.mcmc.sample_chain,
-            kwargs={
-                "num_results": num_results,
-                "current_state": self._weights,
-                "kernel": kernel,
-                "num_burnin_steps": num_burnin_steps,
-                "trace_fn": None,
-                "parallel_iterations": parallel_iterations,
-                "num_steps_between_results": num_steps_between_results,
-            }
-        )
-        return device_chains
-
-    @tf.function
-    def sample_chain_verbose(
-        self,
-        kernel,
-        num_results,
-        num_burnin_steps,
-        num_steps_between_results=0,
-        trace_fn=0,
-        parallel_iterations=10,
-        fname=None,
-    ):
-        
-        current_state = self.weights
-        kernel_results = kernel.bootstrap_results(current_state)
-
-        #Burn in steps:
-        for i in trange(num_burnin_steps, desc="Burn-in steps"):
-            current_state, kernel_results = kernel.one_step(
-                current_state, kernel_results,
-            )
-        
-        chain = current_state
-
-        for i in trange(num_results, desc="Sampling results"):
-            current_state, kernel_results = kernel.one_step(
-                current_state, kernel_results,
-            )
-            chain = [tf.concat([state1, state2], axis=0) for state1, state2 in zip(chain, current_state)]
-            #chain.append(current_state)
-        
-        self.chain = chain
-            
-        
-        
-
-
+    
     def sample_chain(
         self,
         kernel,
@@ -471,6 +398,13 @@ class BayesianNeuralNetwork(_BNNBase):
                 Number of parallel iterations run on hardware supporting SIMD instructions.
             fname (str):
                 Filename to save the sample chain to.
+            restack (bool):
+                Restacks each sampled weights as (num_chains, num_samples, ...) --> (num_chains * num_samples, ...)
+                at the sampled chain is obtained.
+                Works in the same way as concatenation of the independent chains. 
+                Thus, the first `num_samples` belong to the first chain, the next `num_samples`
+                belong to the next chain and so on.
+                Default: `restack=True`. 
 
         Returns:
             self.chain (list[tf.Tensor]):
@@ -484,9 +418,14 @@ class BayesianNeuralNetwork(_BNNBase):
         if not isinstance(kernel, tfp.mcmc.TransitionKernel):
             raise TypeError(
                 f"""kernel = {kernel} is not a valid kernel. Please provide an
-                instance of tfp.mcmc.TransitionKernel.
+                instance of tfp.mcmc.TransitionKernel,
+                or an instance of a derived class with tfp.mcmc.TransitionKernel
+                as the base class.
                 """
             )
+
+        # Calls _sample_chain(...) which is a wrapper around
+        # tfp.mcmc.sample_chain compiled with tf.function to greatly speedup code.
         chain = self._sample_chain(
             num_results=num_results,
             kernel=kernel,
@@ -525,29 +464,6 @@ def trace_fn_adaptive_no_u_turn(_, pkr):
         "step_size": pkr.inner_results.step_size,
         "target_accept_prob": pkr.target_accept_prob,
     }
-
-
-def trace_fn_adaptive_hmc(_, pkr):
-    return {
-        # "target_log_prob": pkr.inner_results.target_log_prob,
-        # "leapfrogs_taken": pkr.inner_results.leapfrogs_taken,
-        # "has_divergence": pkr.inner_results.has_divergence,
-        # "energy": pkr.inner_results.energy,
-        # "log_accept_ratio": pkr.inner_results.log_accept_ratio,
-        "is_accepted": pkr.inner_results.is_accepted,
-        "step_size": pkr.inner_results.accepted_results.step_size,
-        "target_accept_prob": pkr.target_accept_prob,
-    }
-
-def trace_fn_chees(_, pkr):
-  return (
-        pkr.inner_results.accepted_results,
-        pkr.step,
-        pkr.max_trajectory_length,
-        pkr.inner_results.log_accept_ratio,
-        pkr.adaptation_rate,
-        pkr.averaged_max_trajectory_length,
-  )
 
 
 def main():
@@ -622,10 +538,10 @@ def main():
     )
     end = time.perf_counter()
     timeused = end - start
-    print(f"{timeused=} on sampling")
+    print(f"{timeused =} on sampling")
 
     timeused = end - start
-    print(f"{timeused=} seconds on mcmc sample chain.")
+    print(f"{timeused =} seconds on mcmc sample chain.")
 
     # test the model
     n_test = 1000

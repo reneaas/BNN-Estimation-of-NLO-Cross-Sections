@@ -5,7 +5,7 @@ import time
 import sys
 
 @tf.function
-def forward(x, weights, activations):
+def forward(x: tf.Tensor, weights: list[tf.Tensor], activations: list[callable]):
     """Calculates the forward pass of the neural network
 
     Args:
@@ -26,7 +26,7 @@ def forward(x, weights, activations):
         x = activation(tf.matmul(x, w) + b[..., None, :])
     return x
 
-def get_target_log_prob_fn(x, y, activations):
+def get_target_log_prob_fn(x: tf.Tensor, y: tf.Tensor, activations: list[callable]):
     """ Returns the target log probability function of the neural network model.
 
     Args:
@@ -48,7 +48,7 @@ def get_target_log_prob_fn(x, y, activations):
     return log_posterior_fn
 
 @tf.function
-def log_prior_fn(weights, lamb=1e-3):
+def log_prior_fn(weights: list[tf.Tensor], lamb: float = 1e-3):
     """Calculates the log prior of the weights of the neural network.
     The prior is assumed to be Gaussian.
 
@@ -70,7 +70,7 @@ def log_prior_fn(weights, lamb=1e-3):
     return 0.5 * lamb * res
 
 @tf.function
-def log_likelihood_fn(x, y, weights, activations):
+def log_likelihood_fn(x: tf.Tensor, y: tf.Tensor, weights: list[tf.Tensor], activations: list[callable]):
     """Calculates the Log likelihood given a dataset (x, y),
     and the weights and activations of the neural network.
 
@@ -86,7 +86,7 @@ def log_likelihood_fn(x, y, weights, activations):
     y_pred = forward(x=x, weights=weights, activations=activations)
     return 0.5 * tf.reduce_sum((y_pred - y) ** 2, axis=(-1,-2))
 
-def get_weights(layers, num_chains, mean=0.0, stddev=1.0):
+def get_weights(layers: list[int], num_chains: int, mean: float = 0.0, stddev: float = 1.0):
     """Initates the weights of the neural network model from 
     a Gaussian prior.
 
