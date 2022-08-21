@@ -41,10 +41,10 @@ This will initialize parameters from a default prior which is Gaussian, though a
 The typical training of a BNN in the bayesian framework 
 can be summarized as
 
-1. Perform backpropagation for a number of `num_epochs` with a given
-`batch_size` to reach a high probability region of the target probability distribution (the posterior).
+1. Pretrain network, i.e. minimize L2 loss for a number of `num_epochs` with a given
+`batch_size` to reach a high probability region of the target probability distribution (the posterior density).
 
-2. Perform Monte Carlo sampling using HMC or its derivatives with a small number of burn-in steps to adapt step size.
+2. Perform Monte Carlo sampling using HMC or its extensions with a small number of burn-in steps to adapt step size.
 
 This can be done with the following code example:
 
