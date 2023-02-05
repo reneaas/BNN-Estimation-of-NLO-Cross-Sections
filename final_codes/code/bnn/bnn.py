@@ -467,7 +467,7 @@ def trace_fn_adaptive_no_u_turn(_, pkr):
 
 
 def main():
-    layers = [1, 20, 20, 1]
+    layers = [1, 50, 50, 1]
     n_train = 1000
     n_dims = 1
     f = lambda x: x * tf.math.sin(x) * tf.math.cos(x)
