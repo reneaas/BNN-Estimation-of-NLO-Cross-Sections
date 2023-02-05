@@ -1,2 +1,0 @@
-python3 r_hat_stats.py
-python3 r_hat_stats_nuts.py
